@@ -1,2 +1,1 @@
-# Pawe-Popek-RNG
-sigmastyczy symulator
+sigmastyczny symulator dla sigiemek❤️
