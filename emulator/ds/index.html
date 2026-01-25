@@ -3,19 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>DS Emulator</title>
-
-  <!-- EmulatorJS CSS (must exist in this path) -->
-  <link rel="stylesheet" href="../emulatorjs/emulator.min.css">
-
+  <link rel="stylesheet" href="./emulatorjs/emulator.min.css">
   <style>
-    body {
-      margin: 0;
-      background: black;
-    }
-    #game {
-      width: 100vw;
-      height: 100vh;
-    }
+    body { margin: 0; background: black; }
+    #game { width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
@@ -23,22 +14,17 @@
 <div id="game"></div>
 
 <script>
-  // REQUIRED EmulatorJS config
-  EJS_player = "#game";
-  EJS_core = "nds";
-  EJS_pathtodata = "../emulatorjs/";
-
-  // REQUIRED: game ROM
-  EJS_gameUrl = "../roms/Mario.nds";
-
-  // Strongly recommended
-  EJS_gameID = "nds-game-1";
-  EJS_language = "en";
+  // EmulatorJS configuration
+  EJS_player = "#game";                    // HTML container
+  EJS_core = "nds";                        // Nintendo DS core
+  EJS_pathtodata = "./emulatorjs/";       // Path to emulatorjs folder
+  EJS_biosUrl = "./bios/bios7.bin";       // ARM7 BIOS
+  EJS_biosUrl2 = "./bios/bios9.bin";      // ARM9 BIOS
+  EJS_firmwareUrl = "./bios/firmware.bin";// DS firmware
+  EJS_gameUrl = "./roms/mario.nds";       // Your ROM
 </script>
 
-<!-- IMPORTANT:
-     This MUST be the ONLY EmulatorJS script you load -->
-<script src="../emulatorjs/loader.js"></script>
+<script src="./emulatorjs/loader.js"></script>
 
 </body>
 </html>
