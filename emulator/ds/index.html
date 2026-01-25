@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DS Emulator</title>
+  <title>DS Emulator - Mario</title>
 
-  <!-- EmulatorJS CSS (must exist in this path) -->
+  <!-- EmulatorJS CSS -->
   <link rel="stylesheet" href="../emulatorjs/emulator.min.css">
 
   <style>
     body {
       margin: 0;
       background: black;
+      overflow: hidden;
     }
     #game {
-      width: 100vw;
-      height: 100vh;
+      width: 100vw;    /* full browser width */
+      height: 100vh;   /* full browser height */
+      touch-action: none; /* better touch control for mobile */
     }
   </style>
 </head>
@@ -23,26 +25,37 @@
 <div id="game"></div>
 
 <script>
-  // REQUIRED EmulatorJS config
-  EJS_player = "#game";
-  EJS_core = "nds";
-  EJS_pathtodata = "../emulatorjs/";
+  // ====== REQUIRED EmulatorJS CONFIG ======
+  EJS_player      = "#game";
+  EJS_core        = "nds";
+  EJS_pathtodata  = "../emulatorjs/";
 
-  // REQUIRED: game ROM
+  // DS BIOS & firmware
+  EJS_biosUrl      = "../bios/bios7.bin";
+  EJS_biosUrl2     = "../bios/bios9.bin";
+  EJS_firmwareUrl  = "../bios/firmware.bin";
+
+  // Game ROM
   EJS_gameUrl = "../roms/mario.nds";
-  // DS BIOS
-  EJS_biosUrl  = "../bios/bios7.bin";     // ARM7 BIOS
-EJS_biosUrl2 = "../bios/bios9.bin";     // ARM9 BIOS
-EJS_firmwareUrl = "../bios/firmware.bin"; // DS firmware
 
-
-  // Strongly recommended
+  // Game identity (important for saving settings)
   EJS_gameID = "nds-game-1";
+
+  // Language
   EJS_language = "en";
+
+  // ====== AUDIO SETTINGS ======
+  EJS_audioBuffer    = 4096;   // bigger buffer = smoother audio
+  EJS_audioResampler = 2;      // higher-quality audio resampling
+
+  // ====== VIDEO / RESOLUTION ======
+  EJS_render       = "webgl"; // hardware-accelerated rendering
+  EJS_canvasWidth  = 512;     // combined width of top+bottom screens
+  EJS_canvasHeight = 384;     // combined height of top+bottom screens
+  EJS_scale        = 2;       // scale factor (2x native resolution)
 </script>
 
-<!-- IMPORTANT:
-     This MUST be the ONLY EmulatorJS script you load -->
+<!-- LOAD EMULATORJS -->
 <script src="../emulatorjs/loader.js"></script>
 
 </body>
