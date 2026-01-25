@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>cos</title>
+  <title>DS Emulator - Mario</title>
 
   <!-- EmulatorJS CSS -->
   <link rel="stylesheet" href="../emulatorjs/emulator.min.css">
@@ -45,14 +45,14 @@
   EJS_language = "en";
 
   // ====== AUDIO SETTINGS ======
-  EJS_audioBuffer    = 8192;   // bigger buffer = smoother audio
+  EJS_audioBuffer    = 24 576;   // bigger buffer = smoother audio
   EJS_audioResampler = 2;      // higher-quality audio resampling
 
   // ====== VIDEO / RESOLUTION ======
   EJS_render       = "webgl"; // hardware-accelerated rendering
   EJS_canvasWidth  = 256;     // combined width of top+bottom screens
   EJS_canvasHeight = 192;     // combined height of top+bottom screens
-  EJS_scale        = 4;       // scale factor (2x native resolution)
+  EJS_scale        = 2;       // scale factor (2x native resolution)
 </script>
 
 <!-- LOAD EMULATORJS -->
