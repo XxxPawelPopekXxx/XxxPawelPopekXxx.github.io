@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DS Emulator - Mario</title>
+  <title>DS Emulator</title>
 
   <!-- EmulatorJS CSS -->
   <link rel="stylesheet" href="../emulatorjs/emulator.min.css">
@@ -11,12 +11,26 @@
     body {
       margin: 0;
       background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       overflow: hidden;
     }
+
     #game {
-      width: 100vw;    /* full browser width */
-      height: 100vh;   /* full browser height */
-      touch-action: none; /* better touch control for mobile */
+      display: flex;
+      flex-direction: column; /* top screen above bottom screen */
+      image-rendering: pixelated; /* crisp pixels when scaled */
+      width: auto;
+      height: 100%;
+      max-height: 100vh;
+    }
+
+    #game canvas {
+      display: block;
+      width: 100%;    /* scale to container width */
+      height: auto;   /* keep aspect ratio */
     }
   </style>
 </head>
@@ -45,14 +59,14 @@
   EJS_language = "en";
 
   // ====== AUDIO SETTINGS ======
-  EJS_audioBuffer    = 4096;   // bigger buffer = smoother audio
-  EJS_audioResampler = 2;      // higher-quality audio resampling
+  EJS_audioBuffer    = 8192;  // larger buffer = smoother audio
+  EJS_audioResampler = 2;     // high-quality resampling
 
   // ====== VIDEO / RESOLUTION ======
   EJS_render       = "webgl"; // hardware-accelerated rendering
-  EJS_canvasWidth  = 512;     // combined width of top+bottom screens
-  EJS_canvasHeight = 384;     // combined height of top+bottom screens
-  EJS_scale        = 2;       // scale factor (2x native resolution)
+  EJS_canvasWidth  = 256;     // DS top/bottom screen width
+  EJS_canvasHeight = 192;     // DS top/bottom screen height
+  EJS_scale        = 2;       // scale factor for crisp display
 </script>
 
 <!-- LOAD EMULATORJS -->
