@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DS Emulator</title>
+  <title>DS Emulator - Mario</title>
   <link rel="stylesheet" href="./emulatorjs/emulator.min.css">
   <style>
     body { margin: 0; background: black; }
@@ -14,14 +14,13 @@
 <div id="game"></div>
 
 <script>
-  // EmulatorJS configuration
-  EJS_player = "#game";                    // HTML container
-  EJS_core = "nds";                        // Nintendo DS core
-  EJS_pathtodata = "./emulatorjs/";       // Path to emulatorjs folder
-  EJS_biosUrl = "./bios/bios7.bin";       // ARM7 BIOS
-  EJS_biosUrl2 = "./bios/bios9.bin";      // ARM9 BIOS
-  EJS_firmwareUrl = "./bios/firmware.bin";// DS firmware
-  EJS_gameUrl = "./roms/mario.nds";       // Your ROM
+  EJS_player = "#game";
+  EJS_core = "nds";
+  EJS_pathtodata = "./emulatorjs/";
+  EJS_biosUrl = "./bios/bios7.bin";
+  EJS_biosUrl2 = "./bios/bios9.bin";
+  EJS_firmwareUrl = "./bios/firmware.bin";
+  EJS_gameUrl = "./roms/mario.nds";
 </script>
 
 <script src="./emulatorjs/loader.js"></script>
