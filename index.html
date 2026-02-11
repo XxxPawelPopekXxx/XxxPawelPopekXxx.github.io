@@ -586,20 +586,18 @@ let equippedGear = localStorage.getItem('equippedGear') || null;
 // Questy
 let quests = localStorage.getItem('quests') ? JSON.parse(localStorage.getItem('quests')) : [
   {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false},
-  {id:2, name:'Zbieracz Monet', desc:'Zgromadź 500 monet', target:500, current:0, reward:100, type:'coins', completed:false},
-  {id:3, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:150, type:'unique', completed:false},
-  {id:4, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:200, type:'rolls', completed:false},
-  {id:5, name:'Kolekcjoner Uncommon', desc:'Wylosuj 10x paweł prezydent', target:10, current:0, reward:250, type:'item:paweł prezydent', completed:false},
-  {id:6, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:500, type:'rolls', completed:false},
-  {id:7, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:750, type:'coins', completed:false},
-  {id:8, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:400, type:'item:pawel w zoltym hoodie', completed:false},
-  {id:9, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:600, type:'item:funni paweł', completed:false},
-  {id:10, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:1000, type:'rolls', completed:false},
-  {id:11, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:800, type:'item:paweł ok', completed:false},
-  {id:12, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:1200, type:'item:świąteczny paweł', completed:false},
-  {id:13, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:2000, type:'rolls', completed:false},
-  {id:14, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false},
-  {id:15, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false}
+  {id:2, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false},
+  {id:3, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:100, type:'rolls', completed:false}, 
+  {id:4, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:200, type:'rolls', completed:false},
+  {id:5, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false},
+  {id:6, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:300, type:'item:pawel w zoltym hoodie', completed:false},
+  {id:7, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:350, type:'item:funni paweł', completed:false},
+  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:400, type:'rolls', completed:false},
+  {id:9, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:400, type:'item:paweł ok', completed:false},
+  {id:10, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:500, type:'item:świąteczny paweł', completed:false},
+  {id:11, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1067, type:'rolls', completed:false},
+  {id:12, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false},
+  {id:13, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false}
 ];
 
 // Kody promocyjne
@@ -607,8 +605,9 @@ let usedCodes = localStorage.getItem('usedCodes') ? JSON.parse(localStorage.getI
 const promoCodes = {
   'SLEDZIUFEMBOY': 1000,
   'PAWEL': 100,
-  'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1500,
-  'UPDATE1': 2000
+  'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1000,
+  'UPDATE1': 567
+  'WIECEJPAWELKOW': 500
 };
 
 // ===== CUSTOM POPUP =====
