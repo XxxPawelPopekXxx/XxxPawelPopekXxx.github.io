@@ -602,14 +602,13 @@ let quests = localStorage.getItem('quests') ? JSON.parse(localStorage.getItem('q
 
 // Kody promocyjne
 let usedCodes = localStorage.getItem('usedCodes') ? JSON.parse(localStorage.getItem('usedCodes')) : [];
-const promoCodes = {
+const promoCodes = {}
   'SLEDZIUFEMBOY': 1000,
   'PAWEL': 100,
   'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1000,
   'UPDATE1': 567
   'WIECEJPAWELKOW': 500 
 };
-  ];
 
 // ===== CUSTOM POPUP =====
 function showPopup(message, type = 'success') {
