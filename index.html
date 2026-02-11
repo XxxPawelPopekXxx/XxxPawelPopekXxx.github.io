@@ -220,14 +220,20 @@ button:active { transform: scale(0.9); }
 #questsBox h2 { color:#9C27B0; margin-top:0; }
 .questItem { background:#333; padding:15px; margin:10px 0; border-radius:10px; border:1px solid #555; position:relative; }
 .questItem.completed { border-color:#4CAF50; opacity:0.7; }
+.questItem.ready { border-color:#FFD700; background:#3a3a1a; }
 .questItem h3 { color:#9C27B0; margin:5px 0; }
 .questItem.completed h3 { color:#4CAF50; }
+.questItem.ready h3 { color:#FFD700; }
 .questItem p { margin:5px 0; font-size:0.9em; }
 .questItem .progress { background:#555; height:20px; border-radius:10px; margin:10px 0; overflow:hidden; }
 .questItem .progressBar { background:#9C27B0; height:100%; transition:width 0.3s; }
 .questItem.completed .progressBar { background:#4CAF50; }
+.questItem.ready .progressBar { background:#FFD700; }
 .questItem .reward { color:#FFD700; font-weight:bold; }
 .questItem .checkmark { position:absolute; top:10px; right:10px; color:#4CAF50; font-size:1.5em; }
+.questItem .claimButton { background:#FFD700; color:#000; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px; transition:all 0.3s; }
+.questItem .claimButton:hover { background:#FFC107; transform:scale(1.05); }
+.questItem .claimButton:disabled { background:#666; color:#999; cursor:not-allowed; }
 
 #codesButton { background-color:#673AB7; color:white; margin-top:10px; }
 #codesOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:1000; justify-content:center; align-items:center; }
@@ -275,24 +281,52 @@ button:active { transform: scale(0.9); }
 /* Custom Popup */
 .custom-popup { 
   position: fixed; 
-  top: 50%; 
-  left: 50%; 
-  transform: translate(-50%, -50%); 
+  top: 20px;
+  left: -400px; /* Zaczyna poza ekranem */
   background: #222; 
   border: 2px solid #4CAF50; 
   border-radius: 15px; 
-  padding: 30px 40px; 
-  font-size: 1.3em; 
+  padding: 20px 30px; 
+  font-size: 1.2em; 
   z-index: 2000; 
   opacity: 1;
-  transition: opacity 0.5s ease;
+  transition: left 0.5s ease, opacity 0.3s ease, top 0.4s ease; /* Dodana animacja dla top */
   box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
-  text-align: center;
-  min-width: 300px;
+  min-width: 250px;
+  max-width: 350px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
 }
-.custom-popup.error { border-color: #f44336; box-shadow: 0 0 20px rgba(244, 67, 54, 0.5); }
-.custom-popup.success { border-color: #4CAF50; box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); }
-.custom-popup.fadeout { opacity: 0; }
+.custom-popup.error { 
+  border-color: #f44336; 
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.5); 
+}
+.custom-popup.success { 
+  border-color: #4CAF50; 
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); 
+}
+.custom-popup.slide-in { 
+  left: 20px; 
+}
+.custom-popup.slide-out { 
+  left: -400px;
+  opacity: 0;
+}
+.popup-text {
+  flex: 1;
+}
+.popup-counter {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.9em;
+  min-width: 40px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -310,7 +344,7 @@ button:active { transform: scale(0.9); }
 <div id="chanceText"></div>
 <div id="rarityText"></div>
 <button id="rollButton">Roll</button>
-<div id="cooldownDisplay">Cooldown: 3.0s</div>
+<div id="cooldownDisplay">Cooldown: 1.0s</div>
 
 <input type="range" min="0" max="100" value="100" id="volumeControl"> Głośność
 <br>
@@ -321,12 +355,12 @@ button:active { transform: scale(0.9); }
 <div id="currency">Monety: <span id="coins">0</span></div>
 
 <button id="shopButton">🛒 SKLEP</button>
-<button id="questsButton">📋 QUESTY</button>
+<button id="questsButton">🏆 ACHIEVEMENTY</button>
 <button id="codesButton">🎁 KODY</button>
 <button id="inventoryButton">🎒 EKWIPUNEK</button>
 
 <div id="upgrades">
-  <button class="upgradeButton" id="shortenCooldown">Skróć cooldown (-0.5s) 50 monet</button>
+  <button class="upgradeButton" id="shortenCooldown">Skróć cooldown (-0.1s) 25 monet</button>
   <button class="upgradeButton" id="increaseChances">Ulepszenie szans 100 monet</button>
   <button class="upgradeButton" id="buyItem">Kup Tajemniczy Przedmiot 100 monet</button>
   <button class="upgradeButton disabled" id="toggleAutoRoll">Kup Auto-Roll 5000 monet</button>
@@ -394,8 +428,8 @@ button:active { transform: scale(0.9); }
 <div id="questsOverlay">
   <button class="closeButton" id="closeQuests">✕</button>
   <div id="questsBox">
-    <h2>📋 QUESTY</h2>
-    <p style="color:#ccc;">Wykonuj questy aby zdobyć dodatkowe nagrody!</p>
+    <h2>🏆 ACHIEVEMENTY</h2>
+    <p style="color:#ccc;">Wykonuj achievementy aby zdobyć nagrody! Pamiętaj aby odebrać nagrodę!</p>
     <div id="questsList"></div>
   </div>
 </div>
@@ -424,6 +458,7 @@ button:active { transform: scale(0.9); }
     
     <div class="menuButtons">
       <button class="menuTabButton active" id="statsTab">Statystyki</button>
+      <button class="menuTabButton" id="achievementsTab">Achievementy</button>
       <button class="menuTabButton" id="devsTab">Deweloperzy</button>
     </div>
     
@@ -445,7 +480,7 @@ button:active { transform: scale(0.9); }
         <span class="statValue" id="menuLuckMultiplier">1.00x</span>
       </div>
       <div class="statItem">
-        <span class="statLabel">Wykonane questy:</span>
+        <span class="statLabel">Wykonane achievementy:</span>
         <span class="statValue" id="menuCompletedQuests">0/15</span>
       </div>
       <div class="statItem">
@@ -459,6 +494,12 @@ button:active { transform: scale(0.9); }
       <div class="statItem">
         <span class="statLabel">Czas gry:</span>
         <span class="statValue" id="menuPlayTime">0s</span>
+      </div>
+    </div>
+    
+    <div class="menuSection" id="achievementsSection">
+      <div id="menuAchievementsList" style="max-height: 400px; overflow-y: auto;">
+        <!-- Achievementy będą tutaj -->
       </div>
     </div>
     
@@ -519,7 +560,14 @@ const images = [
   {src:'photo6.png',text:'świąteczny paweł',chance:1/64,rarity:'Legendary',reward:80},
   {src:'photo7.png',text:'paweł dostaje backshoty',chance:1/128,rarity:'Ultra Legendary',reward:160},
   {src:'photo8.png',text:'paweł komunista',chance:1/256,rarity:'Ultra Legendary',reward:320},
-  {src:'photo9.png',text:'Śledziu',chance:1/100000000,rarity:'Secret',reward:10000,requiresItem:'Tajemniczy Przedmiot'}
+  {src:'photo9.png',text:'Śledziu',chance:1/100000000,rarity:'Secret',reward:10000,requiresItem:'Tajemniczy Przedmiot'
+  {src:'photo10.png',text:'paweł kolega',chance:1/80,rarity:'Legendary',reward:100},
+  {src:'photo11.png',text:'paweł ai',chance:1/333,rarity:'Ultra Legendary',reward:400},
+  {src:'photo12.png',text:'Paweł nwm',chance:1/1400,rarity:'Super Ultra Legendary',reward:450},
+  {src:'photo13.png',text:'paweł czipsy',chance:1/5000,rarity:'Epicki siur',reward:1000},
+  {src:'photo14.png',text:'paweł śnieg',chance:1/50,rarity:'Mythic',reward:50},
+  {src:'photo14.png',text:'paweł prokurator',chance:1/30000,rarity:'Secret',reward:2500}
+
 ];
 
 // ===== WCZYTYWANIE SZANS Z LOCALSTORAGE =====
@@ -538,9 +586,7 @@ const musicFiles = [
   'https://xxxpawelpopekxxx.github.io/music2.mp3',
   'https://xxxpawelpopekxxx.github.io/music3.mp3',
   'https://xxxpawelpopekxxx.github.io/music4.mp3',
-  'https://xxxpawelpopekxxx.github.io/music5.mp3',
-  'https://xxxpawelpopekxxx.github.io/music6.mp3',
-  'https://xxxpawelpopekxxx.github.io/music7.mp3'
+  'https://xxxpawelpopekxxx.github.io/music5.mp3'
 ];
 const bgMusic = document.getElementById('backgroundMusic');
 let musicStarted = false;
@@ -559,11 +605,12 @@ bgMusic.addEventListener('ended', () => {
 });
 
 // ===== ZMIENNE =====
-let coins = localStorage.getItem('coins') !== null ? parseInt(localStorage.getItem('coins')) : 30;
+let coins = localStorage.getItem('coins') !== null ? parseInt(localStorage.getItem('coins')) : 0;
 let inventory = localStorage.getItem('inventory') ? JSON.parse(localStorage.getItem('inventory')) : [];
 let historyData = localStorage.getItem('historyData') ? JSON.parse(localStorage.getItem('historyData')) : {};
-let cooldown = localStorage.getItem('cooldown') !== null ? parseInt(localStorage.getItem('cooldown')) : 3000;
+let cooldown = localStorage.getItem('cooldown') !== null ? parseInt(localStorage.getItem('cooldown')) : 1000;
 let lastRoll = 0;
+let isRolling = false; // NOWA ZMIENNA - śledzi czy trwa animacja
 let totalRolls = localStorage.getItem('totalRolls') !== null ? parseInt(localStorage.getItem('totalRolls')) : 0;
 let autoRollEnabled = localStorage.getItem('autoRollEnabled') !== null ? JSON.parse(localStorage.getItem('autoRollEnabled')) : false;
 let autoRollPurchased = localStorage.getItem('autoRollPurchased') !== null ? JSON.parse(localStorage.getItem('autoRollPurchased')) : false;
@@ -585,19 +632,21 @@ let equippedGear = localStorage.getItem('equippedGear') || null;
 
 // Questy
 let quests = localStorage.getItem('quests') ? JSON.parse(localStorage.getItem('quests')) : [
-  {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false},
-  {id:2, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false},
-  {id:3, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:100, type:'rolls', completed:false}, 
-  {id:4, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:200, type:'rolls', completed:false},
-  {id:5, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false},
-  {id:6, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:300, type:'item:pawel w zoltym hoodie', completed:false},
-  {id:7, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:350, type:'item:funni paweł', completed:false},
-  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:400, type:'rolls', completed:false},
-  {id:9, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:400, type:'item:paweł ok', completed:false},
-  {id:10, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:500, type:'item:świąteczny paweł', completed:false},
-  {id:11, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1067, type:'rolls', completed:false},
-  {id:12, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false},
-  {id:13, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false}
+  {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false, readyToClaim:false},
+  {id:2, name:'Zbieracz Monet', desc:'Zgromadź 500 monet', target:500, current:0, reward:100, type:'coins', completed:false, readyToClaim:false},
+  {id:3, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:150, type:'unique', completed:false, readyToClaim:false},
+  {id:4, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:200, type:'rolls', completed:false, readyToClaim:false},
+  {id:5, name:'Kolekcjoner Uncommon', desc:'Wylosuj 10x paweł prezydent', target:10, current:0, reward:250, type:'item:paweł prezydent', completed:false, readyToClaim:false},
+  {id:6, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:500, type:'rolls', completed:false, readyToClaim:false},
+  {id:7, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:750, type:'coins', completed:false, readyToClaim:false},
+  {id:8, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:400, type:'item:pawel w zoltym hoodie', completed:false, readyToClaim:false},
+  {id:9, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:600, type:'item:funni paweł', completed:false, readyToClaim:false},
+  {id:10, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:1000, type:'rolls', completed:false, readyToClaim:false},
+  {id:11, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:800, type:'item:paweł ok', completed:false, readyToClaim:false},
+  {id:12, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:1200, type:'item:świąteczny paweł', completed:false, readyToClaim:false},
+  {id:13, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:2000, type:'rolls', completed:false, readyToClaim:false},
+  {id:14, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false, readyToClaim:false},
+  {id:15, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false, readyToClaim:false}
 ];
 
 // Kody promocyjne
@@ -605,25 +654,112 @@ let usedCodes = localStorage.getItem('usedCodes') ? JSON.parse(localStorage.getI
 const promoCodes = {
   'SLEDZIUFEMBOY': 1000,
   'PAWEL': 100,
-  'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1000,
-  'UPDATE1': 567,
-  'WIECEJPAWELKOW': 500 
+  'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1500,
+  'UPDATE1': 2000
 };
 
 // ===== CUSTOM POPUP =====
+let popupStack = []; // Stos aktywnych popupów
+let popupRegistry = {}; // Rejestr popupów według tekstu (dla grupowania)
+
 function showPopup(message, type = 'success') {
+  // Sprawdź czy popup o tej treści już istnieje
+  if(popupRegistry[message]) {
+    const existingPopup = popupRegistry[message];
+    existingPopup.count++;
+    
+    // Zaktualizuj licznik
+    const counterElem = existingPopup.element.querySelector('.popup-counter');
+    if(counterElem) {
+      counterElem.textContent = `+${existingPopup.count}`;
+    } else {
+      // Dodaj licznik jeśli jeszcze nie istnieje
+      const counter = document.createElement('div');
+      counter.className = 'popup-counter';
+      counter.textContent = `+${existingPopup.count}`;
+      existingPopup.element.appendChild(counter);
+    }
+    
+    // Zresetuj timer
+    clearTimeout(existingPopup.timer);
+    existingPopup.timer = setTimeout(() => {
+      removePopup(existingPopup);
+    }, 5000);
+    
+    return;
+  }
+  
+  // Utwórz nowy popup
   const popup = document.createElement('div');
   popup.className = `custom-popup ${type}`;
-  popup.textContent = message;
+  
+  const textDiv = document.createElement('div');
+  textDiv.className = 'popup-text';
+  textDiv.textContent = message;
+  popup.appendChild(textDiv);
+  
   document.body.appendChild(popup);
   
+  // Dodaj do rejestru
+  const popupData = {
+    element: popup,
+    message: message,
+    count: 1,
+    timer: null
+  };
+  popupRegistry[message] = popupData;
+  popupStack.push(popupData);
+  
+  // Ustaw pozycję w stosie
+  updatePopupPositions();
+  
+  // Animacja wejścia
   setTimeout(() => {
-    popup.classList.add('fadeout');
-  }, 2000);
+    popup.classList.add('slide-in');
+  }, 10);
+  
+  // Obsługa kliknięcia - natychmiastowe usunięcie
+  popup.addEventListener('click', () => {
+    removePopup(popupData);
+  });
+  
+  // Automatyczne usunięcie po 5 sekundach
+  popupData.timer = setTimeout(() => {
+    removePopup(popupData);
+  }, 5000);
+}
+
+function removePopup(popupData) {
+  if(!popupData || !popupData.element) return;
+  
+  clearTimeout(popupData.timer);
+  
+  // Animacja wyjścia
+  popupData.element.classList.remove('slide-in');
+  popupData.element.classList.add('slide-out');
   
   setTimeout(() => {
-    document.body.removeChild(popup);
-  }, 2500);
+    if(popupData.element && popupData.element.parentNode) {
+      document.body.removeChild(popupData.element);
+    }
+    
+    // Usuń z rejestru i stosu
+    delete popupRegistry[popupData.message];
+    const index = popupStack.indexOf(popupData);
+    if(index > -1) {
+      popupStack.splice(index, 1);
+    }
+    
+    // Zaktualizuj pozycje pozostałych popupów
+    updatePopupPositions();
+  }, 500);
+}
+
+function updatePopupPositions() {
+  popupStack.forEach((popupData, index) => {
+    const offset = index * 90; // 90px odstępu między popupami
+    popupData.element.style.top = `${20 + offset}px`;
+  });
 }
 
 // ===== MENU BUTTON VISIBILITY =====
@@ -637,8 +773,7 @@ function showMenuButton() {
 
 // ===== FUNKCJE =====
 function updateQuests(fromRoll = false) {
-  // Aktualizuj postęp questów TYLKO gdy fromRoll = true (po losowaniu)
-  // To zapobiega automatycznemu wykonywaniu questów przy starcie
+  // Aktualizuj postęp achievementów TYLKO gdy fromRoll = true (po losowaniu)
   quests.forEach(q => {
     if(q.completed) return;
     
@@ -656,10 +791,10 @@ function updateQuests(fromRoll = false) {
       }
     }
     
-    if(q.current >= q.target && !q.completed) {
-      q.completed = true;
-      coins += q.reward;
-      showPopup(`✨ Quest ukończony: ${q.name}! +${q.reward} monet`, 'success');
+    // Oznacz jako gotowy do odebrania (ale NIE odbieraj automatycznie)
+    if(q.current >= q.target && !q.completed && !q.readyToClaim) {
+      q.readyToClaim = true;
+      showPopup(`🏆 Achievement ukończony: ${q.name}!`, 'success');
     }
   });
   
@@ -672,9 +807,18 @@ function updateQuestsUI() {
   
   quests.forEach(q => {
     const questDiv = document.createElement('div');
-    questDiv.className = `questItem${q.completed ? ' completed' : ''}`;
+    let questClass = 'questItem';
+    if(q.completed) questClass += ' completed';
+    else if(q.readyToClaim) questClass += ' ready';
+    
+    questDiv.className = questClass;
     
     const progress = Math.min(100, (q.current / q.target) * 100);
+    
+    let buttonHTML = '';
+    if(q.readyToClaim && !q.completed) {
+      buttonHTML = `<button class="claimButton" data-quest-id="${q.id}">🎁 Odbierz nagrodę</button>`;
+    }
     
     questDiv.innerHTML = `
       ${q.completed ? '<span class="checkmark">✓</span>' : ''}
@@ -685,17 +829,42 @@ function updateQuestsUI() {
       </div>
       <p>Postęp: ${q.current}/${q.target}</p>
       <p class="reward">Nagroda: ${q.reward} monet</p>
+      ${buttonHTML}
     `;
     
     questsList.appendChild(questDiv);
   });
+  
+  // Dodaj event listenery do przycisków "Odbierz"
+  document.querySelectorAll('.claimButton').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const questId = parseInt(e.target.getAttribute('data-quest-id'));
+      claimQuestReward(questId);
+    });
+  });
+}
+
+function claimQuestReward(questId) {
+  const quest = quests.find(q => q.id === questId);
+  if(!quest || !quest.readyToClaim || quest.completed) return;
+  
+  // Odbierz nagrodę
+  quest.completed = true;
+  quest.readyToClaim = false;
+  coins += quest.reward;
+  totalCoinsEarned += quest.reward;
+  
+  localStorage.setItem('quests', JSON.stringify(quests));
+  localStorage.setItem('totalCoinsEarned', totalCoinsEarned);
+  
+  updateUI();
+  updateQuestsUI();
+  
+  showPopup(`Wykonałeś achievement: ${quest.name}`, 'success');
 }
 
 function updateUI(fromRoll = false){
   document.getElementById('coins').textContent = coins;
-
-  // aktualizacja listy szans (bez Śledziu)
-  // USUNIĘTE - nie wyświetlamy już szans na dole
 
   // Aktualizuj questy - przekaż parametr fromRoll
   updateQuests(fromRoll);
@@ -708,18 +877,29 @@ function updateUI(fromRoll = false){
   localStorage.setItem('totalRolls',totalRolls);
 }
 
-// ===== COOLDOWN =====
+// ===== COOLDOWN - ZMIENIONE, żeby uwzględniać isRolling =====
 setInterval(()=>{
   const now=Date.now();
-  const diff=lastRoll?Math.max(0,cooldown-(now-lastRoll)):0;
-  document.getElementById('cooldownDisplay').textContent=`Cooldown: ${(diff/1000).toFixed(1)}s`;
+  // Jeśli trwa animacja, wyświetl "Rolling..."
+  if(isRolling) {
+    document.getElementById('cooldownDisplay').textContent='Rolling...';
+  } else {
+    const diff=lastRoll?Math.max(0,cooldown-(now-lastRoll)):0;
+    document.getElementById('cooldownDisplay').textContent=`Cooldown: ${(diff/1000).toFixed(1)}s`;
+  }
 },100);
 
-// ===== ROLL =====
+// ===== ROLL - ZMODYFIKOWANE =====
 function rollRNG(showRareAnimationOnly=false){
+  // Sprawdź czy nie trwa już animacja
+  if(isRolling) return;
+  
   const now=Date.now();
+  // Sprawdź cooldown tylko jeśli animacja się skończyła
   if(now-lastRoll<cooldown) return;
-  lastRoll=now;
+  
+  // Oznacz, że rozpoczyna się animacja
+  isRolling = true;
   totalRolls++;
 
   // Oblicz szansę na Śledzia - co 500 rolli daje boost do 1/100
@@ -808,6 +988,10 @@ function rollRNG(showRareAnimationOnly=false){
       
       // Aktualizuj UI i przekaż fromRoll=true
       updateUI(true);
+      
+      // WAŻNE: Dopiero TERAZ ustawiamy lastRoll i kończymy animację
+      lastRoll = Date.now();
+      isRolling = false;
     }
   },animSpeed);
 }
@@ -850,15 +1034,33 @@ document.getElementById('nextSong').addEventListener('click', () => {
 
 // ===== ULEPSZENIA =====
 document.getElementById('shortenCooldown').addEventListener('click',()=>{
-  if(coins>=50 && cooldown>1000){ 
-    coins-=50; 
-    cooldown=Math.max(1000,cooldown-500);
+  // Ceny dla kolejnych ulepszeń
+  const cooldownPrices = [25, 50, 100, 250, 500, 1000];
+  
+  // Sprawdź czy możemy jeszcze ulepszyć (max 6 razy)
+  if(cooldownUpgrades >= 6) {
+    showPopup('Osiągnięto maksymalny poziom skrócenia cooldownu!', 'error');
+    return;
+  }
+  
+  const currentPrice = cooldownPrices[cooldownUpgrades];
+  
+  if(coins >= currentPrice) {
+    coins -= currentPrice;
+    cooldown = Math.max(400, cooldown - 100); // Zmniejsz o 0.1s (100ms)
     cooldownUpgrades++;
     localStorage.setItem('cooldownUpgrades', cooldownUpgrades);
-    updateUI(); 
+    
+    // Zaktualizuj tekst przycisku
+    if(cooldownUpgrades >= 6) {
+      document.getElementById('shortenCooldown').textContent = 'Skróć cooldown (MAX)';
+    } else {
+      const nextPrice = cooldownPrices[cooldownUpgrades];
+      document.getElementById('shortenCooldown').textContent = `Skróć cooldown (-0.1s) ${nextPrice} monet`;
+    }
+    
+    updateUI();
     showPopup(`Cooldown skrócony! Teraz ${(cooldown/1000).toFixed(1)}s`, 'success');
-  } else if(cooldown <= 1000) {
-    showPopup('Nie można już ulepszyć cooldowna!', 'error');
   } else {
     showPopup('Nie masz wystarczająco monet!', 'error');
   }
@@ -949,7 +1151,60 @@ const resetNo = document.getElementById('resetNo');
 
 document.getElementById('resetProgress').addEventListener('click',()=>{ resetOverlay.style.display='flex'; });
 resetNo.addEventListener('click',()=>{ resetOverlay.style.display='none'; });
-resetYes.addEventListener('click',()=>{ localStorage.clear(); location.reload(); });
+resetYes.addEventListener('click',()=>{ 
+  // Wyczyść wszystkie dane z localStorage
+  localStorage.clear();
+  
+  // Resetuj wszystkie zmienne do wartości domyślnych
+  coins = 0;
+  inventory = [];
+  historyData = {};
+  cooldown = 1000;
+  lastRoll = 0;
+  isRolling = false;
+  totalRolls = 0;
+  autoRollEnabled = false;
+  autoRollPurchased = false;
+  playTime = 0;
+  luckMultiplier = 1;
+  ownedShopItems = [];
+  cooldownUpgrades = 0;
+  chanceUpgrades = 0;
+  totalCoinsEarned = 0;
+  equippedGear = null;
+  usedCodes = [];
+  
+  // Resetuj questy do wartości domyślnych
+  quests = [
+     {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false},
+  {id:2, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false},
+  {id:3, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:100, type:'rolls', completed:false}, 
+  {id:4, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:200, type:'rolls', completed:false},
+  {id:5, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false},
+  {id:6, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:300, type:'item:pawel w zoltym hoodie', completed:false},
+  {id:7, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:350, type:'item:funni paweł', completed:false},
+  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:400, type:'rolls', completed:false},
+  {id:9, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:400, type:'item:paweł ok', completed:false},
+  {id:10, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:500, type:'item:świąteczny paweł', completed:false},
+  {id:11, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1067, type:'rolls', completed:false},
+  {id:12, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false},
+  {id:13, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false}
+  ];
+  
+  // Resetuj szanse do wartości domyślnych
+  images[0].chance = 1/2;
+  images[1].chance = 1/4;
+  images[2].chance = 1/8;
+  images[3].chance = 1/16;
+  images[4].chance = 1/32;
+  images[5].chance = 1/64;
+  images[6].chance = 1/128;
+  images[7].chance = 1/256;
+  images[8].chance = 1/100000000;
+  
+  // Przeładuj stronę aby wszystko się zresetowało
+  location.reload();
+});
 
 // ===== SKLEP =====
 const shopOverlay = document.getElementById('shopOverlay');
@@ -1322,8 +1577,10 @@ const menuOverlay = document.getElementById('menuOverlay');
 const menuButton = document.getElementById('menuButton');
 const closeMenu = document.getElementById('closeMenu');
 const statsTab = document.getElementById('statsTab');
+const achievementsTab = document.getElementById('achievementsTab');
 const devsTab = document.getElementById('devsTab');
 const statsSection = document.getElementById('statsSection');
+const achievementsSection = document.getElementById('achievementsSection');
 const devsSection = document.getElementById('devsSection');
 
 let menuStatsInterval = null;
@@ -1357,16 +1614,30 @@ closeMenu.addEventListener('click', () => {
 
 statsTab.addEventListener('click', () => {
   statsTab.classList.add('active');
+  achievementsTab.classList.remove('active');
   devsTab.classList.remove('active');
   statsSection.classList.add('active');
+  achievementsSection.classList.remove('active');
   devsSection.classList.remove('active');
+});
+
+achievementsTab.addEventListener('click', () => {
+  achievementsTab.classList.add('active');
+  statsTab.classList.remove('active');
+  devsTab.classList.remove('active');
+  achievementsSection.classList.add('active');
+  statsSection.classList.remove('active');
+  devsSection.classList.remove('active');
+  updateMenuAchievements();
 });
 
 devsTab.addEventListener('click', () => {
   devsTab.classList.add('active');
   statsTab.classList.remove('active');
+  achievementsTab.classList.remove('active');
   devsSection.classList.add('active');
   statsSection.classList.remove('active');
+  achievementsSection.classList.remove('active');
 });
 
 function updateCodesUI() {
@@ -1399,6 +1670,52 @@ function updateMenuStats() {
   document.getElementById('menuPlayTime').textContent = playTime + 's';
 }
 
+function updateMenuAchievements() {
+  const achievementsList = document.getElementById('menuAchievementsList');
+  achievementsList.innerHTML = '';
+  
+  quests.forEach(q => {
+    const achievementDiv = document.createElement('div');
+    let className = 'questItem';
+    if(q.completed) className += ' completed';
+    else if(q.readyToClaim) className += ' ready';
+    
+    achievementDiv.className = className;
+    achievementDiv.style.margin = '10px 0';
+    achievementDiv.style.padding = '12px';
+    
+    const progress = Math.min(100, (q.current / q.target) * 100);
+    
+    let buttonHTML = '';
+    if(q.readyToClaim && !q.completed) {
+      buttonHTML = `<button class="claimButton menu-claim-btn" data-quest-id="${q.id}">🎁 Odbierz</button>`;
+    }
+    
+    achievementDiv.innerHTML = `
+      ${q.completed ? '<span class="checkmark">✓</span>' : ''}
+      <h3 style="font-size: 1em;">${q.name}</h3>
+      <p style="font-size: 0.85em;">${q.desc}</p>
+      <div class="progress">
+        <div class="progressBar" style="width:${progress}%"></div>
+      </div>
+      <p style="font-size: 0.85em;">Postęp: ${q.current}/${q.target}</p>
+      <p class="reward" style="font-size: 0.9em;">Nagroda: ${q.reward} monet</p>
+      ${buttonHTML}
+    `;
+    
+    achievementsList.appendChild(achievementDiv);
+  });
+  
+  // Dodaj event listenery do przycisków
+  document.querySelectorAll('.menu-claim-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const questId = parseInt(e.target.getAttribute('data-quest-id'));
+      claimQuestReward(questId);
+      updateMenuAchievements();
+    });
+  });
+}
+
 // ===== AUTO-SAVE & PLAYTIME UPDATE =====
 setInterval(()=>{
   playTime += 1; // Dodaj 1 sekundę
@@ -1410,6 +1727,16 @@ setInterval(()=>{
 
 // ===== INIT =====
 updateUI(false); // Nie sprawdzaj questów przy starcie (fromRoll=false)
+
+// Aktualizuj wygląd przycisku "Skróć cooldown" przy starcie
+const cooldownButton = document.getElementById('shortenCooldown');
+const cooldownPrices = [25, 50, 100, 250, 500, 1000];
+if(cooldownUpgrades >= 6) {
+  cooldownButton.textContent = 'Skróć cooldown (MAX)';
+} else {
+  const currentPrice = cooldownPrices[cooldownUpgrades];
+  cooldownButton.textContent = `Skróć cooldown (-0.1s) ${currentPrice} monet`;
+}
 
 // Aktualizuj wygląd przycisku Auto-Roll przy starcie
 const autoRollButton = document.getElementById('toggleAutoRoll');
