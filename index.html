@@ -89,7 +89,7 @@ button:active { transform: scale(0.9); }
   background: #222; 
   padding: 25px; 
   border-radius: 15px; 
-  width: 400px;
+  width: 460px;
   border: 2px solid #4CAF50; 
 }
 #menuBox h2 { 
@@ -100,19 +100,22 @@ button:active { transform: scale(0.9); }
 }
 .menuButtons {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
 }
 .menuTabButton {
   flex: 1;
-  padding: 12px;
+  padding: 10px 6px;
   background: #333;
   color: #aaa;
   border: 2px solid #555;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.1em;
+  font-size: 0.95em;
   transition: all 0.3s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .menuTabButton.active {
   background: #4CAF50;
@@ -355,7 +358,6 @@ button:active { transform: scale(0.9); }
 <div id="currency">Monety: <span id="coins">0</span></div>
 
 <button id="shopButton">🛒 SKLEP</button>
-<button id="questsButton">🏆 ACHIEVEMENTY</button>
 <button id="codesButton">🎁 KODY</button>
 <button id="inventoryButton">🎒 EKWIPUNEK</button>
 
@@ -459,7 +461,7 @@ button:active { transform: scale(0.9); }
     <div class="menuButtons">
       <button class="menuTabButton active" id="statsTab">Statystyki</button>
       <button class="menuTabButton" id="achievementsTab">Achievementy</button>
-      <button class="menuTabButton" id="devsTab">Deweloperzy</button>
+      <button class="menuTabButton" id="devsTab">Autorzy</button>
     </div>
     
     <div class="menuSection active" id="statsSection">
@@ -557,12 +559,10 @@ const images = [
   {src:'photo3.png',text:'pawel w zoltym hoodie',chance:1/8,rarity:'Rare',reward:10},
   {src:'photo4.png',text:'funni paweł',chance:1/16,rarity:'Epic',reward:20},
   {src:'photo5.png',text:'paweł ok',chance:1/32,rarity:'Mythic',reward:40},
+  {src:'photo6.png',text:'świąteczny paweł',chance:1/64,rarity:'Legendary',reward:80},
   {src:'photo7.png',text:'paweł dostaje backshoty',chance:1/128,rarity:'Ultra Legendary',reward:160},
   {src:'photo8.png',text:'paweł komunista',chance:1/256,rarity:'Ultra Legendary',reward:320},
-  {src:'photo9.png',text:'Śledziu',chance:1/100000000,rarity:'Secret',reward:10000,requiresItem:'Tajemniczy Przedmiot'},
-  {src:'photo10.png',text:'paweł kolega',chance:1/80,rarity:'Legendary',reward:100},
-  {src:'photo14.png',text:'paweł śnieg',chance:1/50,rarity:'Mythic',reward:50},
-  {src:'photo15.png',text:'paweł prokurator',chance:1/30000,rarity:'Secret',reward:2500}
+  {src:'photo9.png',text:'Śledziu',chance:1/100000000,rarity:'Secret',reward:10000,requiresItem:'Tajemniczy Przedmiot'}
 ];
 
 // ===== WCZYTYWANIE SZANS Z LOCALSTORAGE =====
@@ -581,9 +581,7 @@ const musicFiles = [
   'https://xxxpawelpopekxxx.github.io/music2.mp3',
   'https://xxxpawelpopekxxx.github.io/music3.mp3',
   'https://xxxpawelpopekxxx.github.io/music4.mp3',
-  'https://xxxpawelpopekxxx.github.io/music5.mp3',
-  'https://xxxpawelpopekxxx.github.io/music6.mp3',
-  'https://xxxpawelpopekxxx.github.io/music7.mp3',
+  'https://xxxpawelpopekxxx.github.io/music5.mp3'
 ];
 const bgMusic = document.getElementById('backgroundMusic');
 let musicStarted = false;
@@ -856,8 +854,6 @@ function claimQuestReward(questId) {
   
   updateUI();
   updateQuestsUI();
-  
-  showPopup(`Wykonałeś achievement: ${quest.name}`, 'success');
 }
 
 function updateUI(fromRoll = false){
@@ -1173,19 +1169,21 @@ resetYes.addEventListener('click',()=>{
   
   // Resetuj questy do wartości domyślnych
   quests = [
-     {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false},
-  {id:2, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false},
-  {id:3, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:100, type:'rolls', completed:false}, 
-  {id:4, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:200, type:'rolls', completed:false},
-  {id:5, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false},
-  {id:6, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:300, type:'item:pawel w zoltym hoodie', completed:false},
-  {id:7, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:350, type:'item:funni paweł', completed:false},
-  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:400, type:'rolls', completed:false},
-  {id:9, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:400, type:'item:paweł ok', completed:false},
-  {id:10, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:500, type:'item:świąteczny paweł', completed:false},
-  {id:11, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1067, type:'rolls', completed:false},
-  {id:12, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false},
-  {id:13, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false}
+    {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false, readyToClaim:false},
+    {id:2, name:'Zbieracz Monet', desc:'Zgromadź 500 monet', target:500, current:0, reward:100, type:'coins', completed:false, readyToClaim:false},
+    {id:3, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:150, type:'unique', completed:false, readyToClaim:false},
+    {id:4, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:200, type:'rolls', completed:false, readyToClaim:false},
+    {id:5, name:'Kolekcjoner Uncommon', desc:'Wylosuj 10x paweł prezydent', target:10, current:0, reward:250, type:'item:paweł prezydent', completed:false, readyToClaim:false},
+    {id:6, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:500, type:'rolls', completed:false, readyToClaim:false},
+    {id:7, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:750, type:'coins', completed:false, readyToClaim:false},
+    {id:8, name:'Mistrz Rare', desc:'Wylosuj 5x pawel w zoltym hoodie', target:5, current:0, reward:400, type:'item:pawel w zoltym hoodie', completed:false, readyToClaim:false},
+    {id:9, name:'Epic Hunter', desc:'Wylosuj 3x funni paweł', target:3, current:0, reward:600, type:'item:funni paweł', completed:false, readyToClaim:false},
+    {id:10, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:1000, type:'rolls', completed:false, readyToClaim:false},
+    {id:11, name:'Mythic Seeker', desc:'Wylosuj 2x paweł ok', target:2, current:0, reward:800, type:'item:paweł ok', completed:false, readyToClaim:false},
+    {id:12, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:1200, type:'item:świąteczny paweł', completed:false, readyToClaim:false},
+    {id:13, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:2000, type:'rolls', completed:false, readyToClaim:false},
+    {id:14, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false, readyToClaim:false},
+    {id:15, name:'Mistrz RNG', desc:'Wylosuj wszystkie 9 Pawełków', target:9, current:0, reward:5000, type:'unique', completed:false, readyToClaim:false}
   ];
   
   // Resetuj szanse do wartości domyślnych
@@ -1334,16 +1332,9 @@ document.getElementById('buyUltimatePawel').addEventListener('click', () => {
   }
 });
 
-// ===== QUESTY =====
+// ===== ACHIEVEMENTY (overlay) =====
 const questsOverlay = document.getElementById('questsOverlay');
-const questsButton = document.getElementById('questsButton');
 const closeQuests = document.getElementById('closeQuests');
-
-questsButton.addEventListener('click', () => {
-  updateQuestsUI();
-  questsOverlay.style.display = 'flex';
-  hideMenuButton();
-});
 
 closeQuests.addEventListener('click', () => {
   questsOverlay.style.display = 'none';
