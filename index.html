@@ -8,31 +8,19 @@
 body { font-family: Arial; background:#121212; color:#fff; text-align:center; margin:0; padding:0; }
 h1 { margin-top:20px; font-size:2em; }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
 button { padding:15px 30px; font-size:1.2em; margin:10px; cursor:pointer; border:none; border-radius:10px; transition:transform 0.2s; }
 button:active { transform: scale(0.9); }
 
 #rollButton { background-color:#4CAF50; color:white; }
 #muteButton { background-color:#f44336; color:white; }
-.musicControlButton { background-color:#555; color:white; padding:15px 20px; font-size:1.3em; border:none; border-radius:10px; cursor:pointer; margin:5px; transition:background-color 0.3s; vertical-align: middle; height: 54px; display: inline-flex; align-items: center; justify-content: center; }
+.musicControlButton { background-color:#555; color:white; padding:15px 20px; font-size:1.3em; border:none; border-radius:10px; cursor:pointer; margin:5px; transition:background-color 0.3s; vertical-align:middle; height:54px; display:inline-flex; align-items:center; justify-content:center; }
 .musicControlButton:hover { background-color:#666; }
-#muteButton { vertical-align: middle; }
+#muteButton { vertical-align:middle; }
 .upgradeButton { background-color:#2196F3; color:white; }
 #toggleAutoRoll.disabled { background-color:#f44336; }
 #toggleAutoRoll.enabled { background-color:#4CAF50; }
@@ -43,131 +31,145 @@ button:active { transform: scale(0.9); }
 #currency { margin-top:20px; font-size:1.3em; }
 #upgrades { margin-top:20px; font-size:1em; display:flex; flex-wrap:wrap; justify-content:center; }
 #upgrades button { margin:5px; }
-#inventory, #history, #cooldownDisplay { margin-top:15px; font-size:1.1em; }
-#history { max-height:200px; overflow-y:auto; border:1px solid #555; padding:10px; border-radius:10px; width:90%; margin:10px auto; background-color:#222; }
+#cooldownDisplay { margin-top:15px; font-size:1.1em; }
 
-#menuButton { 
-  position: fixed; 
-  top: 15px; 
-  right: 15px; 
-  width: 50px; 
-  height: 50px; 
-  background-color: #333; 
-  border: 2px solid #555; 
-  border-radius: 10px; 
-  cursor: pointer; 
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  align-items: center; 
-  gap: 6px;
-  transition: background-color 0.3s, opacity 0.3s;
-  z-index: 1001;
+#menuButton {
+  position:fixed; top:15px; right:15px; width:50px; height:50px;
+  background-color:#333; border:2px solid #555; border-radius:10px; cursor:pointer;
+  display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px;
+  transition:background-color 0.3s, opacity 0.3s; z-index:1001;
 }
-#menuButton.hidden { opacity: 0; pointer-events: none; }
-#menuButton:hover { background-color: #444; }
-#menuButton .bar { 
-  width: 30px; 
-  height: 3px; 
-  background-color: #fff; 
-  border-radius: 2px; 
+#menuButton.hidden { opacity:0; pointer-events:none; }
+#menuButton:hover { background-color:#444; }
+#menuButton .bar { width:30px; height:3px; background-color:#fff; border-radius:2px; }
+
+/* Admin toggle */
+#adminToggleBtn {
+  position:fixed; top:75px; right:15px; width:50px; height:50px;
+  background-color:#7c3aed; border:2px solid #a855f7; border-radius:10px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:1.5em;
+  z-index:1001; padding:0; margin:0; transition:background-color 0.3s;
+}
+#adminToggleBtn:hover { background-color:#6d28d9; }
+#adminToggleBtn:active { transform:scale(0.9); }
+
+/* Admin panel */
+#adminPanel {
+  position:fixed; top:0; right:-380px; width:360px; height:100vh;
+  background:#0d0a1a; border-left:2px solid #7c3aed; z-index:2001;
+  display:flex; flex-direction:column;
+  transition:right 0.35s ease;
+  box-shadow:-5px 0 30px rgba(124,58,237,0.4);
+}
+#adminPanel.open { right:0; }
+
+/* Transparent overlay to catch outside clicks */
+#adminOverlay {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  z-index:2000; background:transparent;
+}
+#adminOverlay.visible { display:block; }
+
+.admin-header {
+  padding:16px 18px; border-bottom:1px solid #2a1a4a;
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(168,85,247,0.1));
+  flex-shrink:0;
+}
+.admin-header h2 { font-size:1.1em; color:#c084fc; margin:0; letter-spacing:2px; }
+.admin-close-x {
+  background:#f44336; color:white; border:none; border-radius:6px;
+  width:30px; height:30px; font-size:1em; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0; margin:0;
+}
+.admin-close-x:hover { background:#da190b; }
+
+.admin-body { flex:1; overflow-y:auto; padding:12px; }
+
+.admin-live-coins {
+  font-weight:bold; color:#FFD700; font-size:1.2em; text-align:center;
+  padding:10px; background:rgba(255,215,0,0.08); border-radius:8px;
+  margin-bottom:8px; border:1px solid rgba(255,215,0,0.2);
+}
+.admin-live-luck {
+  font-weight:bold; color:#a855f7; font-size:1em; text-align:center;
+  padding:8px; background:rgba(124,58,237,0.08); border-radius:8px;
+  margin-bottom:12px; border:1px solid rgba(124,58,237,0.2);
 }
 
-#menuOverlay { 
-  display: none; 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%; 
-  background: rgba(0,0,0,0.85); 
-  z-index: 1000; 
-  justify-content: center; 
-  align-items: center; 
+.asec {
+  background:rgba(124,58,237,0.08); border:1px solid #2a1a4a;
+  border-radius:10px; padding:12px; margin-bottom:12px;
 }
-#menuBox { 
-  background: #222; 
-  padding: 25px; 
-  border-radius: 15px; 
-  width: 460px;
-  border: 2px solid #4CAF50; 
+.asec h3 {
+  font-size:0.78em; letter-spacing:2px; color:#a855f7;
+  margin:0 0 10px 0; padding-bottom:8px; border-bottom:1px solid #2a1a4a;
+  text-transform:uppercase;
 }
-#menuBox h2 { 
-  color: #4CAF50; 
-  margin-top: 0; 
-  margin-bottom: 20px;
-  text-align: center;
+.arow { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.ainput {
+  flex:1; background:#222; border:1px solid #444; color:#fff;
+  padding:8px 10px; border-radius:6px; font-size:0.95em; font-family:Arial; min-width:0;
 }
-.menuButtons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+.ainput:focus { outline:none; border-color:#a855f7; }
+.abtn {
+  padding:8px 11px; border:none; border-radius:6px; cursor:pointer;
+  font-weight:bold; font-size:0.82em; transition:opacity 0.2s;
+  margin:0; white-space:nowrap; font-family:Arial;
 }
+.abtn:hover { opacity:0.85; }
+.abtn:active { transform:scale(0.95); }
+.abtn.g { background:#4CAF50; color:#000; }
+.abtn.r { background:#f44336; color:#fff; }
+.abtn.b { background:#2196F3; color:#fff; }
+.abtn.p { background:#9C27B0; color:#fff; }
+.abtn.fw { width:100%; margin:3px 0; padding:9px; }
+.qcoins { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+.qcoins .abtn { flex:1; min-width:40px; font-size:0.78em; padding:6px 4px; }
+.lpresets { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; }
+.lpbtn {
+  flex:1; min-width:34px; background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3);
+  color:#FFD700; padding:7px 3px; border-radius:6px; cursor:pointer;
+  font-size:0.78em; font-weight:bold; text-align:center; transition:background 0.2s;
+  margin:0; font-family:Arial;
+}
+.lpbtn:hover { background:rgba(255,215,0,0.2); }
+.aselect {
+  width:100%; background:#222; border:1px solid #444; color:#fff;
+  padding:8px 10px; border-radius:6px; font-size:0.88em; cursor:pointer;
+  margin-bottom:8px; font-family:Arial;
+}
+.aselect:focus { outline:none; border-color:#a855f7; }
+.aselect option { background:#222; }
+.astat { display:flex; justify-content:space-between; padding:5px 0; font-size:0.9em; border-bottom:1px solid rgba(255,255,255,0.05); }
+.astat:last-child { border-bottom:none; }
+.astat span:last-child { color:#c084fc; font-weight:bold; }
+
+/* Overlays */
+#menuOverlay {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center;
+}
+#menuBox {
+  background:#222; padding:25px; border-radius:15px; width:460px; border:2px solid #4CAF50;
+}
+#menuBox h2 { color:#4CAF50; margin-top:0; margin-bottom:20px; text-align:center; }
+.menuButtons { display:flex; gap:8px; margin-bottom:20px; }
 .menuTabButton {
-  flex: 1;
-  padding: 10px 6px;
-  background: #333;
-  color: #aaa;
-  border: 2px solid #555;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95em;
-  transition: all 0.3s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex:1; padding:10px 6px; background:#333; color:#aaa; border:2px solid #555;
+  border-radius:8px; cursor:pointer; font-size:0.95em; transition:all 0.3s;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.menuTabButton.active {
-  background: #4CAF50;
-  color: white;
-  border-color: #4CAF50;
-}
-.menuTabButton:hover {
-  background: #444;
-}
-.menuTabButton.active:hover {
-  background: #45a049;
-}
-.menuSection { 
-  display: none;
-  background: #333; 
-  padding: 20px; 
-  border-radius: 10px; 
-  border: 1px solid #555; 
-}
-.menuSection.active {
-  display: block;
-}
-.menuSection h3 { 
-  color: #4CAF50; 
-  margin-top: 0; 
-  margin-bottom: 15px;
-  border-bottom: 2px solid #555;
-  padding-bottom: 10px;
-}
-.statItem { 
-  padding: 8px 0; 
-  font-size: 1em; 
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.statLabel { 
-  color: #aaa; 
-}
-.statValue { 
-  color: #4CAF50; 
-  font-weight: bold; 
-}
-.devItem {
-  padding: 10px;
-  margin: 5px 0;
-  background: #444;
-  border-radius: 5px;
-  text-align: center;
-  font-size: 1.2em;
-  color: #4CAF50;
-}
+.menuTabButton.active { background:#4CAF50; color:white; border-color:#4CAF50; }
+.menuTabButton:hover { background:#444; }
+.menuTabButton.active:hover { background:#45a049; }
+.menuSection { display:none; background:#333; padding:20px; border-radius:10px; border:1px solid #555; }
+.menuSection.active { display:block; }
+.menuSection h3 { color:#4CAF50; margin-top:0; margin-bottom:15px; border-bottom:2px solid #555; padding-bottom:10px; }
+.statItem { padding:8px 0; font-size:1em; display:flex; justify-content:space-between; align-items:center; }
+.statLabel { color:#aaa; }
+.statValue { color:#4CAF50; font-weight:bold; }
+.devItem { padding:10px; margin:5px 0; background:#444; border-radius:5px; text-align:center; font-size:1.2em; color:#4CAF50; }
 
 #resetOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; color:white; justify-content:center; align-items:center; }
 #resetBox { background:#222; padding:30px; border-radius:15px; text-align:center; max-width:400px; }
@@ -177,7 +179,6 @@ button:active { transform: scale(0.9); }
 #resetNo { background-color:red; color:white; }
 
 #volumeControl { margin-top:15px; }
-
 #resetProgress { position:fixed; bottom:10px; left:10px; background-color:#f44336; color:white; padding:10px 15px; border-radius:10px; font-weight:bold; cursor:pointer; }
 
 #shopButton { background-color:#FF9800; color:white; margin-top:10px; }
@@ -190,32 +191,15 @@ button:active { transform: scale(0.9); }
 .shopItem button { background-color:#4CAF50; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; margin-top:10px; }
 .shopItem button:hover { background-color:#45a049; }
 .shopItem button:disabled { background-color:#666; cursor:not-allowed; }
-.shopItem .owned { color:#4CAF50; font-weight:bold; }
 
-.closeButton { 
-  position: fixed; 
-  top: 20px; 
-  right: 20px; 
-  width: 45px; 
-  height: 45px; 
-  background: #f44336; 
-  color: white; 
-  border: none; 
-  border-radius: 8px; 
-  font-size: 1.8em; 
-  cursor: pointer; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  transition: background-color 0.2s; 
-  box-shadow: 0 4px 15px rgba(244,67,54,0.6);
-  z-index: 10001;
-  font-weight: normal;
-  line-height: 1;
+.closeButton {
+  position:fixed; top:20px; right:20px; width:45px; height:45px;
+  background:#f44336; color:white; border:none; border-radius:8px; font-size:1.8em;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background-color 0.2s; box-shadow:0 4px 15px rgba(244,67,54,0.6);
+  z-index:10001; font-weight:normal; line-height:1;
 }
-.closeButton:hover { 
-  background: #da190b; 
-}
+.closeButton:hover { background:#da190b; }
 
 #questsButton { background-color:#9C27B0; color:white; margin-top:10px; }
 #questsOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:1000; justify-content:center; align-items:center; }
@@ -236,7 +220,6 @@ button:active { transform: scale(0.9); }
 .questItem .checkmark { position:absolute; top:10px; right:10px; color:#4CAF50; font-size:1.5em; }
 .questItem .claimButton { background:#FFD700; color:#000; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px; transition:all 0.3s; }
 .questItem .claimButton:hover { background:#FFC107; transform:scale(1.05); }
-.questItem .claimButton:disabled { background:#666; color:#999; cursor:not-allowed; }
 
 #codesButton { background-color:#673AB7; color:white; margin-top:10px; }
 #codesOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:1000; justify-content:center; align-items:center; }
@@ -260,7 +243,7 @@ button:active { transform: scale(0.9); }
 .inventoryTab:hover { background:#2a2a2a; }
 .inventorySection { display:none; }
 .inventorySection.active { display:block; }
-.inventoryGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:15px; margin-top:20px; }
+.inventoryGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:15px; margin-top:20px; }
 .inventoryItem { background:#2a2a2a; border:2px solid #444; border-radius:10px; padding:15px; text-align:center; cursor:pointer; transition:all 0.3s; position:relative; }
 .inventoryItem:hover { border-color:#00BCD4; transform:translateY(-3px); box-shadow:0 5px 15px rgba(0,188,212,0.3); }
 .inventoryItem.equipped { border-color:#4CAF50; background:#1a3a1a; }
@@ -281,65 +264,132 @@ button:active { transform: scale(0.9); }
 #equipButton:disabled { background-color:#666; cursor:not-allowed; }
 #closeItemDetail { background-color:#f44336; color:white; padding:12px 25px; border:none; border-radius:10px; cursor:pointer; font-size:1em; margin-top:10px; width:80%; display:block; margin-left:auto; margin-right:auto; }
 
-/* Custom Popup */
-.custom-popup { 
-  position: fixed; 
-  top: 20px;
-  left: -400px; /* Zaczyna poza ekranem */
-  background: #222; 
-  border: 2px solid #4CAF50; 
-  border-radius: 15px; 
-  padding: 20px 30px; 
-  font-size: 1.2em; 
-  z-index: 2000; 
-  opacity: 1;
-  transition: left 0.5s ease, opacity 0.3s ease, top 0.4s ease; /* Dodana animacja dla top */
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
-  min-width: 250px;
-  max-width: 350px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
+.custom-popup {
+  position:fixed; top:20px; left:-400px; background:#222; border:2px solid #4CAF50;
+  border-radius:15px; padding:20px 30px; font-size:1.2em; z-index:3000; opacity:1;
+  transition:left 0.5s ease, opacity 0.3s ease, top 0.4s ease;
+  box-shadow:0 0 20px rgba(76,175,80,0.5); min-width:250px; max-width:350px;
+  cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:15px;
 }
-.custom-popup.error { 
-  border-color: #f44336; 
-  box-shadow: 0 0 20px rgba(244, 67, 54, 0.5); 
-}
-.custom-popup.success { 
-  border-color: #4CAF50; 
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); 
-}
-.custom-popup.slide-in { 
-  left: 20px; 
-}
-.custom-popup.slide-out { 
-  left: -400px;
-  opacity: 0;
-}
-.popup-text {
-  flex: 1;
-}
-.popup-counter {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 0.9em;
-  min-width: 40px;
-  text-align: center;
-}
+.custom-popup.error { border-color:#f44336; box-shadow:0 0 20px rgba(244,67,54,0.5); }
+.custom-popup.slide-in { left:20px; }
+.custom-popup.slide-out { left:-400px; opacity:0; }
+.popup-text { flex:1; }
+.popup-counter { background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:8px; font-weight:bold; font-size:0.9em; min-width:40px; text-align:center; }
 </style>
 </head>
 <body>
 
 <h1>Paweł RNG</h1>
 
+<!-- Menu button -->
 <div id="menuButton">
   <div class="bar"></div>
   <div class="bar"></div>
   <div class="bar"></div>
+</div>
+
+<!-- Admin toggle button -->
+<button id="adminToggleBtn" title="Panel Admina">⚙️</button>
+
+<!-- Transparent overlay - kliknięcie poza panelem go zamyka -->
+<div id="adminOverlay"></div>
+
+<!-- Admin Panel -->
+<div id="adminPanel">
+  <div class="admin-header">
+    <h2>⚙️ ADMIN PANEL</h2>
+    <button class="admin-close-x" id="adminCloseBtn">✕</button>
+  </div>
+  <div class="admin-body">
+
+    <div class="admin-live-coins" id="adminLiveCoins">💰 0 monet</div>
+    <div class="admin-live-luck" id="adminLiveLuck">⭐ Luck: 1.00x</div>
+
+    <div class="asec">
+      <h3>💰 Monety</h3>
+      <div class="arow">
+        <input class="ainput" id="adminCoinAmt" type="number" value="1000" min="1" placeholder="Ilość">
+        <button class="abtn g" onclick="adminAddCoins()">+Dodaj</button>
+        <button class="abtn r" onclick="adminRemoveCoins()">−Odejmij</button>
+      </div>
+      <div class="arow">
+        <button class="abtn b" style="flex:1" onclick="adminSetCoins()">= Ustaw na wartość powyżej</button>
+      </div>
+      <div class="qcoins">
+        <button class="abtn g" onclick="adminAddCoins(100)">+100</button>
+        <button class="abtn g" onclick="adminAddCoins(500)">+500</button>
+        <button class="abtn g" onclick="adminAddCoins(1000)">+1K</button>
+        <button class="abtn g" onclick="adminAddCoins(10000)">+10K</button>
+      </div>
+    </div>
+
+    <div class="asec">
+      <h3>⭐ Mnożnik Szczęścia</h3>
+      <div class="lpresets">
+        <button class="lpbtn" onclick="adminSetLuck(1)">1x</button>
+        <button class="lpbtn" onclick="adminSetLuck(2)">2x</button>
+        <button class="lpbtn" onclick="adminSetLuck(5)">5x</button>
+        <button class="lpbtn" onclick="adminSetLuck(10)">10x</button>
+        <button class="lpbtn" onclick="adminSetLuck(50)">50x</button>
+        <button class="lpbtn" onclick="adminSetLuck(100)">100x</button>
+      </div>
+      <div class="arow">
+        <input class="ainput" id="adminLuckAmt" type="number" value="1" min="0.1" step="0.1" placeholder="Własny mnożnik">
+        <button class="abtn b" onclick="adminSetCustomLuck()">Ustaw</button>
+      </div>
+    </div>
+
+    <div class="asec">
+      <h3>🎭 Dodaj Pawełka do Ekwipunku</h3>
+      <select class="aselect" id="adminPawelSel">
+        <option value="gejmingowy paweł">🎮 gejmingowy paweł (Common)</option>
+        <option value="paweł prezydent">🎩 paweł prezydent (Uncommon)</option>
+        <option value="pawel w zoltym hoodie">👕 pawel w zoltym hoodie (Rare)</option>
+        <option value="funni paweł">😂 funni paweł (Epic)</option>
+        <option value="paweł ok">👌 paweł ok (Mythic)</option>
+        <option value="świąteczny paweł">🎄 świąteczny paweł (Legendary)</option>
+        <option value="paweł dostaje backshoty">💥 paweł dostaje backshoty (Ultra Leg.)</option>
+        <option value="paweł komunista">☭ paweł komunista (Ultra Leg.)</option>
+        <option value="Śledziu">🐟 Śledziu (Secret)</option>
+        <option value="Paweł kolega">🤝 Paweł kolega (Legendary)</option>
+        <option value="Paweł ai">🤖 Paweł ai (Epic)</option>
+        <option value="Paweł ubrany">👔 Paweł ubrany (Nigger)</option>
+        <option value="Paweł czipsy">🥔 Paweł czipsy (Ultra Leg.)</option>
+        <option value="Paweł Śnieg">❄️ Paweł Śnieg (Mythic)</option>
+        <option value="Paweł komornik">📄 Paweł komornik (Szacunek)</option>
+        <option value="Paweł mechanik">🔧 Paweł mechanik (Ultra Leg.)</option>
+      </select>
+      <div class="arow">
+        <input class="ainput" id="adminPawelCnt" type="number" value="1" min="1" placeholder="Ilość">
+        <button class="abtn g" onclick="adminAddPawel()">Dodaj</button>
+      </div>
+    </div>
+
+    <div class="asec">
+      <h3>⚔️ Dodaj Gear</h3>
+      <button class="abtn g fw" onclick="adminAddGear('Lucky Pawel')">🍀 Lucky Pawel (luck 1.5x)</button>
+      <button class="abtn g fw" onclick="adminAddGear('Mega Pawel')">💎 Mega Pawel (luck 2x)</button>
+      <button class="abtn g fw" onclick="adminAddGear('Ultimate Pawel')">👑 Ultimate Pawel (luck 3x)</button>
+    </div>
+
+    <div class="asec">
+      <h3>⚡ Szybkie Akcje</h3>
+      <button class="abtn b fw" onclick="adminMaxCooldown()">⚡ Max Cooldown (0.4s)</button>
+      <button class="abtn b fw" onclick="adminUnlockAutoRoll()">🤖 Odblokuj Auto-Roll</button>
+      <button class="abtn g fw" onclick="adminRollX(100)">🎲 Szybkie 100 Rolli</button>
+      <button class="abtn r fw" onclick="adminResetAll()">💀 Reset Wszystkiego</button>
+    </div>
+
+    <div class="asec">
+      <h3>📊 Live Stats</h3>
+      <div class="astat"><span>Łączne rolle:</span><span id="aStatRolls">0</span></div>
+      <div class="astat"><span>Unikalne Pawełki:</span><span id="aStatUniq">0</span></div>
+      <div class="astat"><span>Cooldown:</span><span id="aStatCD">1.0s</span></div>
+      <div class="astat"><span>Auto-Roll:</span><span id="aStatAR">NIE</span></div>
+    </div>
+
+  </div>
 </div>
 
 <img id="resultImage" src="photo.png" alt="Result">
@@ -370,7 +420,7 @@ button:active { transform: scale(0.9); }
 
 <div id="resetProgress">RESET PROGRESS</div>
 
-<!-- Reset overlay -->
+<!-- Reset -->
 <div id="resetOverlay">
   <div id="resetBox">
     <p>Czy na pewno chcesz zresetować progres?</p>
@@ -379,14 +429,13 @@ button:active { transform: scale(0.9); }
   </div>
 </div>
 
-<!-- Shop overlay -->
+<!-- Shop -->
 <div id="shopOverlay">
   <button class="closeButton" id="closeShop">✕</button>
   <div id="shopBox">
     <h2>🛒 SKLEP PAWEŁKÓW</h2>
     <p style="color:#ccc;">Zbieraj wylosowane Pawełki i wymień je na potężne ulepszenia!</p>
-    
-    <div class="shopItem" id="luckyPawelItem">
+    <div class="shopItem">
       <h3>Lucky Pawel 🍀</h3>
       <p>Mnożnik szczęścia: <strong>1.5x</strong></p>
       <p>Wymagane:</p>
@@ -397,8 +446,7 @@ button:active { transform: scale(0.9); }
       </ul>
       <button id="buyLuckyPawel">Kup Lucky Pawel</button>
     </div>
-
-    <div class="shopItem" id="megaPawelItem">
+    <div class="shopItem">
       <h3>Mega Pawel 💎</h3>
       <p>Mnożnik szczęścia: <strong>2x</strong></p>
       <p>Wymagane:</p>
@@ -409,8 +457,7 @@ button:active { transform: scale(0.9); }
       </ul>
       <button id="buyMegaPawel">Kup Mega Pawel</button>
     </div>
-
-    <div class="shopItem" id="ultimatePawelItem">
+    <div class="shopItem">
       <h3>Ultimate Pawel 👑</h3>
       <p>Mnożnik szczęścia: <strong>3x</strong></p>
       <p>Wymagane:</p>
@@ -426,7 +473,7 @@ button:active { transform: scale(0.9); }
   </div>
 </div>
 
-<!-- Quests overlay -->
+<!-- Quests -->
 <div id="questsOverlay">
   <button class="closeButton" id="closeQuests">✕</button>
   <div id="questsBox">
@@ -436,7 +483,7 @@ button:active { transform: scale(0.9); }
   </div>
 </div>
 
-<!-- Codes overlay -->
+<!-- Codes -->
 <div id="codesOverlay">
   <button class="closeButton" id="closeCodes">✕</button>
   <div id="codesBox">
@@ -452,59 +499,29 @@ button:active { transform: scale(0.9); }
   </div>
 </div>
 
-<!-- Menu overlay -->
+<!-- Menu -->
 <div id="menuOverlay">
   <button class="closeButton" id="closeMenu">✕</button>
   <div id="menuBox">
     <h2>📊 MENU</h2>
-    
     <div class="menuButtons">
       <button class="menuTabButton active" id="statsTab">Statystyki</button>
       <button class="menuTabButton" id="achievementsTab">Achievementy</button>
       <button class="menuTabButton" id="devsTab">Autorzy</button>
     </div>
-    
     <div class="menuSection active" id="statsSection">
-      <div class="statItem">
-        <span class="statLabel">Łączne monety:</span>
-        <span class="statValue" id="menuTotalCoins">0</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Aktualne monety:</span>
-        <span class="statValue" id="menuCurrentCoins">0</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Łączne losowania:</span>
-        <span class="statValue" id="menuTotalRolls">0</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Mnożnik szczęścia:</span>
-        <span class="statValue" id="menuLuckMultiplier">1.00x</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Wykonane achievementy:</span>
-        <span class="statValue" id="menuCompletedQuests">0/15</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Skrócenie cooldownu:</span>
-        <span class="statValue" id="menuCooldownUpgrades">0</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Ulepszenia szans:</span>
-        <span class="statValue" id="menuChanceUpgrades">0</span>
-      </div>
-      <div class="statItem">
-        <span class="statLabel">Czas gry:</span>
-        <span class="statValue" id="menuPlayTime">0s</span>
-      </div>
+      <div class="statItem"><span class="statLabel">Łączne monety:</span><span class="statValue" id="menuTotalCoins">0</span></div>
+      <div class="statItem"><span class="statLabel">Aktualne monety:</span><span class="statValue" id="menuCurrentCoins">0</span></div>
+      <div class="statItem"><span class="statLabel">Łączne losowania:</span><span class="statValue" id="menuTotalRolls">0</span></div>
+      <div class="statItem"><span class="statLabel">Mnożnik szczęścia:</span><span class="statValue" id="menuLuckMultiplier">1.00x</span></div>
+      <div class="statItem"><span class="statLabel">Wykonane achievementy:</span><span class="statValue" id="menuCompletedQuests">0/11</span></div>
+      <div class="statItem"><span class="statLabel">Skrócenie cooldownu:</span><span class="statValue" id="menuCooldownUpgrades">0</span></div>
+      <div class="statItem"><span class="statLabel">Ulepszenia szans:</span><span class="statValue" id="menuChanceUpgrades">0</span></div>
+      <div class="statItem"><span class="statLabel">Czas gry:</span><span class="statValue" id="menuPlayTime">0s</span></div>
     </div>
-    
     <div class="menuSection" id="achievementsSection">
-      <div id="menuAchievementsList" style="max-height: 400px; overflow-y: auto;">
-        <!-- Achievementy będą tutaj -->
-      </div>
+      <div id="menuAchievementsList" style="max-height:400px;overflow-y:auto;"></div>
     </div>
-    
     <div class="menuSection" id="devsSection">
       <div class="devItem">KoleszkaPP</div>
       <div class="devItem">its4iko</div>
@@ -512,32 +529,25 @@ button:active { transform: scale(0.9); }
   </div>
 </div>
 
-<!-- Inventory overlay -->
+<!-- Inventory -->
 <div id="inventoryOverlay">
   <button class="closeButton" id="closeInventory">✕</button>
   <div id="inventoryBox">
     <h2>🎒 EKWIPUNEK</h2>
-    
     <div class="inventoryTabs">
       <button class="inventoryTab active" id="itemsTab">Items</button>
       <button class="inventoryTab" id="gearsTab">Gears</button>
     </div>
-    
     <div class="inventorySection active" id="itemsSection">
-      <div class="inventoryGrid" id="itemsGrid">
-        <!-- Items będą tutaj generowane dynamicznie -->
-      </div>
+      <div class="inventoryGrid" id="itemsGrid"></div>
     </div>
-    
     <div class="inventorySection" id="gearsSection">
-      <div class="inventoryGrid" id="gearsGrid">
-        <!-- Gears będą tutaj generowane dynamicznie -->
-      </div>
+      <div class="inventoryGrid" id="gearsGrid"></div>
     </div>
   </div>
 </div>
 
-<!-- Item Detail overlay -->
+<!-- Item Detail -->
 <div id="itemDetailOverlay">
   <div id="itemDetailBox">
     <div class="itemIcon" id="detailIcon">📦</div>
@@ -554,33 +564,28 @@ button:active { transform: scale(0.9); }
 <script>
 // ===== DANE =====
 const images = [
-  {src:'photo.png',text:'gejmingowy paweł',chance:1/2,rarity:'Common',reward:1},
-  {src:'photo2.png',text:'paweł prezydent',chance:1/4,rarity:'Uncommon',reward:5},
-  {src:'photo3.png',text:'pawel w zoltym hoodie',chance:1/8,rarity:'Rare',reward:10},
-  {src:'photo4.png',text:'funni paweł',chance:1/16,rarity:'Epic',reward:20},
-  {src:'photo5.png',text:'paweł ok',chance:1/32,rarity:'Mythic',reward:40},
-  {src:'photo6.png',text:'świąteczny paweł',chance:1/64,rarity:'Legendary',reward:80},
-  {src:'photo7.png',text:'paweł dostaje backshoty',chance:1/128,rarity:'Ultra Legendary',reward:160},
-  {src:'photo8.png',text:'paweł komunista',chance:1/256,rarity:'Ultra Legendary',reward:320},
-  {src:'photo9.png',text:'Śledziu',chance:1/100000000,rarity:'Secret',reward:10000,requiresItem:'Tajemniczy Przedmiot'},
-  {src:'photo10.png',text:'Paweł kolega',chance:1/80,rarity:'Legendary',reward:10000},
-  {src:'photo11.png',text:'Paweł ai',chance:1/20,rarity:'Epic',reward:10000},
-  {src:'photo12.png',text:'Paweł ubrany',chance:1/500,rarity:'nigger',reward:500},
-  {src:'photo13.png',text:'Paweł czipsy',chance:1/300,rarity:'Ultra Legendary',reward:390},
-  {src:'photo14.png',text:'Paweł Śnieg',chance:1/40,rarity:'Mythic',reward:50},
-  {src:'photo15.png',text:'Paweł komornik',chance:1/1000,rarity:'Szacunek',reward:1000},
-  {src:'photo16.png',text:'Paweł mechanik',chance:1/110,rarity:'Ultra Legendary',reward:120},
+  {src:'photo.png',  text:'gejmingowy paweł',        chance:1/2,         rarity:'Common',        reward:1},
+  {src:'photo2.png', text:'paweł prezydent',          chance:1/4,         rarity:'Uncommon',      reward:5},
+  {src:'photo3.png', text:'pawel w zoltym hoodie',    chance:1/8,         rarity:'Rare',          reward:10},
+  {src:'photo4.png', text:'funni paweł',              chance:1/16,        rarity:'Epic',          reward:20},
+  {src:'photo5.png', text:'paweł ok',                 chance:1/32,        rarity:'Mythic',        reward:40},
+  {src:'photo6.png', text:'świąteczny paweł',         chance:1/64,        rarity:'Legendary',     reward:80},
+  {src:'photo7.png', text:'paweł dostaje backshoty',  chance:1/128,       rarity:'Ultra Legendary',reward:160},
+  {src:'photo8.png', text:'paweł komunista',          chance:1/256,       rarity:'Ultra Legendary',reward:320},
+  {src:'photo9.png', text:'Śledziu',                  chance:1/100000000, rarity:'Secret',        reward:10000, requiresItem:'Tajemniczy Przedmiot'},
+  {src:'photo10.png',text:'Paweł kolega',             chance:1/80,        rarity:'Legendary',     reward:10000},
+  {src:'photo11.png',text:'Paweł ai',                 chance:1/20,        rarity:'Epic',          reward:10000},
+  {src:'photo12.png',text:'Paweł ubrany',             chance:1/500,       rarity:'nigger',        reward:500},
+  {src:'photo13.png',text:'Paweł czipsy',             chance:1/300,       rarity:'Ultra Legendary',reward:390},
+  {src:'photo14.png',text:'Paweł Śnieg',              chance:1/40,        rarity:'Mythic',        reward:50},
+  {src:'photo15.png',text:'Paweł komornik',           chance:1/1000,      rarity:'Szacunek',      reward:1000},
+  {src:'photo16.png',text:'Paweł mechanik',           chance:1/110,       rarity:'Ultra Legendary',reward:120},
 ];
 
-// ===== WCZYTYWANIE SZANS Z LOCALSTORAGE =====
 const savedChances = localStorage.getItem('imagesChances');
 if(savedChances){
-  const chancesArr = JSON.parse(savedChances);
-  images.forEach((img,i)=>{
-    if(img.text !== 'Śledziu') {
-      img.chance = chancesArr[i];
-    }
-  });
+  const arr = JSON.parse(savedChances);
+  images.forEach((img,i)=>{ if(img.text!=='Śledziu') img.chance=arr[i]; });
 }
 
 const musicFiles = [
@@ -593,1186 +598,610 @@ const musicFiles = [
   'https://xxxpawelpopekxxx.github.io/music7.mp3'
 ];
 const bgMusic = document.getElementById('backgroundMusic');
-let musicStarted = false;
-let currentMusicIndex = 0;
-
-// Obsługa błędów ładowania muzyki - cicha obsługa
-bgMusic.addEventListener('error', (e) => {
-  musicStarted = false;
+let musicStarted=false, currentMusicIndex=0;
+bgMusic.addEventListener('error',()=>{musicStarted=false;});
+bgMusic.addEventListener('ended',()=>{
+  currentMusicIndex=(currentMusicIndex+1)%musicFiles.length;
+  bgMusic.src=musicFiles[currentMusicIndex];
+  bgMusic.play().catch(()=>{});
 });
 
-// Obsługa zakończenia utworu - automatyczne przełączanie
-bgMusic.addEventListener('ended', () => {
-  currentMusicIndex = (currentMusicIndex + 1) % musicFiles.length;
-  bgMusic.src = musicFiles[currentMusicIndex];
-  bgMusic.play().catch(err => {});
-});
+// Zmienne
+let coins           = localStorage.getItem('coins')!==null ? parseInt(localStorage.getItem('coins')) : 0;
+let inventory       = localStorage.getItem('inventory') ? JSON.parse(localStorage.getItem('inventory')) : [];
+let historyData     = localStorage.getItem('historyData') ? JSON.parse(localStorage.getItem('historyData')) : {};
+let cooldown        = localStorage.getItem('cooldown')!==null ? parseInt(localStorage.getItem('cooldown')) : 1000;
+let lastRoll=0, isRolling=false;
+let totalRolls      = localStorage.getItem('totalRolls')!==null ? parseInt(localStorage.getItem('totalRolls')) : 0;
+let autoRollEnabled = localStorage.getItem('autoRollEnabled')!==null ? JSON.parse(localStorage.getItem('autoRollEnabled')) : false;
+let autoRollPurchased=localStorage.getItem('autoRollPurchased')!==null ? JSON.parse(localStorage.getItem('autoRollPurchased')) : false;
+let autoRollInterval=null;
+let playTime        = localStorage.getItem('playTime')!==null ? parseInt(localStorage.getItem('playTime')) : 0;
+let luckMultiplier  = localStorage.getItem('luckMultiplier')!==null ? parseFloat(localStorage.getItem('luckMultiplier')) : 1;
+let ownedShopItems  = localStorage.getItem('ownedShopItems') ? JSON.parse(localStorage.getItem('ownedShopItems')) : [];
+let cooldownUpgrades= localStorage.getItem('cooldownUpgrades')!==null ? parseInt(localStorage.getItem('cooldownUpgrades')) : 0;
+let chanceUpgrades  = localStorage.getItem('chanceUpgrades')!==null ? parseInt(localStorage.getItem('chanceUpgrades')) : 0;
+let totalCoinsEarned= localStorage.getItem('totalCoinsEarned')!==null ? parseInt(localStorage.getItem('totalCoinsEarned')) : coins;
+let equippedGear    = localStorage.getItem('equippedGear') || null;
+let usedCodes       = localStorage.getItem('usedCodes') ? JSON.parse(localStorage.getItem('usedCodes')) : [];
 
-// ===== ZMIENNE =====
-let coins = localStorage.getItem('coins') !== null ? parseInt(localStorage.getItem('coins')) : 0;
-let inventory = localStorage.getItem('inventory') ? JSON.parse(localStorage.getItem('inventory')) : [];
-let historyData = localStorage.getItem('historyData') ? JSON.parse(localStorage.getItem('historyData')) : {};
-let cooldown = localStorage.getItem('cooldown') !== null ? parseInt(localStorage.getItem('cooldown')) : 1000;
-let lastRoll = 0;
-let isRolling = false; // NOWA ZMIENNA - śledzi czy trwa animacja
-let totalRolls = localStorage.getItem('totalRolls') !== null ? parseInt(localStorage.getItem('totalRolls')) : 0;
-let autoRollEnabled = localStorage.getItem('autoRollEnabled') !== null ? JSON.parse(localStorage.getItem('autoRollEnabled')) : false;
-let autoRollPurchased = localStorage.getItem('autoRollPurchased') !== null ? JSON.parse(localStorage.getItem('autoRollPurchased')) : false;
-let autoRollInterval = null;
-let playTime = localStorage.getItem('playTime') !== null ? parseInt(localStorage.getItem('playTime')) : 0;
-let playTimeStart = localStorage.getItem('playTimeStart') !== null ? parseInt(localStorage.getItem('playTimeStart')) : Date.now();
-
-// Mnożniki szczęścia ze sklepu
-let luckMultiplier = localStorage.getItem('luckMultiplier') !== null ? parseFloat(localStorage.getItem('luckMultiplier')) : 1;
-let ownedShopItems = localStorage.getItem('ownedShopItems') ? JSON.parse(localStorage.getItem('ownedShopItems')) : [];
-
-// Liczniki ulepszeń
-let cooldownUpgrades = localStorage.getItem('cooldownUpgrades') !== null ? parseInt(localStorage.getItem('cooldownUpgrades')) : 0;
-let chanceUpgrades = localStorage.getItem('chanceUpgrades') !== null ? parseInt(localStorage.getItem('chanceUpgrades')) : 0;
-let totalCoinsEarned = localStorage.getItem('totalCoinsEarned') !== null ? parseInt(localStorage.getItem('totalCoinsEarned')) : coins;
-
-// Ekwipunek
-let equippedGear = localStorage.getItem('equippedGear') || null;
-
-// Questy
 let quests = localStorage.getItem('quests') ? JSON.parse(localStorage.getItem('quests')) : [
-  {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false, readyToClaim:false},
-  {id:2, name:'Zbieracz Monet', desc:'Zgromadź 500 monet', target:500, current:0, reward:50, type:'coins', completed:false, readyToClaim:false},
-  {id:3, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false, readyToClaim:false},
-  {id:4, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:120, type:'rolls', completed:false, readyToClaim:false},
-  {id:5, name:'Kolekcjoner Uncommon', desc:'Wylosuj 10x paweł prezydent', target:10, current:0, reward:180, type:'item:paweł prezydent', completed:false, readyToClaim:false},
-  {id:6, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:250, type:'rolls', completed:false, readyToClaim:false},
-  {id:7, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false, readyToClaim:false},
-  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:600, type:'rolls', completed:false, readyToClaim:false},
-  {id:9, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:1200, type:'item:świąteczny paweł', completed:false, readyToClaim:false},
-  {id:10, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1800, type:'rolls', completed:false, readyToClaim:false},
-  {id:11, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false, readyToClaim:false},
+  {id:1,name:'Początkujący Rollujący',desc:'Wykonaj 10 losowań',target:10,current:0,reward:50,type:'rolls',completed:false,readyToClaim:false},
+  {id:2,name:'Zbieracz Monet',desc:'Zgromadź 500 monet',target:500,current:0,reward:50,type:'coins',completed:false,readyToClaim:false},
+  {id:3,name:'Wspinaczka po Drabinie',desc:'Wylosuj 5 różnych Pawełków',target:5,current:0,reward:100,type:'unique',completed:false,readyToClaim:false},
+  {id:4,name:'Rollercoaster',desc:'Wykonaj 50 losowań',target:50,current:0,reward:120,type:'rolls',completed:false,readyToClaim:false},
+  {id:5,name:'Kolekcjoner Uncommon',desc:'Wylosuj 10x paweł prezydent',target:10,current:0,reward:180,type:'item:paweł prezydent',completed:false,readyToClaim:false},
+  {id:6,name:'Maraton Rollowania',desc:'Wykonaj 100 losowań',target:100,current:0,reward:250,type:'rolls',completed:false,readyToClaim:false},
+  {id:7,name:'Bogacz',desc:'Zgromadź 2000 monet',target:2000,current:0,reward:500,type:'coins',completed:false,readyToClaim:false},
+  {id:8,name:'Legenda',desc:'Wykonaj 250 losowań',target:250,current:0,reward:600,type:'rolls',completed:false,readyToClaim:false},
+  {id:9,name:'Świąteczny Duch',desc:'Wylosuj 1x świąteczny paweł',target:1,current:0,reward:1200,type:'item:świąteczny paweł',completed:false,readyToClaim:false},
+  {id:10,name:'Ultra Gracz',desc:'Wykonaj 500 losowań',target:500,current:0,reward:1800,type:'rolls',completed:false,readyToClaim:false},
+  {id:11,name:'Magnat',desc:'Zgromadź 10000 monet',target:10000,current:0,reward:3000,type:'coins',completed:false,readyToClaim:false},
 ];
 
-// Kody promocyjne
-let usedCodes = localStorage.getItem('usedCodes') ? JSON.parse(localStorage.getItem('usedCodes')) : [];
-const promoCodes = {
-  'SLEDZIUFEMBOY': 1000,
-  'PAWEL': 100,
-  'SUPERCALIFRAGILISTICEXPIALIDOCIOUS': 1500,
-  'UPDATE1': 2000
+const promoCodes={'SLEDZIUFEMBOY':1000,'PAWEL':100,'SUPERCALIFRAGILISTICEXPIALIDOCIOUS':1500,'UPDATE1':2000};
+
+const pawelItemsData={
+  'gejmingowy paweł':{icon:'🎮',rarity:'Common',description:'Klasyczny gejmingowy Paweł. Najczęściej spotykany w przyrodzie.'},
+  'paweł prezydent':{icon:'🎩',rarity:'Uncommon',description:'Paweł w stroju prezydenta. Lider wśród Pawełków.'},
+  'pawel w zoltym hoodie':{icon:'👕',rarity:'Rare',description:'Paweł w modnym żółtym hoodie. Rzadko spotykany.'},
+  'funni paweł':{icon:'😂',rarity:'Epic',description:'Zabawny Paweł, który zawsze wywołuje uśmiech.'},
+  'paweł ok':{icon:'👌',rarity:'Mythic',description:'Mityczny Paweł pokazujący znak OK. Bardzo rzadki.'},
+  'świąteczny paweł':{icon:'🎄',rarity:'Legendary',description:'Legendarny świąteczny Paweł. Pojawia się bardzo rzadko.'},
+  'paweł dostaje backshoty':{icon:'💥',rarity:'Ultra Legendary',description:'Ultra legendarny Paweł w akcji. Niezwykle rzadki.'},
+  'paweł komunista':{icon:'☭',rarity:'Ultra Legendary',description:'Ultra legendarny Paweł komunista. Ekstremalnie rzadki.'},
+  'Śledziu':{icon:'🐟',rarity:'Secret',description:'Tajemniczy Śledź. Najrzadsza istota w całym wszechświecie Pawełków.'},
+  'Paweł kolega':{icon:'🤝',rarity:'Legendary',description:'Legendarny Paweł w trybie ziomalskim.'},
+  'Paweł ai':{icon:'🤖',rarity:'Epic',description:'Epicki Paweł z procesorem zamiast mózgu.'},
+  'Paweł ubrany':{icon:'👔',rarity:'Nigger',description:'Paweł w pełnym outficie. Widok tak rzadki, że aż niepokojący.'},
+  'Paweł czipsy':{icon:'🥔',rarity:'Ultra Legendary',description:'Ultra legendarny Paweł z czipsami.'},
+  'Paweł Śnieg':{icon:'❄️',rarity:'Mythic',description:'Mityczny Paweł zimowej aury.'},
+  'Paweł komornik':{icon:'📄',rarity:'Szacunek',description:'Paweł w trybie urzędowym. Respekt rośnie, portfel maleje.'},
+  'Paweł mechanik':{icon:'🔧',rarity:'Ultra Legendary',description:'Ultra legendarny Paweł mechanik.'}
 };
 
-// ===== CUSTOM POPUP =====
-let popupStack = []; // Stos aktywnych popupów
-let popupRegistry = {}; // Rejestr popupów według tekstu (dla grupowania)
+const gearData={
+  'Lucky Pawel':{icon:'🍀',multiplier:1.5,description:'Mnożnik szczęścia: 1.5x',rarity:'Common'},
+  'Mega Pawel':{icon:'💎',multiplier:2,description:'Mnożnik szczęścia: 2x',rarity:'Epic'},
+  'Ultimate Pawel':{icon:'👑',multiplier:3,description:'Mnożnik szczęścia: 3x',rarity:'Ultra Legendary'}
+};
 
-function showPopup(message, type = 'success') {
-  // Sprawdź czy popup o tej treści już istnieje
-  if(popupRegistry[message]) {
-    const existingPopup = popupRegistry[message];
-    existingPopup.count++;
-    
-    // Zaktualizuj licznik
-    const counterElem = existingPopup.element.querySelector('.popup-counter');
-    if(counterElem) {
-      counterElem.textContent = `+${existingPopup.count}`;
-    } else {
-      // Dodaj licznik jeśli jeszcze nie istnieje
-      const counter = document.createElement('div');
-      counter.className = 'popup-counter';
-      counter.textContent = `+${existingPopup.count}`;
-      existingPopup.element.appendChild(counter);
+// ===== ADMIN PANEL =====
+let adminOpen=false;
+
+function openAdmin(){
+  adminOpen=true;
+  document.getElementById('adminPanel').classList.add('open');
+  document.getElementById('adminOverlay').classList.add('visible');
+  updateAdminLive();
+}
+function closeAdmin(){
+  adminOpen=false;
+  document.getElementById('adminPanel').classList.remove('open');
+  document.getElementById('adminOverlay').classList.remove('visible');
+}
+
+document.getElementById('adminToggleBtn').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  adminOpen ? closeAdmin() : openAdmin();
+});
+document.getElementById('adminCloseBtn').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  closeAdmin();
+});
+// Kliknięcie na przezroczysty overlay = zamknij panel
+document.getElementById('adminOverlay').addEventListener('click',()=>{ closeAdmin(); });
+// Zapobiegaj zamknięciu przy klikaniu wewnątrz panelu
+document.getElementById('adminPanel').addEventListener('click',(e)=>{ e.stopPropagation(); });
+
+function updateAdminLive(){
+  document.getElementById('adminLiveCoins').textContent='💰 '+coins+' monet';
+  document.getElementById('adminLiveLuck').textContent='⭐ Luck: '+luckMultiplier.toFixed(2)+'x';
+  document.getElementById('aStatRolls').textContent=totalRolls;
+  document.getElementById('aStatUniq').textContent=Object.keys(historyData).length;
+  document.getElementById('aStatCD').textContent=(cooldown/1000).toFixed(1)+'s';
+  document.getElementById('aStatAR').textContent=autoRollEnabled?'TAK':'NIE';
+}
+
+function adminAddCoins(amt){
+  const v=amt!==undefined?amt:(parseInt(document.getElementById('adminCoinAmt').value)||0);
+  if(v<=0)return;
+  coins+=v; totalCoinsEarned+=v;
+  localStorage.setItem('totalCoinsEarned',totalCoinsEarned);
+  updateUI(); updateAdminLive();
+  showPopup('[ADMIN] +'+v+' monet','success');
+}
+function adminRemoveCoins(){
+  const v=parseInt(document.getElementById('adminCoinAmt').value)||0;
+  if(v<=0)return;
+  coins=Math.max(0,coins-v);
+  updateUI(); updateAdminLive();
+  showPopup('[ADMIN] -'+v+' monet','error');
+}
+function adminSetCoins(){
+  const v=parseInt(document.getElementById('adminCoinAmt').value)||0;
+  coins=Math.max(0,v);
+  if(v>totalCoinsEarned){totalCoinsEarned=v; localStorage.setItem('totalCoinsEarned',totalCoinsEarned);}
+  updateUI(); updateAdminLive();
+  showPopup('[ADMIN] Monety = '+v,'success');
+}
+function adminSetLuck(v){
+  luckMultiplier=v;
+  localStorage.setItem('luckMultiplier',luckMultiplier);
+  updateUI(); updateAdminLive();
+  showPopup('[ADMIN] Luck = '+v+'x','success');
+}
+function adminSetCustomLuck(){
+  const v=parseFloat(document.getElementById('adminLuckAmt').value)||1;
+  adminSetLuck(Math.max(0.1,v));
+}
+function adminAddPawel(){
+  const name=document.getElementById('adminPawelSel').value;
+  const cnt=parseInt(document.getElementById('adminPawelCnt').value)||1;
+  if(!historyData[name]) historyData[name]=0;
+  historyData[name]+=cnt;
+  if(name==='Śledziu'&&!inventory.includes('Tajemniczy Przedmiot')) inventory.push('Tajemniczy Przedmiot');
+  updateUI(true); updateAdminLive();
+  showPopup('[ADMIN] Dodano '+cnt+'x '+name,'success');
+}
+function adminAddGear(gearName){
+  if(!ownedShopItems.includes(gearName)){
+    ownedShopItems.push(gearName);
+    localStorage.setItem('ownedShopItems',JSON.stringify(ownedShopItems));
+    showPopup('[ADMIN] Gear: '+gearName,'success');
+  } else {
+    showPopup('Już posiadasz: '+gearName,'error');
+  }
+}
+function adminMaxCooldown(){
+  cooldown=400; cooldownUpgrades=6;
+  localStorage.setItem('cooldown',cooldown); localStorage.setItem('cooldownUpgrades',cooldownUpgrades);
+  document.getElementById('shortenCooldown').textContent='Skróć cooldown (MAX)';
+  updateUI(); updateAdminLive();
+  showPopup('[ADMIN] Cooldown = 0.4s','success');
+}
+function adminUnlockAutoRoll(){
+  autoRollPurchased=true;
+  localStorage.setItem('autoRollPurchased',true);
+  const btn=document.getElementById('toggleAutoRoll');
+  if(!autoRollEnabled){ btn.textContent='Włącz Auto-Roll'; btn.className='upgradeButton disabled'; }
+  updateAdminLive();
+  showPopup('[ADMIN] Auto-Roll odblokowany!','success');
+}
+function adminRollX(times){
+  let i=0;
+  const t=setInterval(()=>{
+    if(i>=times){
+      clearInterval(t);
+      localStorage.setItem('totalCoinsEarned',totalCoinsEarned);
+      updateUI(true); updateAdminLive();
+      showPopup('[ADMIN] '+times+' rolli!','success');
+      return;
     }
-    
-    // Zresetuj timer
-    clearTimeout(existingPopup.timer);
-    existingPopup.timer = setTimeout(() => {
-      removePopup(existingPopup);
-    }, 5000);
-    
+    const entries=[];
+    images.forEach(img=>{
+      if(img.requiresItem&&!inventory.includes(img.requiresItem))return;
+      const cnt=Math.max(1,Math.floor(img.chance*1000000*luckMultiplier));
+      for(let j=0;j<cnt;j++) entries.push(img);
+    });
+    if(!entries.length){clearInterval(t);return;}
+    const sel=entries[Math.floor(Math.random()*entries.length)];
+    let rew=sel.reward;
+    if(inventory.length>0) rew=Math.floor(rew*(1+0.05*inventory.length));
+    coins+=rew; totalCoinsEarned+=rew;
+    historyData[sel.text]=(historyData[sel.text]||0)+1;
+    totalRolls++; i++;
+  },10);
+}
+function adminResetAll(){
+  if(confirm('Na pewno zresetować wszystko?')){ localStorage.clear(); location.reload(); }
+}
+
+// ===== POPUP =====
+let popupStack=[], popupRegistry={};
+function showPopup(message,type='success'){
+  if(popupRegistry[message]){
+    const ep=popupRegistry[message]; ep.count++;
+    const ce=ep.element.querySelector('.popup-counter');
+    if(ce) ce.textContent='+'+ep.count;
+    else { const c=document.createElement('div'); c.className='popup-counter'; c.textContent='+'+ep.count; ep.element.appendChild(c); }
+    clearTimeout(ep.timer); ep.timer=setTimeout(()=>removePopup(ep),5000);
     return;
   }
-  
-  // Utwórz nowy popup
-  const popup = document.createElement('div');
-  popup.className = `custom-popup ${type}`;
-  
-  const textDiv = document.createElement('div');
-  textDiv.className = 'popup-text';
-  textDiv.textContent = message;
-  popup.appendChild(textDiv);
-  
-  document.body.appendChild(popup);
-  
-  // Dodaj do rejestru
-  const popupData = {
-    element: popup,
-    message: message,
-    count: 1,
-    timer: null
-  };
-  popupRegistry[message] = popupData;
-  popupStack.push(popupData);
-  
-  // Ustaw pozycję w stosie
-  updatePopupPositions();
-  
-  // Animacja wejścia
-  setTimeout(() => {
-    popup.classList.add('slide-in');
-  }, 10);
-  
-  // Obsługa kliknięcia - natychmiastowe usunięcie
-  popup.addEventListener('click', () => {
-    removePopup(popupData);
-  });
-  
-  // Automatyczne usunięcie po 5 sekundach
-  popupData.timer = setTimeout(() => {
-    removePopup(popupData);
-  }, 5000);
+  const popup=document.createElement('div');
+  popup.className='custom-popup '+type;
+  const td=document.createElement('div'); td.className='popup-text'; td.textContent=message;
+  popup.appendChild(td); document.body.appendChild(popup);
+  const pd={element:popup,message,count:1,timer:null};
+  popupRegistry[message]=pd; popupStack.push(pd); updatePopupPositions();
+  setTimeout(()=>popup.classList.add('slide-in'),10);
+  popup.addEventListener('click',()=>removePopup(pd));
+  pd.timer=setTimeout(()=>removePopup(pd),5000);
 }
-
-function removePopup(popupData) {
-  if(!popupData || !popupData.element) return;
-  
-  clearTimeout(popupData.timer);
-  
-  // Animacja wyjścia
-  popupData.element.classList.remove('slide-in');
-  popupData.element.classList.add('slide-out');
-  
-  setTimeout(() => {
-    if(popupData.element && popupData.element.parentNode) {
-      document.body.removeChild(popupData.element);
-    }
-    
-    // Usuń z rejestru i stosu
-    delete popupRegistry[popupData.message];
-    const index = popupStack.indexOf(popupData);
-    if(index > -1) {
-      popupStack.splice(index, 1);
-    }
-    
-    // Zaktualizuj pozycje pozostałych popupów
+function removePopup(pd){
+  if(!pd||!pd.element)return;
+  clearTimeout(pd.timer);
+  pd.element.classList.remove('slide-in'); pd.element.classList.add('slide-out');
+  setTimeout(()=>{
+    if(pd.element&&pd.element.parentNode) document.body.removeChild(pd.element);
+    delete popupRegistry[pd.message];
+    const idx=popupStack.indexOf(pd); if(idx>-1) popupStack.splice(idx,1);
     updatePopupPositions();
-  }, 500);
+  },500);
 }
+function updatePopupPositions(){ popupStack.forEach((p,i)=>{ p.element.style.top=(20+i*90)+'px'; }); }
 
-function updatePopupPositions() {
-  popupStack.forEach((popupData, index) => {
-    const offset = index * 90; // 90px odstępu między popupami
-    popupData.element.style.top = `${20 + offset}px`;
-  });
-}
+function hideMenuButton(){ document.getElementById('menuButton').classList.add('hidden'); }
+function showMenuButton(){ document.getElementById('menuButton').classList.remove('hidden'); }
 
-// ===== MENU BUTTON VISIBILITY =====
-function hideMenuButton() {
-  document.getElementById('menuButton').classList.add('hidden');
-}
-
-function showMenuButton() {
-  document.getElementById('menuButton').classList.remove('hidden');
-}
-
-// ===== FUNKCJE =====
-function updateQuests(fromRoll = false) {
-  // Aktualizuj postęp achievementów TYLKO gdy fromRoll = true (po losowaniu)
-  quests.forEach(q => {
-    if(q.completed) return;
-    
-    // Aktualizuj current tylko jeśli to wywołanie z roll lub jest to quest coins/unique
-    if(fromRoll || q.type === 'coins' || q.type === 'unique') {
-      if(q.type === 'rolls') {
-        q.current = totalRolls;
-      } else if(q.type === 'coins') {
-        q.current = coins;
-      } else if(q.type === 'unique') {
-        q.current = Object.keys(historyData).length;
-      } else if(q.type.startsWith('item:')) {
-        const itemName = q.type.split(':')[1];
-        q.current = historyData[itemName] || 0;
-      }
+// ===== QUESTS =====
+function updateQuests(fromRoll=false){
+  quests.forEach(q=>{
+    if(q.completed)return;
+    if(fromRoll||q.type==='coins'||q.type==='unique'){
+      if(q.type==='rolls') q.current=totalRolls;
+      else if(q.type==='coins') q.current=coins;
+      else if(q.type==='unique') q.current=Object.keys(historyData).length;
+      else if(q.type.startsWith('item:')) q.current=historyData[q.type.split(':')[1]]||0;
     }
-    
-    // Oznacz jako gotowy do odebrania (ale NIE odbieraj automatycznie)
-    if(q.current >= q.target && !q.completed && !q.readyToClaim) {
-      q.readyToClaim = true;
-      showPopup(`🏆 Achievement ukończony: ${q.name}!`, 'success');
+    if(q.current>=q.target&&!q.completed&&!q.readyToClaim){
+      q.readyToClaim=true;
+      showPopup('🏆 Achievement: '+q.name+'!','success');
     }
   });
-  
-  localStorage.setItem('quests', JSON.stringify(quests));
+  localStorage.setItem('quests',JSON.stringify(quests));
 }
 
-function updateQuestsUI() {
-  const questsList = document.getElementById('questsList');
-  questsList.innerHTML = '';
-  
-  quests.forEach(q => {
-    const questDiv = document.createElement('div');
-    let questClass = 'questItem';
-    if(q.completed) questClass += ' completed';
-    else if(q.readyToClaim) questClass += ' ready';
-    
-    questDiv.className = questClass;
-    
-    const progress = Math.min(100, (q.current / q.target) * 100);
-    
-    let buttonHTML = '';
-    if(q.readyToClaim && !q.completed) {
-      buttonHTML = `<button class="claimButton" data-quest-id="${q.id}">🎁 Odbierz nagrodę</button>`;
-    }
-    
-    questDiv.innerHTML = `
-      ${q.completed ? '<span class="checkmark">✓</span>' : ''}
-      <h3>${q.name}</h3>
-      <p>${q.desc}</p>
-      <div class="progress">
-        <div class="progressBar" style="width:${progress}%"></div>
-      </div>
-      <p>Postęp: ${q.current}/${q.target}</p>
-      <p class="reward">Nagroda: ${q.reward} monet</p>
-      ${buttonHTML}
-    `;
-    
-    questsList.appendChild(questDiv);
+function updateQuestsUI(){
+  const ql=document.getElementById('questsList'); ql.innerHTML='';
+  quests.forEach(q=>{
+    const d=document.createElement('div');
+    let cls='questItem'; if(q.completed) cls+=' completed'; else if(q.readyToClaim) cls+=' ready';
+    d.className=cls;
+    const prog=Math.min(100,(q.current/q.target)*100);
+    let btn=''; if(q.readyToClaim&&!q.completed) btn=`<button class="claimButton" data-qid="${q.id}">🎁 Odbierz nagrodę</button>`;
+    d.innerHTML=`${q.completed?'<span class="checkmark">✓</span>':''}<h3>${q.name}</h3><p>${q.desc}</p><div class="progress"><div class="progressBar" style="width:${prog}%"></div></div><p>Postęp: ${q.current}/${q.target}</p><p class="reward">Nagroda: ${q.reward} monet</p>${btn}`;
+    ql.appendChild(d);
   });
-  
-  // Dodaj event listenery do przycisków "Odbierz"
-  document.querySelectorAll('.claimButton').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const questId = parseInt(e.target.getAttribute('data-quest-id'));
-      claimQuestReward(questId);
-    });
-  });
+  document.querySelectorAll('.claimButton').forEach(b=>b.addEventListener('click',e=>claimQuestReward(parseInt(e.target.getAttribute('data-qid')))));
 }
 
-function claimQuestReward(questId) {
-  const quest = quests.find(q => q.id === questId);
-  if(!quest || !quest.readyToClaim || quest.completed) return;
-  
-  // Odbierz nagrodę
-  quest.completed = true;
-  quest.readyToClaim = false;
-  coins += quest.reward;
-  totalCoinsEarned += quest.reward;
-  
-  localStorage.setItem('quests', JSON.stringify(quests));
-  localStorage.setItem('totalCoinsEarned', totalCoinsEarned);
-  
-  updateUI();
-  updateQuestsUI();
+function claimQuestReward(id){
+  const q=quests.find(x=>x.id===id);
+  if(!q||!q.readyToClaim||q.completed)return;
+  q.completed=true; q.readyToClaim=false; coins+=q.reward; totalCoinsEarned+=q.reward;
+  localStorage.setItem('quests',JSON.stringify(quests)); localStorage.setItem('totalCoinsEarned',totalCoinsEarned);
+  updateUI(); updateQuestsUI();
 }
 
-function updateUI(fromRoll = false){
-  document.getElementById('coins').textContent = coins;
-
-  // Aktualizuj questy - przekaż parametr fromRoll
+function updateUI(fromRoll=false){
+  document.getElementById('coins').textContent=coins;
   updateQuests(fromRoll);
-
-  // zapis do localStorage
   localStorage.setItem('coins',coins);
   localStorage.setItem('inventory',JSON.stringify(inventory));
   localStorage.setItem('historyData',JSON.stringify(historyData));
   localStorage.setItem('cooldown',cooldown);
   localStorage.setItem('totalRolls',totalRolls);
+  updateAdminLive();
 }
 
-// ===== COOLDOWN - ZMIENIONE, żeby uwzględniać isRolling =====
+// Cooldown display
 setInterval(()=>{
   const now=Date.now();
-  // Jeśli trwa animacja, wyświetl "Rolling..."
-  if(isRolling) {
-    document.getElementById('cooldownDisplay').textContent='Rolling...';
-  } else {
-    const diff=lastRoll?Math.max(0,cooldown-(now-lastRoll)):0;
-    document.getElementById('cooldownDisplay').textContent=`Cooldown: ${(diff/1000).toFixed(1)}s`;
-  }
+  if(isRolling){ document.getElementById('cooldownDisplay').textContent='Rolling...'; }
+  else { const d=lastRoll?Math.max(0,cooldown-(now-lastRoll)):0; document.getElementById('cooldownDisplay').textContent='Cooldown: '+(d/1000).toFixed(1)+'s'; }
 },100);
 
-// ===== ROLL - ZMODYFIKOWANE =====
-function rollRNG(showRareAnimationOnly=false){
-  // Sprawdź czy nie trwa już animacja
-  if(isRolling) return;
-  
+// ===== ROLL =====
+function rollRNG(){
+  if(isRolling)return;
   const now=Date.now();
-  // Sprawdź cooldown tylko jeśli animacja się skończyła
-  if(now-lastRoll<cooldown) return;
-  
-  // Oznacz, że rozpoczyna się animacja
-  isRolling = true;
-  totalRolls++;
+  if(now-lastRoll<cooldown)return;
+  isRolling=true; totalRolls++;
 
-  // Oblicz szansę na Śledzia - co 500 rolli daje boost do 1/100
-  const sledzImage = images.find(img => img.text === 'Śledziu');
-  if(sledzImage) {
-    // Jeśli liczba rolli jest wielokrotnością 500 (500, 1000, 1500...), szansa to 1/100
-    if(totalRolls % 500 === 0 && totalRolls > 0) {
-      sledzImage.chance = 1/100;
-    } else {
-      sledzImage.chance = 1/100000000; // Normalna ultra-rzadka szansa
-    }
-  }
+  const sledz=images.find(i=>i.text==='Śledziu');
+  if(sledz) sledz.chance=(totalRolls%500===0&&totalRolls>0)?1/100:1/100000000;
 
   const entries=[];
   images.forEach(img=>{
-    if(img.requiresItem && !inventory.includes(img.requiresItem)) return;
-
-    let count;
-    if(img.text === 'Śledziu') {
-      // Śledź nie jest modyfikowany przez luck multiplier
-      count = Math.floor(img.chance * 1000000);
-    } else {
-      count = Math.floor(img.chance * 1000000 * luckMultiplier);
-      if(inventory.length > 0) count = Math.floor(count * 1.05);
-    }
-    
-    for(let i = 0; i < count; i++) entries.push(img);
+    if(img.requiresItem&&!inventory.includes(img.requiresItem))return;
+    let cnt;
+    if(img.text==='Śledziu') cnt=Math.floor(img.chance*1000000);
+    else { cnt=Math.floor(img.chance*1000000*luckMultiplier); if(inventory.length>0) cnt=Math.floor(cnt*1.05); }
+    cnt=Math.max(1,cnt); // minimum 1 - każdy Pawełek dosępny
+    for(let i=0;i<cnt;i++) entries.push(img);
   });
 
-  const imgElem=document.getElementById('resultImage');
-  const textElem=document.getElementById('resultText');
-  const chanceElem=document.getElementById('chanceText');
-  const rarityElem=document.getElementById('rarityText');
-
-  let elapsedAnim=0;
-  const animSpeed=50;
-  const totalDuration=1000;
-  const interval=setInterval(()=>{
-    // Wyklucz Śledzia z animacji
-    const tempImages = images.filter(img => img.text !== 'Śledziu');
-    const temp = tempImages[Math.floor(Math.random()*tempImages.length)];
-
-    imgElem.src=temp.src;
-    textElem.textContent=temp.text;
-    if(temp.chance > 0) {
-      chanceElem.textContent=`Szansa: 1/${Math.round(1/temp.chance)}`;
-    } else {
-      chanceElem.textContent='Szansa: ???';
+  const imgEl=document.getElementById('resultImage'), txtEl=document.getElementById('resultText');
+  const chEl=document.getElementById('chanceText'), rarEl=document.getElementById('rarityText');
+  let elapsed=0;
+  const iv=setInterval(()=>{
+    const tmp=images.filter(i=>i.text!=='Śledziu')[Math.floor(Math.random()*images.filter(i=>i.text!=='Śledziu').length)];
+    imgEl.src=tmp.src; txtEl.textContent=tmp.text;
+    chEl.textContent=tmp.chance>0?'Szansa: 1/'+Math.round(1/tmp.chance):'Szansa: ???';
+    rarEl.textContent='Rzadkość: '+tmp.rarity;
+    if(tmp.rarity!=='Common'&&tmp.rarity!=='Uncommon'){
+      imgEl.style.transform='scale('+(1+Math.random()*0.2)+') rotate('+(Math.random()-0.5)*20+'deg)';
+      imgEl.style.filter='brightness('+(1+Math.random()*0.5)+')';
+    } else { imgEl.style.transform='scale(1) rotate(0deg)'; imgEl.style.filter='brightness(1)'; }
+    elapsed+=50;
+    if(elapsed>=1000){
+      clearInterval(iv);
+      const sel=entries[Math.floor(Math.random()*entries.length)];
+      imgEl.src=sel.src; txtEl.textContent=sel.text;
+      chEl.textContent=(sel.chance<=0||sel.chance>1)?'Szansa: ???':'Szansa: 1/'+Math.round(1/sel.chance);
+      rarEl.textContent='Rzadkość: '+sel.rarity;
+      let rew=sel.reward; if(inventory.length>0) rew=Math.floor(rew*(1+0.05*inventory.length));
+      coins+=rew; totalCoinsEarned+=rew; localStorage.setItem('totalCoinsEarned',totalCoinsEarned);
+      historyData[sel.text]=(historyData[sel.text]||0)+1;
+      imgEl.style.transform='scale(1) rotate(0deg)'; imgEl.style.filter='brightness(1)';
+      if(sel.text==='Śledziu') showPopup('🐟 WYLOSOWAŁEŚ ŚLEDZIA! 🐟','success');
+      updateUI(true); lastRoll=Date.now(); isRolling=false;
     }
-    rarityElem.textContent=`Rzadkość: ${temp.rarity}`;
-    if(temp.rarity!=='Common' && temp.rarity!=='Uncommon'){
-      imgElem.style.transform=`scale(${1+Math.random()*0.2}) rotate(${(Math.random()-0.5)*20}deg)`;
-      imgElem.style.filter=`brightness(${1+Math.random()*0.5})`;
-    } else { 
-      imgElem.style.transform='scale(1) rotate(0deg)'; 
-      imgElem.style.filter='brightness(1)'; 
-    }
-
-    elapsedAnim+=animSpeed;
-    if(elapsedAnim>=totalDuration){
-      clearInterval(interval);
-      const selected=entries[Math.floor(Math.random()*entries.length)];
-      imgElem.src=selected.src;
-      textElem.textContent=selected.text;
-      if (selected.chance <= 0 || selected.chance > 1) {
-        chanceElem.textContent = 'Szansa: ???';
-      } else {
-        chanceElem.textContent = `Szansa: 1/${Math.round(1 / selected.chance)}`;
-      }
-
-      rarityElem.textContent=`Rzadkość: ${selected.rarity}`;
-      let reward=selected.reward;
-      if(inventory.length>0) reward=Math.floor(reward*(1+0.05*inventory.length));
-      coins+=reward;
-      totalCoinsEarned+=reward;
-      localStorage.setItem('totalCoinsEarned', totalCoinsEarned);
-      if(historyData[selected.text]) historyData[selected.text]++;
-      else historyData[selected.text]=1;
-      imgElem.style.transform='scale(1) rotate(0deg)';
-      imgElem.style.filter='brightness(1)';
-      
-      // Popup dla Śledzia
-      if(selected.text === 'Śledziu') {
-        showPopup('🐟 WYLOSOWAŁEŚ ŚLEDZIA! 🐟', 'success');
-      }
-      
-      // Aktualizuj UI i przekaż fromRoll=true
-      updateUI(true);
-      
-      // WAŻNE: Dopiero TERAZ ustawiamy lastRoll i kończymy animację
-      lastRoll = Date.now();
-      isRolling = false;
-    }
-  },animSpeed);
+  },50);
 }
 
-// ===== BUTTONS =====
-document.getElementById('rollButton').addEventListener('click', async ()=>{
-  if(!musicStarted){
-    currentMusicIndex = 0;
-    bgMusic.src = musicFiles[currentMusicIndex];
-    try{ 
-      await bgMusic.play(); 
-      musicStarted=true;
-    } catch(err) {
-      musicStarted=false;
-    }
-  }
-  rollRNG(true);
+document.getElementById('rollButton').addEventListener('click',async()=>{
+  if(!musicStarted){ currentMusicIndex=0; bgMusic.src=musicFiles[0]; try{await bgMusic.play();musicStarted=true;}catch(e){musicStarted=false;} }
+  rollRNG();
 });
-
 document.getElementById('muteButton').addEventListener('click',()=>{ bgMusic.muted=!bgMusic.muted; });
-document.getElementById('volumeControl').addEventListener('input',(e)=>{ bgMusic.volume=e.target.value/100; });
-
-// Poprzednia piosenka
-document.getElementById('prevSong').addEventListener('click', () => {
-  currentMusicIndex = (currentMusicIndex - 1 + musicFiles.length) % musicFiles.length;
-  bgMusic.src = musicFiles[currentMusicIndex];
-  if(musicStarted) {
-    bgMusic.play().catch(err => {});
-  }
+document.getElementById('volumeControl').addEventListener('input',e=>{ bgMusic.volume=e.target.value/100; });
+document.getElementById('prevSong').addEventListener('click',()=>{
+  currentMusicIndex=(currentMusicIndex-1+musicFiles.length)%musicFiles.length;
+  bgMusic.src=musicFiles[currentMusicIndex]; if(musicStarted) bgMusic.play().catch(()=>{});
+});
+document.getElementById('nextSong').addEventListener('click',()=>{
+  currentMusicIndex=(currentMusicIndex+1)%musicFiles.length;
+  bgMusic.src=musicFiles[currentMusicIndex]; if(musicStarted) bgMusic.play().catch(()=>{});
 });
 
-// Następna piosenka
-document.getElementById('nextSong').addEventListener('click', () => {
-  currentMusicIndex = (currentMusicIndex + 1) % musicFiles.length;
-  bgMusic.src = musicFiles[currentMusicIndex];
-  if(musicStarted) {
-    bgMusic.play().catch(err => {});
-  }
-});
-
-// ===== ULEPSZENIA =====
+// Ulepszenia
 document.getElementById('shortenCooldown').addEventListener('click',()=>{
-  // Ceny dla kolejnych ulepszeń
-  const cooldownPrices = [25, 50, 100, 250, 500, 1000];
-  
-  // Sprawdź czy możemy jeszcze ulepszyć (max 6 razy)
-  if(cooldownUpgrades >= 6) {
-    showPopup('Osiągnięto maksymalny poziom skrócenia cooldownu!', 'error');
-    return;
-  }
-  
-  const currentPrice = cooldownPrices[cooldownUpgrades];
-  
-  if(coins >= currentPrice) {
-    coins -= currentPrice;
-    cooldown = Math.max(400, cooldown - 100); // Zmniejsz o 0.1s (100ms)
-    cooldownUpgrades++;
-    localStorage.setItem('cooldownUpgrades', cooldownUpgrades);
-    
-    // Zaktualizuj tekst przycisku
-    if(cooldownUpgrades >= 6) {
-      document.getElementById('shortenCooldown').textContent = 'Skróć cooldown (MAX)';
-    } else {
-      const nextPrice = cooldownPrices[cooldownUpgrades];
-      document.getElementById('shortenCooldown').textContent = `Skróć cooldown (-0.1s) ${nextPrice} monet`;
-    }
-    
-    updateUI();
-    showPopup(`Cooldown skrócony! Teraz ${(cooldown/1000).toFixed(1)}s`, 'success');
-  } else {
-    showPopup('Nie masz wystarczająco monet!', 'error');
-  }
+  const prices=[25,50,100,250,500,1000];
+  if(cooldownUpgrades>=6){showPopup('Osiągnięto maksymalny poziom!','error');return;}
+  const p=prices[cooldownUpgrades];
+  if(coins>=p){ coins-=p; cooldown=Math.max(400,cooldown-100); cooldownUpgrades++; localStorage.setItem('cooldownUpgrades',cooldownUpgrades);
+    document.getElementById('shortenCooldown').textContent=cooldownUpgrades>=6?'Skróć cooldown (MAX)':'Skróć cooldown (-0.1s) '+prices[cooldownUpgrades]+' monet';
+    updateUI(); showPopup('Cooldown: '+(cooldown/1000).toFixed(1)+'s','success');
+  } else showPopup('Nie masz wystarczająco monet!','error');
 });
 
 document.getElementById('increaseChances').addEventListener('click',()=>{
-  if(coins>=100){
-    coins-=100;
-    chanceUpgrades++;
-    localStorage.setItem('chanceUpgrades', chanceUpgrades);
-    images.forEach(img=>{
-      if(img.text === 'Śledziu') return; // Nie modyfikujemy szansy Śledzia
-      if(img.text==='gejmingowy paweł' || img.text==='paweł prezydent'){
-        img.chance = Math.max(0.01, img.chance*0.95);
-      } else {
-        img.chance = Math.min(1, Math.round(img.chance*1.05*1000)/1000);
-      }
+  if(coins>=100){ coins-=100; chanceUpgrades++; localStorage.setItem('chanceUpgrades',chanceUpgrades);
+    images.forEach(img=>{ if(img.text==='Śledziu')return;
+      if(img.text==='gejmingowy paweł'||img.text==='paweł prezydent') img.chance=Math.max(0.01,img.chance*0.95);
+      else img.chance=Math.min(1,Math.round(img.chance*1.05*1000)/1000);
     });
-    localStorage.setItem('imagesChances', JSON.stringify(images.map(img=>img.chance)));
-    updateUI(); 
-    showPopup('Szanse zostały ulepszone!', 'success');
-  } else {
-    showPopup('Nie masz wystarczająco monet!', 'error');
-  }
+    localStorage.setItem('imagesChances',JSON.stringify(images.map(i=>i.chance)));
+    updateUI(); showPopup('Szanse ulepszone!','success');
+  } else showPopup('Nie masz wystarczająco monet!','error');
 });
 
 document.getElementById('buyItem').addEventListener('click',()=>{
-  if(coins>=100){
-    if(!inventory.includes('Tajemniczy Przedmiot')){ 
-      coins-=100; 
-      inventory.push('Tajemniczy Przedmiot'); 
-      updateUI(); 
-      showPopup('Tajemniczy Przedmiot dodany!', 'success');
-    } else {
-      showPopup('Masz już Tajemniczy Przedmiot!', 'error');
-    }
-  } else {
-    showPopup('Nie masz wystarczająco monet!', 'error');
-  }
+  if(coins>=100){ if(!inventory.includes('Tajemniczy Przedmiot')){ coins-=100; inventory.push('Tajemniczy Przedmiot'); updateUI(); showPopup('Tajemniczy Przedmiot dodany!','success'); }
+    else showPopup('Masz już Tajemniczy Przedmiot!','error');
+  } else showPopup('Nie masz wystarczająco monet!','error');
 });
 
 document.getElementById('toggleAutoRoll').addEventListener('click',()=>{
-  const button = document.getElementById('toggleAutoRoll');
-  
-  // Jeśli jeszcze nie kupiono, wymaga zapłaty
-  if(!autoRollPurchased) {
-    if(coins >= 5000) {
-      coins -= 5000;
-      autoRollPurchased = true;
-      autoRollEnabled = false; // Domyślnie wyłączony po kupnie
-      localStorage.setItem('autoRollPurchased', autoRollPurchased);
-      button.textContent = 'Włącz Auto-Roll';
-      button.classList.remove('enabled');
-      button.classList.add('disabled');
-      updateUI();
-      showPopup('Auto-Roll zakupiony! Kliknij ponownie aby włączyć', 'success');
-    } else {
-      showPopup('Nie masz wystarczająco monet na Auto-Roll!', 'error');
-    }
+  const btn=document.getElementById('toggleAutoRoll');
+  if(!autoRollPurchased){
+    if(coins>=5000){ coins-=5000; autoRollPurchased=true; autoRollEnabled=false; localStorage.setItem('autoRollPurchased',true);
+      btn.textContent='Włącz Auto-Roll'; btn.classList.remove('enabled'); btn.classList.add('disabled');
+      updateUI(); showPopup('Auto-Roll zakupiony!','success');
+    } else showPopup('Nie masz wystarczająco monet!','error');
   } else {
-    // Jeśli już kupiono, działa jako przełącznik
-    if(autoRollEnabled) {
-      // Wyłącz
-      clearInterval(autoRollInterval);
-      autoRollEnabled = false;
-      button.textContent = 'Włącz Auto-Roll';
-      button.classList.remove('enabled');
-      button.classList.add('disabled');
-      showPopup('Auto-Roll wyłączony', 'success');
-    } else {
-      // Włącz
-      autoRollEnabled = true;
-      autoRollInterval = setInterval(() => rollRNG(true), 1500);
-      button.textContent = 'Wyłącz Auto-Roll';
-      button.classList.remove('disabled');
-      button.classList.add('enabled');
-      showPopup('Auto-Roll włączony', 'success');
-    }
-    localStorage.setItem('autoRollEnabled', autoRollEnabled);
-    updateUI();
+    if(autoRollEnabled){ clearInterval(autoRollInterval); autoRollEnabled=false; btn.textContent='Włącz Auto-Roll'; btn.classList.remove('enabled'); btn.classList.add('disabled'); showPopup('Auto-Roll wyłączony','success'); }
+    else { autoRollEnabled=true; autoRollInterval=setInterval(()=>rollRNG(),1500); btn.textContent='Wyłącz Auto-Roll'; btn.classList.remove('disabled'); btn.classList.add('enabled'); showPopup('Auto-Roll włączony','success'); }
+    localStorage.setItem('autoRollEnabled',autoRollEnabled); updateUI();
   }
 });
 
-// ===== RESET =====
-const resetOverlay = document.getElementById('resetOverlay');
-const resetYes = document.getElementById('resetYes');
-const resetNo = document.getElementById('resetNo');
+// Reset
+document.getElementById('resetProgress').addEventListener('click',()=>{ document.getElementById('resetOverlay').style.display='flex'; });
+document.getElementById('resetNo').addEventListener('click',()=>{ document.getElementById('resetOverlay').style.display='none'; });
+document.getElementById('resetYes').addEventListener('click',()=>{ localStorage.clear(); location.reload(); });
 
-document.getElementById('resetProgress').addEventListener('click',()=>{ resetOverlay.style.display='flex'; });
-resetNo.addEventListener('click',()=>{ resetOverlay.style.display='none'; });
-resetYes.addEventListener('click',()=>{ 
-  // Wyczyść wszystkie dane z localStorage
-  localStorage.clear();
-  
-  // Resetuj wszystkie zmienne do wartości domyślnych
-  coins = 0;
-  inventory = [];
-  historyData = {};
-  cooldown = 1000;
-  lastRoll = 0;
-  isRolling = false;
-  totalRolls = 0;
-  autoRollEnabled = false;
-  autoRollPurchased = false;
-  playTime = 0;
-  luckMultiplier = 1;
-  ownedShopItems = [];
-  cooldownUpgrades = 0;
-  chanceUpgrades = 0;
-  totalCoinsEarned = 0;
-  equippedGear = null;
-  usedCodes = [];
-  
-  // Resetuj questy do wartości domyślnych
-  quests = [
-      {id:1, name:'Początkujący Rollujący', desc:'Wykonaj 10 losowań', target:10, current:0, reward:50, type:'rolls', completed:false, readyToClaim:false},
-  {id:2, name:'Zbieracz Monet', desc:'Zgromadź 500 monet', target:500, current:0, reward:50, type:'coins', completed:false, readyToClaim:false},
-  {id:3, name:'Wspinaczka po Drabinie', desc:'Wylosuj 5 różnych Pawełków', target:5, current:0, reward:100, type:'unique', completed:false, readyToClaim:false},
-  {id:4, name:'Rollercoaster', desc:'Wykonaj 50 losowań', target:50, current:0, reward:120, type:'rolls', completed:false, readyToClaim:false},
-  {id:5, name:'Kolekcjoner Uncommon', desc:'Wylosuj 10x paweł prezydent', target:10, current:0, reward:180, type:'item:paweł prezydent', completed:false, readyToClaim:false},
-  {id:6, name:'Maraton Rollowania', desc:'Wykonaj 100 losowań', target:100, current:0, reward:250, type:'rolls', completed:false, readyToClaim:false},
-  {id:7, name:'Bogacz', desc:'Zgromadź 2000 monet', target:2000, current:0, reward:500, type:'coins', completed:false, readyToClaim:false},
-  {id:8, name:'Legenda', desc:'Wykonaj 250 losowań', target:250, current:0, reward:600, type:'rolls', completed:false, readyToClaim:false},
-  {id:9, name:'Świąteczny Duch', desc:'Wylosuj 1x świąteczny paweł', target:1, current:0, reward:1200, type:'item:świąteczny paweł', completed:false, readyToClaim:false},
-  {id:10, name:'Ultra Gracz', desc:'Wykonaj 500 losowań', target:500, current:0, reward:1800, type:'rolls', completed:false, readyToClaim:false},
-  {id:11, name:'Magnat', desc:'Zgromadź 10000 monet', target:10000, current:0, reward:3000, type:'coins', completed:false, readyToClaim:false},
-  ];
-  
-  // Resetuj szanse do wartości domyślnych
-  images[0].chance = 1/2;
-  images[1].chance = 1/4;
-  images[2].chance = 1/8;
-  images[3].chance = 1/16;
-  images[4].chance = 1/32;
-  images[5].chance = 1/64;
-  images[6].chance = 1/128;
-  images[7].chance = 1/256;
-  images[8].chance = 1/100000000;
-  images[9].chance = 1/80;
-  images[10].chance = 1/20;
-  images[11].chance = 1/500;
-  images[12].chance = 1/300;
-  images[13].chance = 1/40;
-  images[14].chance = 1/1000
-  images[15].chance = 1/110
-  
-  // Przeładuj stronę aby wszystko się zresetowało
-  location.reload();
-});
+// Shop
+document.getElementById('shopButton').addEventListener('click',()=>{ updateShopUI(); document.getElementById('shopOverlay').style.display='flex'; hideMenuButton(); });
+document.getElementById('closeShop').addEventListener('click',()=>{ document.getElementById('shopOverlay').style.display='none'; showMenuButton(); });
 
-// ===== SKLEP =====
-const shopOverlay = document.getElementById('shopOverlay');
-const shopButton = document.getElementById('shopButton');
-const closeShop = document.getElementById('closeShop');
+function updateShopUI(){
+  const g=historyData['gejmingowy paweł']||0, p=historyData['paweł prezydent']||0;
+  document.getElementById('req1').textContent=g; document.getElementById('req2').textContent=p; document.getElementById('req3').textContent=coins;
+  const lb=document.getElementById('buyLuckyPawel');
+  if(ownedShopItems.includes('Lucky Pawel')){lb.disabled=true;lb.textContent='✓ KUPIONE';} else lb.disabled=!(g>=20&&p>=10&&coins>=1000);
 
-shopButton.addEventListener('click', () => {
-  updateShopUI();
-  shopOverlay.style.display = 'flex';
-  hideMenuButton();
-});
+  const z=historyData['pawel w zoltym hoodie']||0, f=historyData['funni paweł']||0;
+  document.getElementById('req4').textContent=z; document.getElementById('req5').textContent=f; document.getElementById('req6').textContent=coins;
+  const mb=document.getElementById('buyMegaPawel');
+  if(ownedShopItems.includes('Mega Pawel')){mb.disabled=true;mb.textContent='✓ KUPIONE';} else mb.disabled=!(z>=25&&f>=15&&coins>=2500);
 
-closeShop.addEventListener('click', () => {
-  shopOverlay.style.display = 'none';
-  showMenuButton();
-});
-
-function updateShopUI() {
-  // Lucky Pawel
-  const gejmingowy = historyData['gejmingowy paweł'] || 0;
-  const prezydent = historyData['paweł prezydent'] || 0;
-  document.getElementById('req1').textContent = gejmingowy;
-  document.getElementById('req2').textContent = prezydent;
-  document.getElementById('req3').textContent = coins;
-  
-  const luckyBtn = document.getElementById('buyLuckyPawel');
-  if(ownedShopItems.includes('Lucky Pawel')) {
-    luckyBtn.disabled = true;
-    luckyBtn.textContent = '✓ KUPIONE';
-  } else {
-    luckyBtn.disabled = !(gejmingowy >= 20 && prezydent >= 10 && coins >= 1000);
-  }
-
-  // Mega Pawel
-  const zolty = historyData['pawel w zoltym hoodie'] || 0;
-  const funni = historyData['funni paweł'] || 0;
-  document.getElementById('req4').textContent = zolty;
-  document.getElementById('req5').textContent = funni;
-  document.getElementById('req6').textContent = coins;
-  
-  const megaBtn = document.getElementById('buyMegaPawel');
-  if(ownedShopItems.includes('Mega Pawel')) {
-    megaBtn.disabled = true;
-    megaBtn.textContent = '✓ KUPIONE';
-  } else {
-    megaBtn.disabled = !(zolty >= 25 && funni >= 15 && coins >= 2500);
-  }
-
-  // Ultimate Pawel
-  const ok = historyData['paweł ok'] || 0;
-  const swiateczny = historyData['świąteczny paweł'] || 0;
-  const backshoty = historyData['paweł dostaje backshoty'] || 0;
-  const komunista = historyData['paweł komunista'] || 0;
-  document.getElementById('req7').textContent = ok;
-  document.getElementById('req8').textContent = swiateczny;
-  document.getElementById('req9').textContent = backshoty;
-  document.getElementById('req10').textContent = komunista;
-  document.getElementById('req11').textContent = coins;
-  
-  const ultimateBtn = document.getElementById('buyUltimatePawel');
-  if(ownedShopItems.includes('Ultimate Pawel')) {
-    ultimateBtn.disabled = true;
-    ultimateBtn.textContent = '✓ KUPIONE';
-  } else {
-    ultimateBtn.disabled = !(ok >= 50 && swiateczny >= 20 && backshoty >= 2 && komunista >= 1 && coins >= 5000);
-  }
+  const ok=historyData['paweł ok']||0, sw=historyData['świąteczny paweł']||0, bs=historyData['paweł dostaje backshoty']||0, km=historyData['paweł komunista']||0;
+  document.getElementById('req7').textContent=ok; document.getElementById('req8').textContent=sw; document.getElementById('req9').textContent=bs; document.getElementById('req10').textContent=km; document.getElementById('req11').textContent=coins;
+  const ub=document.getElementById('buyUltimatePawel');
+  if(ownedShopItems.includes('Ultimate Pawel')){ub.disabled=true;ub.textContent='✓ KUPIONE';} else ub.disabled=!(ok>=50&&sw>=20&&bs>=2&&km>=1&&coins>=5000);
 }
 
-document.getElementById('buyLuckyPawel').addEventListener('click', () => {
-  const gejmingowy = historyData['gejmingowy paweł'] || 0;
-  const prezydent = historyData['paweł prezydent'] || 0;
-  
-  if(gejmingowy >= 20 && prezydent >= 10 && coins >= 1000 && !ownedShopItems.includes('Lucky Pawel')) {
-    historyData['gejmingowy paweł'] -= 20;
-    historyData['paweł prezydent'] -= 10;
-    coins -= 1000;
-    ownedShopItems.push('Lucky Pawel');
-    
-    localStorage.setItem('ownedShopItems', JSON.stringify(ownedShopItems));
-    
-    updateUI();
-    updateShopUI();
-    showPopup('🍀 Lucky Pawel zakupiony! Możesz go założyć w ekwipunku.', 'success');
-  } else {
-    showPopup('Brak wymaganych zasobów!', 'error');
-  }
+document.getElementById('buyLuckyPawel').addEventListener('click',()=>{
+  const g=historyData['gejmingowy paweł']||0,p=historyData['paweł prezydent']||0;
+  if(g>=20&&p>=10&&coins>=1000&&!ownedShopItems.includes('Lucky Pawel')){
+    historyData['gejmingowy paweł']-=20; historyData['paweł prezydent']-=10; coins-=1000;
+    ownedShopItems.push('Lucky Pawel'); localStorage.setItem('ownedShopItems',JSON.stringify(ownedShopItems));
+    updateUI(); updateShopUI(); showPopup('🍀 Lucky Pawel zakupiony!','success');
+  } else showPopup('Brak wymaganych zasobów!','error');
+});
+document.getElementById('buyMegaPawel').addEventListener('click',()=>{
+  const z=historyData['pawel w zoltym hoodie']||0,f=historyData['funni paweł']||0;
+  if(z>=25&&f>=15&&coins>=2500&&!ownedShopItems.includes('Mega Pawel')){
+    historyData['pawel w zoltym hoodie']-=25; historyData['funni paweł']-=15; coins-=2500;
+    ownedShopItems.push('Mega Pawel'); localStorage.setItem('ownedShopItems',JSON.stringify(ownedShopItems));
+    updateUI(); updateShopUI(); showPopup('💎 Mega Pawel zakupiony!','success');
+  } else showPopup('Brak wymaganych zasobów!','error');
+});
+document.getElementById('buyUltimatePawel').addEventListener('click',()=>{
+  const ok=historyData['paweł ok']||0,sw=historyData['świąteczny paweł']||0,bs=historyData['paweł dostaje backshoty']||0,km=historyData['paweł komunista']||0;
+  if(ok>=50&&sw>=20&&bs>=2&&km>=1&&coins>=5000&&!ownedShopItems.includes('Ultimate Pawel')){
+    historyData['paweł ok']-=50; historyData['świąteczny paweł']-=20; historyData['paweł dostaje backshoty']-=2; historyData['paweł komunista']-=1; coins-=5000;
+    ownedShopItems.push('Ultimate Pawel'); localStorage.setItem('ownedShopItems',JSON.stringify(ownedShopItems));
+    updateUI(); updateShopUI(); showPopup('👑 Ultimate Pawel zakupiony!','success');
+  } else showPopup('Brak wymaganych zasobów!','error');
 });
 
-document.getElementById('buyMegaPawel').addEventListener('click', () => {
-  const zolty = historyData['pawel w zoltym hoodie'] || 0;
-  const funni = historyData['funni paweł'] || 0;
-  
-  if(zolty >= 25 && funni >= 15 && coins >= 2500 && !ownedShopItems.includes('Mega Pawel')) {
-    historyData['pawel w zoltym hoodie'] -= 25;
-    historyData['funni paweł'] -= 15;
-    coins -= 2500;
-    ownedShopItems.push('Mega Pawel');
-    
-    localStorage.setItem('ownedShopItems', JSON.stringify(ownedShopItems));
-    
-    updateUI();
-    updateShopUI();
-    showPopup('💎 Mega Pawel zakupiony! Możesz go założyć w ekwipunku.', 'success');
-  } else {
-    showPopup('Brak wymaganych zasobów!', 'error');
-  }
+// Quests overlay
+document.getElementById('closeQuests').addEventListener('click',()=>{ document.getElementById('questsOverlay').style.display='none'; showMenuButton(); });
+
+// Codes
+document.getElementById('codesButton').addEventListener('click',()=>{ updateCodesUI(); document.getElementById('codesOverlay').style.display='flex'; hideMenuButton(); });
+document.getElementById('closeCodes').addEventListener('click',()=>{ document.getElementById('codesOverlay').style.display='none'; showMenuButton(); });
+document.getElementById('submitCode').addEventListener('click',()=>{
+  const code=document.getElementById('codeInput').value.toUpperCase().trim();
+  if(!code){showPopup('Wpisz kod!','error');return;}
+  if(usedCodes.includes(code)){showPopup('Ten kod już użyty!','error');return;}
+  if(promoCodes[code]){ coins+=promoCodes[code]; totalCoinsEarned+=promoCodes[code]; localStorage.setItem('totalCoinsEarned',totalCoinsEarned);
+    usedCodes.push(code); localStorage.setItem('usedCodes',JSON.stringify(usedCodes));
+    updateUI(); updateCodesUI(); showPopup('✨ +'+promoCodes[code]+' monet','success'); document.getElementById('codeInput').value='';
+  } else showPopup('Nieprawidłowy kod!','error');
 });
+function updateCodesUI(){
+  const l=document.getElementById('usedCodesList');
+  if(!usedCodes.length){l.textContent='Brak użytych kodów';return;}
+  l.innerHTML=''; usedCodes.forEach(c=>{ const d=document.createElement('div'); d.className='codeHistoryItem'; d.textContent=c+' - '+promoCodes[c]+' monet'; l.appendChild(d); });
+}
 
-document.getElementById('buyUltimatePawel').addEventListener('click', () => {
-  const ok = historyData['paweł ok'] || 0;
-  const swiateczny = historyData['świąteczny paweł'] || 0;
-  const backshoty = historyData['paweł dostaje backshoty'] || 0;
-  const komunista = historyData['paweł komunista'] || 0;
-  
-  if(ok >= 50 && swiateczny >= 20 && backshoty >= 2 && komunista >= 1 && coins >= 5000 && !ownedShopItems.includes('Ultimate Pawel')) {
-    historyData['paweł ok'] -= 50;
-    historyData['świąteczny paweł'] -= 20;
-    historyData['paweł dostaje backshoty'] -= 2;
-    historyData['paweł komunista'] -= 1;
-    coins -= 5000;
-    ownedShopItems.push('Ultimate Pawel');
-    
-    localStorage.setItem('ownedShopItems', JSON.stringify(ownedShopItems));
-    
-    updateUI();
-    updateShopUI();
-    showPopup('👑 Ultimate Pawel zakupiony! Możesz go założyć w ekwipunku.', 'success');
-  } else {
-    showPopup('Brak wymaganych zasobów!', 'error');
-  }
+// Inventory
+document.getElementById('inventoryButton').addEventListener('click',()=>{
+  updateInventoryUI(); document.getElementById('inventoryOverlay').style.display='flex'; hideMenuButton();
+  document.getElementById('itemsTab').classList.add('active'); document.getElementById('gearsTab').classList.remove('active');
+  document.getElementById('itemsSection').classList.add('active'); document.getElementById('gearsSection').classList.remove('active');
 });
-
-// ===== ACHIEVEMENTY (overlay) =====
-const questsOverlay = document.getElementById('questsOverlay');
-const closeQuests = document.getElementById('closeQuests');
-
-closeQuests.addEventListener('click', () => {
-  questsOverlay.style.display = 'none';
-  showMenuButton();
+document.getElementById('closeInventory').addEventListener('click',()=>{ document.getElementById('inventoryOverlay').style.display='none'; showMenuButton(); });
+document.getElementById('itemsTab').addEventListener('click',()=>{
+  document.getElementById('itemsTab').classList.add('active'); document.getElementById('gearsTab').classList.remove('active');
+  document.getElementById('itemsSection').classList.add('active'); document.getElementById('gearsSection').classList.remove('active');
 });
-
-// ===== KODY =====
-const codesOverlay = document.getElementById('codesOverlay');
-const codesButton = document.getElementById('codesButton');
-const closeCodes = document.getElementById('closeCodes');
-const submitCode = document.getElementById('submitCode');
-const codeInput = document.getElementById('codeInput');
-
-codesButton.addEventListener('click', () => {
-  updateCodesUI();
-  codesOverlay.style.display = 'flex';
-  hideMenuButton();
+document.getElementById('gearsTab').addEventListener('click',()=>{
+  document.getElementById('gearsTab').classList.add('active'); document.getElementById('itemsTab').classList.remove('active');
+  document.getElementById('gearsSection').classList.add('active'); document.getElementById('itemsSection').classList.remove('active');
 });
+document.getElementById('closeItemDetail').addEventListener('click',()=>{ document.getElementById('itemDetailOverlay').style.display='none'; });
 
-closeCodes.addEventListener('click', () => {
-  codesOverlay.style.display = 'none';
-  showMenuButton();
-});
-
-submitCode.addEventListener('click', () => {
-  const code = codeInput.value.toUpperCase().trim();
-  
-  if(!code) {
-    showPopup('Wpisz kod!', 'error');
-    return;
+function updateInventoryUI(){
+  const ig=document.getElementById('itemsGrid'); ig.innerHTML=''; let hasI=false;
+  if(inventory.includes('Tajemniczy Przedmiot')){
+    hasI=true; const d=document.createElement('div'); d.className='inventoryItem';
+    d.innerHTML='<div class="itemIcon">📦</div><div class="itemName">Tajemniczy Przedmiot</div><div class="itemRarity">Unikalny</div>';
+    d.addEventListener('click',()=>showItemDetail('Tajemniczy Przedmiot','📦','Unikalny','Ten przedmiot pozwala na zdobycie rzeczy jeszcze niesłyszanych...',false));
+    ig.appendChild(d);
   }
-  
-  if(usedCodes.includes(code)) {
-    showPopup('Ten kod został już użyty!', 'error');
-    return;
-  }
-  
-  if(promoCodes[code]) {
-    coins += promoCodes[code];
-    totalCoinsEarned += promoCodes[code];
-    localStorage.setItem('totalCoinsEarned', totalCoinsEarned);
-    usedCodes.push(code);
-    localStorage.setItem('usedCodes', JSON.stringify(usedCodes));
-    updateUI();
-    updateCodesUI();
-    showPopup(`✨ Kod aktywowany! +${promoCodes[code]} monet`, 'success');
-    codeInput.value = '';
-  } else {
-    showPopup('Nieprawidłowy kod!', 'error');
-  }
-});
-
-// ===== EKWIPUNEK =====
-const inventoryOverlay = document.getElementById('inventoryOverlay');
-const inventoryButton = document.getElementById('inventoryButton');
-const closeInventory = document.getElementById('closeInventory');
-const itemsTab = document.getElementById('itemsTab');
-const gearsTab = document.getElementById('gearsTab');
-const itemsSection = document.getElementById('itemsSection');
-const gearsSection = document.getElementById('gearsSection');
-const itemDetailOverlay = document.getElementById('itemDetailOverlay');
-const closeItemDetail = document.getElementById('closeItemDetail');
-const equipButton = document.getElementById('equipButton');
-
-const gearData = {
-  'Lucky Pawel': { icon: '🍀', multiplier: 1.5, description: 'Mnożnik szczęścia: 1.5x', rarity: 'Common' },
-  'Mega Pawel': { icon: '💎', multiplier: 2, description: 'Mnożnik szczęścia: 2x', rarity: 'Epic' },
-  'Ultimate Pawel': { icon: '👑', multiplier: 3, description: 'Mnożnik szczęścia: 3x', rarity: 'Ultra Legendary' }
-};
-
-const pawelItemsData = {
-  'gejmingowy paweł': { icon: '🎮', rarity: 'Common', description: 'Klasyczny gejmingowy Paweł. Najczęściej spotykany w przyrodzie.' },
-  'paweł prezydent': { icon: '🎩', rarity: 'Uncommon', description: 'Paweł w stroju prezydenta. Lider wśród Pawełków.' },
-  'pawel w zoltym hoodie': { icon: '👕', rarity: 'Rare', description: 'Paweł w modnym żółtym hoodie. Rzadko spotykany.' },
-  'funni paweł': { icon: '😂', rarity: 'Epic', description: 'Zabawny Paweł, który zawsze wywołuje uśmiech.' },
-  'paweł ok': { icon: '👌', rarity: 'Mythic', description: 'Mityczny Paweł pokazujący znak OK. Bardzo rzadki.' },
-  'świąteczny paweł': { icon: '🎄', rarity: 'Legendary', description: 'Legendarny świąteczny Paweł. Pojawia się bardzo rzadko.' },
-  'paweł dostaje backshoty': { icon: '💥', rarity: 'Ultra Legendary', description: 'Ultra legendarny Paweł w akcji. Niezwykle rzadki.' },
-  'paweł komunista': { icon: '☭', rarity: 'Ultra Legendary', description: 'Ultra legendarny Paweł komunista. Ekstremalnie rzadki.' },
-  'Śledziu': { icon: '🐟', rarity: 'Secret', description: 'Tajemniczy Śledź. Najrzadsza istota w całym wszechświecie Pawełków.' },
-  'Paweł kolega': { icon: '🤝', rarity: 'Legendary', description: 'Legendarny Paweł w trybie ziomalskim. Zawsze obok, zawsze gotowy.' },
-  'Paweł ai': { icon: '🤖', rarity: 'Epic', description: 'Epicki Paweł z procesorem zamiast mózgu. Analizuje wszystko i czasem ma rację.' },
-  'Paweł ubrany': { icon: '👔', rarity: 'Nigger', description: 'Paweł w pełnym outficie. Widok tak rzadki, że aż niepokojący.' },
-  'Paweł czipsy': { icon: '🥔', rarity: 'Ultra Legendary', description: 'Ultra legendarny Paweł z czipsami. Chrupie tak głośno, że daje debuff ciszy.' },
-  'Paweł Śnieg': { icon: '❄️', rarity: 'Mythic', description: 'Mityczny Paweł zimowej aury. Pojawia się tylko przy mrozie i dramie.' },
-  'Paweł komornik': { icon: '📄', rarity: 'Szacunek', description: 'Paweł w trybie urzędowym. Respekt rośnie, portfel maleje.' },
-  'Paweł mechanik': { icon: '🔧', rarity: 'Ultra Legendary', description: 'Ultra legendarny Paweł mechanik. Naprawi wszystko… albo rozkręci na części.' }
-
-};
-
-function updateInventoryUI() {
-  // Items section - pokazuje Pawełki i Tajemniczy Przedmiot
-  const itemsGrid = document.getElementById('itemsGrid');
-  itemsGrid.innerHTML = '';
-  
-  let hasItems = false;
-  
-  // Najpierw Tajemniczy Przedmiot
-  if(inventory.includes('Tajemniczy Przedmiot')) {
-    hasItems = true;
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'inventoryItem';
-    itemDiv.innerHTML = `
-      <div class="itemIcon">📦</div>
-      <div class="itemName">Tajemniczy Przedmiot</div>
-      <div class="itemRarity">Unikalny</div>
-    `;
-    itemDiv.addEventListener('click', () => showItemDetail('Tajemniczy Przedmiot', '📦', 'Unikalny', 'Ten przedmiot pozwala na zdobycie rzeczy jeszcze niesłyszanych...', false));
-    itemsGrid.appendChild(itemDiv);
-  }
-  
-  // Potem wszystkie wylosowane Pawełki
-  for(const [pawelName, count] of Object.entries(historyData)) {
-    if(count > 0 && pawelItemsData[pawelName]) {
-      hasItems = true;
-      const pawelData = pawelItemsData[pawelName];
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'inventoryItem';
-      itemDiv.innerHTML = `
-        <div class="itemIcon">${pawelData.icon}</div>
-        <div class="itemName">${pawelName}</div>
-        <div class="itemRarity">${pawelData.rarity}</div>
-        <div class="itemCount">x${count}</div>
-      `;
-      itemDiv.addEventListener('click', () => showItemDetail(pawelName, pawelData.icon, pawelData.rarity, pawelData.description, false));
-      itemsGrid.appendChild(itemDiv);
+  for(const [name,cnt] of Object.entries(historyData)){
+    if(cnt>0&&pawelItemsData[name]){ hasI=true; const pd=pawelItemsData[name];
+      const d=document.createElement('div'); d.className='inventoryItem';
+      d.innerHTML='<div class="itemIcon">'+pd.icon+'</div><div class="itemName">'+name+'</div><div class="itemRarity">'+pd.rarity+'</div><div class="itemCount">x'+cnt+'</div>';
+      d.addEventListener('click',()=>showItemDetail(name,pd.icon,pd.rarity,pd.description,false));
+      ig.appendChild(d);
     }
   }
-  
-  if(!hasItems) {
-    itemsGrid.innerHTML = '<div class="emptySlot">Brak przedmiotów<br><small>Losuj aby zdobyć Pawełki!</small></div>';
-  }
-  
-  // Gears section
-  const gearsGrid = document.getElementById('gearsGrid');
-  gearsGrid.innerHTML = '';
-  
-  let hasGears = false;
-  ownedShopItems.forEach(gearName => {
-    if(gearData[gearName]) {
-      hasGears = true;
-      const gear = gearData[gearName];
-      const isEquipped = equippedGear === gearName;
-      
-      const gearDiv = document.createElement('div');
-      gearDiv.className = 'inventoryItem' + (isEquipped ? ' equipped' : '');
-      gearDiv.innerHTML = `
-        <div class="itemIcon">${gear.icon}</div>
-        <div class="itemName">${gearName}</div>
-        <div class="itemRarity">${gear.rarity}</div>
-      `;
-      gearDiv.addEventListener('click', () => showItemDetail(gearName, gear.icon, gear.rarity, gear.description, true));
-      gearsGrid.appendChild(gearDiv);
-    }
-  });
-  
-  if(!hasGears) {
-    gearsGrid.innerHTML = '<div class="emptySlot">Brak gearów<br><small>Kup je w sklepie!</small></div>';
-  }
+  if(!hasI) ig.innerHTML='<div class="emptySlot">Brak przedmiotów<br><small>Losuj aby zdobyć Pawełki!</small></div>';
+
+  const gg=document.getElementById('gearsGrid'); gg.innerHTML=''; let hasG=false;
+  ownedShopItems.forEach(gn=>{ if(gearData[gn]){ hasG=true; const gr=gearData[gn]; const isEq=equippedGear===gn;
+    const d=document.createElement('div'); d.className='inventoryItem'+(isEq?' equipped':'');
+    d.innerHTML='<div class="itemIcon">'+gr.icon+'</div><div class="itemName">'+gn+'</div><div class="itemRarity">'+gr.rarity+'</div>';
+    d.addEventListener('click',()=>showItemDetail(gn,gr.icon,gr.rarity,gr.description,true)); gg.appendChild(d);
+  }});
+  if(!hasG) gg.innerHTML='<div class="emptySlot">Brak gearów<br><small>Kup je w sklepie!</small></div>';
 }
 
-function showItemDetail(name, icon, rarity, description, isGear) {
-  document.getElementById('detailIcon').textContent = icon;
-  document.getElementById('detailName').textContent = name;
-  document.getElementById('detailRarity').textContent = rarity;
-  document.getElementById('detailDescription').textContent = description;
-  
-  if(isGear) {
-    equipButton.style.display = 'block';
-    const isEquipped = equippedGear === name;
-    equipButton.textContent = isEquipped ? '✓ Założony' : 'Załóż';
-    equipButton.disabled = isEquipped;
-    equipButton.onclick = () => equipGear(name);
-  } else {
-    equipButton.style.display = 'none';
-  }
-  
-  itemDetailOverlay.style.display = 'flex';
+function showItemDetail(name,icon,rarity,desc,isGear){
+  document.getElementById('detailIcon').textContent=icon;
+  document.getElementById('detailName').textContent=name;
+  document.getElementById('detailRarity').textContent=rarity;
+  document.getElementById('detailDescription').textContent=desc;
+  const eb=document.getElementById('equipButton');
+  if(isGear){ eb.style.display='block'; const isEq=equippedGear===name; eb.textContent=isEq?'✓ Założony':'Załóż'; eb.disabled=isEq; eb.onclick=()=>equipGear(name); }
+  else eb.style.display='none';
+  document.getElementById('itemDetailOverlay').style.display='flex';
+}
+function equipGear(gn){
+  if(equippedGear&&gearData[equippedGear]) luckMultiplier/=gearData[equippedGear].multiplier;
+  equippedGear=gn; luckMultiplier*=gearData[gn].multiplier;
+  localStorage.setItem('equippedGear',equippedGear); localStorage.setItem('luckMultiplier',luckMultiplier);
+  updateUI(); updateInventoryUI(); document.getElementById('itemDetailOverlay').style.display='none';
+  showPopup(gn+' założony! Mnożnik: '+luckMultiplier.toFixed(2)+'x','success');
 }
 
-function equipGear(gearName) {
-  // Jeśli coś jest założone, zdejmij mnożnik
-  if(equippedGear && gearData[equippedGear]) {
-    luckMultiplier /= gearData[equippedGear].multiplier;
-  }
-  
-  // Załóż nowy gear
-  equippedGear = gearName;
-  luckMultiplier *= gearData[gearName].multiplier;
-  
-  localStorage.setItem('equippedGear', equippedGear);
-  localStorage.setItem('luckMultiplier', luckMultiplier);
-  
-  updateUI();
-  updateInventoryUI();
-  itemDetailOverlay.style.display = 'none';
-  showPopup(`${gearName} założony! Mnożnik: ${luckMultiplier.toFixed(2)}x`, 'success');
-}
-
-inventoryButton.addEventListener('click', () => {
-  updateInventoryUI();
-  inventoryOverlay.style.display = 'flex';
-  hideMenuButton();
-  // Reset to items tab
-  itemsTab.classList.add('active');
-  gearsTab.classList.remove('active');
-  itemsSection.classList.add('active');
-  gearsSection.classList.remove('active');
+// Menu
+let menuStatsInterval=null;
+document.getElementById('menuButton').addEventListener('click',()=>{
+  updateMenuStats(); document.getElementById('menuOverlay').style.display='flex'; hideMenuButton();
+  document.getElementById('statsTab').classList.add('active'); document.getElementById('achievementsTab').classList.remove('active'); document.getElementById('devsTab').classList.remove('active');
+  document.getElementById('statsSection').classList.add('active'); document.getElementById('achievementsSection').classList.remove('active'); document.getElementById('devsSection').classList.remove('active');
+  menuStatsInterval=setInterval(updateMenuStats,1000);
 });
-
-closeInventory.addEventListener('click', () => {
-  inventoryOverlay.style.display = 'none';
-  showMenuButton();
+document.getElementById('closeMenu').addEventListener('click',()=>{
+  document.getElementById('menuOverlay').style.display='none'; showMenuButton();
+  if(menuStatsInterval){clearInterval(menuStatsInterval);menuStatsInterval=null;}
 });
-
-itemsTab.addEventListener('click', () => {
-  itemsTab.classList.add('active');
-  gearsTab.classList.remove('active');
-  itemsSection.classList.add('active');
-  gearsSection.classList.remove('active');
+document.getElementById('statsTab').addEventListener('click',()=>{
+  document.getElementById('statsTab').classList.add('active'); document.getElementById('achievementsTab').classList.remove('active'); document.getElementById('devsTab').classList.remove('active');
+  document.getElementById('statsSection').classList.add('active'); document.getElementById('achievementsSection').classList.remove('active'); document.getElementById('devsSection').classList.remove('active');
 });
-
-gearsTab.addEventListener('click', () => {
-  gearsTab.classList.add('active');
-  itemsTab.classList.remove('active');
-  gearsSection.classList.add('active');
-  itemsSection.classList.remove('active');
-});
-
-closeItemDetail.addEventListener('click', () => {
-  itemDetailOverlay.style.display = 'none';
-});
-
-// ===== MENU =====
-const menuOverlay = document.getElementById('menuOverlay');
-const menuButton = document.getElementById('menuButton');
-const closeMenu = document.getElementById('closeMenu');
-const statsTab = document.getElementById('statsTab');
-const achievementsTab = document.getElementById('achievementsTab');
-const devsTab = document.getElementById('devsTab');
-const statsSection = document.getElementById('statsSection');
-const achievementsSection = document.getElementById('achievementsSection');
-const devsSection = document.getElementById('devsSection');
-
-let menuStatsInterval = null;
-
-menuButton.addEventListener('click', () => {
-  updateMenuStats();
-  menuOverlay.style.display = 'flex';
-  hideMenuButton();
-  // Reset to stats tab when opening
-  statsTab.classList.add('active');
-  devsTab.classList.remove('active');
-  statsSection.classList.add('active');
-  devsSection.classList.remove('active');
-  
-  // Start auto-updating stats every second
-  menuStatsInterval = setInterval(() => {
-    updateMenuStats();
-  }, 1000);
-});
-
-closeMenu.addEventListener('click', () => {
-  menuOverlay.style.display = 'none';
-  showMenuButton();
-  
-  // Stop auto-updating when menu closes
-  if(menuStatsInterval) {
-    clearInterval(menuStatsInterval);
-    menuStatsInterval = null;
-  }
-});
-
-statsTab.addEventListener('click', () => {
-  statsTab.classList.add('active');
-  achievementsTab.classList.remove('active');
-  devsTab.classList.remove('active');
-  statsSection.classList.add('active');
-  achievementsSection.classList.remove('active');
-  devsSection.classList.remove('active');
-});
-
-achievementsTab.addEventListener('click', () => {
-  achievementsTab.classList.add('active');
-  statsTab.classList.remove('active');
-  devsTab.classList.remove('active');
-  achievementsSection.classList.add('active');
-  statsSection.classList.remove('active');
-  devsSection.classList.remove('active');
+document.getElementById('achievementsTab').addEventListener('click',()=>{
+  document.getElementById('achievementsTab').classList.add('active'); document.getElementById('statsTab').classList.remove('active'); document.getElementById('devsTab').classList.remove('active');
+  document.getElementById('achievementsSection').classList.add('active'); document.getElementById('statsSection').classList.remove('active'); document.getElementById('devsSection').classList.remove('active');
   updateMenuAchievements();
 });
-
-devsTab.addEventListener('click', () => {
-  devsTab.classList.add('active');
-  statsTab.classList.remove('active');
-  achievementsTab.classList.remove('active');
-  devsSection.classList.add('active');
-  statsSection.classList.remove('active');
-  achievementsSection.classList.remove('active');
+document.getElementById('devsTab').addEventListener('click',()=>{
+  document.getElementById('devsTab').classList.add('active'); document.getElementById('statsTab').classList.remove('active'); document.getElementById('achievementsTab').classList.remove('active');
+  document.getElementById('devsSection').classList.add('active'); document.getElementById('statsSection').classList.remove('active'); document.getElementById('achievementsSection').classList.remove('active');
 });
 
-function updateCodesUI() {
-  const usedCodesList = document.getElementById('usedCodesList');
-  
-  if(usedCodes.length === 0) {
-    usedCodesList.textContent = 'Brak użytych kodów';
-  } else {
-    usedCodesList.innerHTML = '';
-    usedCodes.forEach(code => {
-      const codeDiv = document.createElement('div');
-      codeDiv.className = 'codeHistoryItem';
-      codeDiv.textContent = `${code} - ${promoCodes[code]} monet`;
-      usedCodesList.appendChild(codeDiv);
-    });
-  }
+function updateMenuStats(){
+  document.getElementById('menuTotalCoins').textContent=totalCoinsEarned;
+  document.getElementById('menuCurrentCoins').textContent=coins;
+  document.getElementById('menuTotalRolls').textContent=totalRolls;
+  document.getElementById('menuLuckMultiplier').textContent=luckMultiplier.toFixed(2)+'x';
+  document.getElementById('menuCompletedQuests').textContent=quests.filter(q=>q.completed).length+'/'+quests.length;
+  document.getElementById('menuCooldownUpgrades').textContent=cooldownUpgrades;
+  document.getElementById('menuChanceUpgrades').textContent=chanceUpgrades;
+  document.getElementById('menuPlayTime').textContent=playTime+'s';
 }
-
-function updateMenuStats() {
-  document.getElementById('menuTotalCoins').textContent = totalCoinsEarned;
-  document.getElementById('menuCurrentCoins').textContent = coins;
-  document.getElementById('menuTotalRolls').textContent = totalRolls;
-  document.getElementById('menuLuckMultiplier').textContent = luckMultiplier.toFixed(2) + 'x';
-  
-  const completedQuests = quests.filter(q => q.completed).length;
-  document.getElementById('menuCompletedQuests').textContent = `${completedQuests}/${quests.length}`;
-  
-  document.getElementById('menuCooldownUpgrades').textContent = cooldownUpgrades;
-  document.getElementById('menuChanceUpgrades').textContent = chanceUpgrades;
-  document.getElementById('menuPlayTime').textContent = playTime + 's';
-}
-
-function updateMenuAchievements() {
-  const achievementsList = document.getElementById('menuAchievementsList');
-  achievementsList.innerHTML = '';
-  
-  quests.forEach(q => {
-    const achievementDiv = document.createElement('div');
-    let className = 'questItem';
-    if(q.completed) className += ' completed';
-    else if(q.readyToClaim) className += ' ready';
-    
-    achievementDiv.className = className;
-    achievementDiv.style.margin = '10px 0';
-    achievementDiv.style.padding = '12px';
-    
-    const progress = Math.min(100, (q.current / q.target) * 100);
-    
-    let buttonHTML = '';
-    if(q.readyToClaim && !q.completed) {
-      buttonHTML = `<button class="claimButton menu-claim-btn" data-quest-id="${q.id}">🎁 Odbierz</button>`;
-    }
-    
-    achievementDiv.innerHTML = `
-      ${q.completed ? '<span class="checkmark">✓</span>' : ''}
-      <h3 style="font-size: 1em;">${q.name}</h3>
-      <p style="font-size: 0.85em;">${q.desc}</p>
-      <div class="progress">
-        <div class="progressBar" style="width:${progress}%"></div>
-      </div>
-      <p style="font-size: 0.85em;">Postęp: ${q.current}/${q.target}</p>
-      <p class="reward" style="font-size: 0.9em;">Nagroda: ${q.reward} monet</p>
-      ${buttonHTML}
-    `;
-    
-    achievementsList.appendChild(achievementDiv);
+function updateMenuAchievements(){
+  const l=document.getElementById('menuAchievementsList'); l.innerHTML='';
+  quests.forEach(q=>{
+    const d=document.createElement('div');
+    let cls='questItem'; if(q.completed) cls+=' completed'; else if(q.readyToClaim) cls+=' ready';
+    d.className=cls; d.style.margin='10px 0'; d.style.padding='12px';
+    const prog=Math.min(100,(q.current/q.target)*100);
+    let btn=''; if(q.readyToClaim&&!q.completed) btn=`<button class="claimButton menu-claim" data-qid="${q.id}">🎁 Odbierz</button>`;
+    d.innerHTML=`${q.completed?'<span class="checkmark">✓</span>':''}<h3 style="font-size:1em">${q.name}</h3><p style="font-size:0.85em">${q.desc}</p><div class="progress"><div class="progressBar" style="width:${prog}%"></div></div><p style="font-size:0.85em">Postęp: ${q.current}/${q.target}</p><p class="reward" style="font-size:0.9em">Nagroda: ${q.reward} monet</p>${btn}`;
+    l.appendChild(d);
   });
-  
-  // Dodaj event listenery do przycisków
-  document.querySelectorAll('.menu-claim-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const questId = parseInt(e.target.getAttribute('data-quest-id'));
-      claimQuestReward(questId);
-      updateMenuAchievements();
-    });
-  });
+  document.querySelectorAll('.menu-claim').forEach(b=>b.addEventListener('click',e=>{ claimQuestReward(parseInt(e.target.getAttribute('data-qid'))); updateMenuAchievements(); }));
 }
 
-// ===== AUTO-SAVE & PLAYTIME UPDATE =====
-setInterval(()=>{
-  playTime += 1; // Dodaj 1 sekundę
-  localStorage.setItem('playTime', playTime);
-  localStorage.setItem('autoRollEnabled', autoRollEnabled);
-  localStorage.setItem('autoRollPurchased', autoRollPurchased);
-}, 1000);
+// Autosave
+setInterval(()=>{ playTime++; localStorage.setItem('playTime',playTime); localStorage.setItem('autoRollEnabled',autoRollEnabled); localStorage.setItem('autoRollPurchased',autoRollPurchased); },1000);
 
+// INIT
+updateUI(false); updateAdminLive();
 
-// ===== INIT =====
-updateUI(false); // Nie sprawdzaj questów przy starcie (fromRoll=false)
+const cdPrices=[25,50,100,250,500,1000];
+if(cooldownUpgrades>=6) document.getElementById('shortenCooldown').textContent='Skróć cooldown (MAX)';
+else document.getElementById('shortenCooldown').textContent='Skróć cooldown (-0.1s) '+cdPrices[cooldownUpgrades]+' monet';
 
-// Aktualizuj wygląd przycisku "Skróć cooldown" przy starcie
-const cooldownButton = document.getElementById('shortenCooldown');
-const cooldownPrices = [25, 50, 100, 250, 500, 1000];
-if(cooldownUpgrades >= 6) {
-  cooldownButton.textContent = 'Skróć cooldown (MAX)';
-} else {
-  const currentPrice = cooldownPrices[cooldownUpgrades];
-  cooldownButton.textContent = `Skróć cooldown (-0.1s) ${currentPrice} monet`;
-}
+const arBtn=document.getElementById('toggleAutoRoll');
+if(autoRollPurchased){
+  arBtn.textContent=autoRollEnabled?'Wyłącz Auto-Roll':'Włącz Auto-Roll';
+  arBtn.classList.add(autoRollEnabled?'enabled':'disabled');
+  arBtn.classList.remove(autoRollEnabled?'disabled':'enabled');
+} else { arBtn.textContent='Kup Auto-Roll 5000 monet'; arBtn.classList.add('disabled'); }
 
-// Aktualizuj wygląd przycisku Auto-Roll przy starcie
-const autoRollButton = document.getElementById('toggleAutoRoll');
-if(autoRollPurchased) {
-  if(autoRollEnabled) {
-    autoRollButton.textContent = 'Wyłącz Auto-Roll';
-    autoRollButton.classList.add('enabled');
-    autoRollButton.classList.remove('disabled');
-  } else {
-    autoRollButton.textContent = 'Włącz Auto-Roll';
-    autoRollButton.classList.add('disabled');
-    autoRollButton.classList.remove('enabled');
-  }
-} else {
-  autoRollButton.textContent = 'Kup Auto-Roll 5000 monet';
-  autoRollButton.classList.add('disabled');
-}
-
-// Przywróć equipped gear przy starcie
-if(equippedGear && gearData[equippedGear] && !ownedShopItems.includes(equippedGear)) {
-  // Jeśli gear jest wyposażony ale już nie posiadany (reset?), usuń go
-  equippedGear = null;
-  localStorage.removeItem('equippedGear');
-}
-
-// Przywróć auto-roll jeśli było włączone
-if(autoRollEnabled) {
-  autoRollInterval = setInterval(() => rollRNG(true), 1500);
-}
-
-// Inicjalizacja głośności
-bgMusic.volume = document.getElementById('volumeControl').value / 100;
+if(equippedGear&&gearData[equippedGear]&&!ownedShopItems.includes(equippedGear)){ equippedGear=null; localStorage.removeItem('equippedGear'); }
+if(autoRollEnabled) autoRollInterval=setInterval(()=>rollRNG(),1500);
+bgMusic.volume=document.getElementById('volumeControl').value/100;
 </script>
 </body>
 </html>
