@@ -301,7 +301,23 @@ button:active { transform: scale(0.9); }
     <h2>⚙️ ADMIN PANEL</h2>
     <button class="admin-close-x" id="adminCloseBtn">✕</button>
   </div>
-  <div class="admin-body">
+
+  <!-- Password screen -->
+  <div id="adminPasswordScreen" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;gap:16px;">
+    <div style="font-size:3em;">🔒</div>
+    <div style="color:#c084fc;font-size:1.1em;font-weight:bold;letter-spacing:2px;">WYMAGANE HASŁO</div>
+    <div style="color:#888;font-size:0.85em;text-align:center;">Wpisz hasło aby uzyskać dostęp do panelu admina</div>
+    <input id="adminPasswordInput" type="password" placeholder="Wpisz hasło..." 
+      style="width:100%;padding:12px;font-size:1em;border:2px solid #7c3aed;border-radius:8px;background:#1a1a2e;color:#fff;text-align:center;font-family:Arial;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter') checkAdminPassword()">
+    <button onclick="checkAdminPassword()" 
+      style="width:100%;padding:12px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer;font-family:Arial;">
+      Zaloguj się
+    </button>
+    <div id="adminPasswordError" style="color:#f44336;font-size:0.85em;display:none;">❌ Nieprawidłowe hasło!</div>
+  </div>
+
+  <div class="admin-body" id="adminBody" style="display:none;">
 
     <div class="admin-live-coins" id="adminLiveCoins">💰 0 monet</div>
     <div class="admin-live-luck" id="adminLiveLuck">⭐ Luck: 1.00x</div>
@@ -668,12 +684,39 @@ const gearData={
 
 // ===== ADMIN PANEL =====
 let adminOpen=false;
+let adminUnlocked=false;
+
+function checkAdminPassword(){
+  const input=document.getElementById('adminPasswordInput').value;
+  const errEl=document.getElementById('adminPasswordError');
+  if(input==='SkibidiPawel'){
+    adminUnlocked=true;
+    document.getElementById('adminPasswordScreen').style.display='none';
+    document.getElementById('adminBody').style.display='block';
+    document.getElementById('adminPasswordInput').value='';
+    errEl.style.display='none';
+    updateAdminLive();
+  } else {
+    errEl.style.display='block';
+    document.getElementById('adminPasswordInput').value='';
+    document.getElementById('adminPasswordInput').style.borderColor='#f44336';
+    setTimeout(()=>{ document.getElementById('adminPasswordInput').style.borderColor='#7c3aed'; },1000);
+  }
+}
 
 function openAdmin(){
   adminOpen=true;
   document.getElementById('adminPanel').classList.add('open');
   document.getElementById('adminOverlay').classList.add('visible');
-  updateAdminLive();
+  // Jeśli nie odblokowany, pokaż ekran hasła
+  if(!adminUnlocked){
+    document.getElementById('adminPasswordScreen').style.display='flex';
+    document.getElementById('adminBody').style.display='none';
+    // Focus na input
+    setTimeout(()=>document.getElementById('adminPasswordInput').focus(),350);
+  } else {
+    updateAdminLive();
+  }
 }
 function closeAdmin(){
   adminOpen=false;
