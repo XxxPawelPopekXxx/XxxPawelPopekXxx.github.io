@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D City Drive - kolizje, wysokie budynki, AI losowe</title>
+    <title>3D City Drive - JASNA WERSJA | kolizje | AI losowe</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Segoe UI', 'Poppins', sans-serif;
+            background: #0a2f2a;
         }
         
         .car-selector-panel {
@@ -16,14 +17,14 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 60px;
             padding: 12px 20px;
             display: flex;
             gap: 12px;
             z-index: 100;
-            border: 1px solid rgba(255, 200, 100, 0.5);
+            border: 1px solid rgba(255, 200, 100, 0.8);
             box-shadow: 0 5px 25px rgba(0,0,0,0.4);
             flex-wrap: wrap;
             justify-content: center;
@@ -31,7 +32,7 @@
         }
         
         .car-btn {
-            background: #1a2a28;
+            background: #2a3a38;
             border: none;
             border-radius: 50px;
             padding: 6px 14px;
@@ -50,7 +51,7 @@
             object-fit: contain;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
             pointer-events: none;
-            background: linear-gradient(135deg, #2a3a38, #1a2a28);
+            background: linear-gradient(135deg, #4a6b62, #2a4a42);
             border-radius: 12px;
             padding: 5px;
         }
@@ -59,7 +60,7 @@
             font-size: 11px;
             font-weight: bold;
             color: #ffecb3;
-            background: #00000088;
+            background: #000000aa;
             padding: 2px 10px;
             border-radius: 20px;
         }
@@ -79,11 +80,11 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
             padding: 8px 16px;
             border-radius: 30px;
-            color: white;
+            color: #ffdd99;
             font-size: 12px;
             font-family: monospace;
             z-index: 100;
@@ -97,13 +98,14 @@
             border-radius: 20px;
             margin: 0 2px;
             font-weight: bold;
+            color: #ffdd99;
         }
         
         .title {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             padding: 6px 15px;
             border-radius: 30px;
             color: #ffdd99;
@@ -122,7 +124,7 @@
     </style>
 </head>
 <body>
-    <div class="title">🚗 CITY DRIVE 3D | WYSOKIE BUDYNKI | AI LOSOWE</div>
+    <div class="title">🚗 CITY DRIVE 3D | JASNE MIASTO | AI LOSOWE</div>
     <div class="controls-info">
         🖱️ <kbd>MYSZKA</kbd> obrót kamery &nbsp;&nbsp;|&nbsp;&nbsp;
         <kbd>W A S D</kbd> jazda &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -144,13 +146,13 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // ---------- KONFIGURACJA SCENY ----------
+        // ---------- KONFIGURACJA SCENY - JASNE KOLORY ----------
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a2f2a);
-        scene.fog = new THREE.FogExp2(0x0a2f2a, 0.0006);
+        scene.background = new THREE.Color(0x87CEEB); // JASNE NIEBO
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.002); // Lekka mgiełka
         
         const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(10, 8, 14);
+        camera.position.set(12, 9, 15);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -166,58 +168,53 @@
         labelRenderer.domElement.style.pointerEvents = 'none';
         document.body.appendChild(labelRenderer.domElement);
         
-        // ---------- KONTROLKI ----------
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.rotateSpeed = 1.2;
-        controls.enableZoom = true;
-        controls.zoomSpeed = 0.8;
-        controls.enablePan = false;
-        controls.maxPolarAngle = Math.PI / 2.3;
-        controls.minDistance = 5;
-        controls.maxDistance = 24;
-        controls.target.set(0, 0, 0);
-        
-        // ---------- OŚWIETLENIE ----------
-        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+        // ---------- JASNE OŚWIETLENIE ----------
+        // Ambient - jasne światło otoczenia
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
         
-        const sunLight = new THREE.DirectionalLight(0xfff5d1, 1.3);
-        sunLight.position.set(15, 25, 10);
+        // Główne światło słoneczne
+        const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.5);
+        sunLight.position.set(20, 30, 15);
         sunLight.castShadow = true;
         sunLight.receiveShadow = true;
         sunLight.shadow.mapSize.width = 1024;
         sunLight.shadow.mapSize.height = 1024;
         sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 50;
-        sunLight.shadow.camera.left = -15;
-        sunLight.shadow.camera.right = 15;
-        sunLight.shadow.camera.top = 15;
-        sunLight.shadow.camera.bottom = -15;
+        sunLight.shadow.camera.far = 60;
+        sunLight.shadow.camera.left = -20;
+        sunLight.shadow.camera.right = 20;
+        sunLight.shadow.camera.top = 20;
+        sunLight.shadow.camera.bottom = -20;
         scene.add(sunLight);
         
-        const fillLight = new THREE.PointLight(0x88aadd, 0.5);
-        fillLight.position.set(5, 10, 7);
+        // Dodatkowe światło wypełniające od dołu
+        const fillLight = new THREE.PointLight(0x88aaff, 0.6);
+        fillLight.position.set(0, 5, 0);
         scene.add(fillLight);
         
-        const backLight = new THREE.PointLight(0xffaa66, 0.4);
-        backLight.position.set(-3, 5, -6);
-        scene.add(backLight);
+        // Światło z tyłu dla podświetlenia
+        const backLight2 = new THREE.PointLight(0xffaa77, 0.5);
+        backLight2.position.set(-5, 8, -8);
+        scene.add(backLight2);
         
-        // ---------- GENEROWANIE MIASTA Z WYSOKIMI BUDYNKAMI ----------
-        // Podłoże asfaltowe
+        // Światło z boku
+        const sideLight = new THREE.PointLight(0xffcc88, 0.5);
+        sideLight.position.set(12, 6, 5);
+        scene.add(sideLight);
+        
+        // ---------- PODŁOŻE (JASNY ASFALT) ----------
         const groundPlane = new THREE.Mesh(
             new THREE.PlaneGeometry(220, 220),
-            new THREE.MeshStandardMaterial({ color: 0x2a3a35, roughness: 0.7, metalness: 0.1 })
+            new THREE.MeshStandardMaterial({ color: 0x5a7a6e, roughness: 0.6, metalness: 0.05 })
         );
         groundPlane.rotation.x = -Math.PI / 2;
         groundPlane.position.y = -0.2;
         groundPlane.receiveShadow = true;
         scene.add(groundPlane);
         
-        // Siatka dróg
-        const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2e2c, roughness: 0.4 });
+        // Siatka dróg (ciemniejszy asfalt dla kontrastu)
+        const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x3a4a44, roughness: 0.5 });
         const roadWidth = 2.2;
         const roads = [
             { x: 0, z: -28, w: 220, h: roadWidth },
@@ -238,40 +235,42 @@
             scene.add(block);
         });
         
-        // Linie na drogach
-        const lineMat = new THREE.MeshStandardMaterial({ color: 0xffdd99 });
+        // Linie na drogach (żółte)
+        const lineMat = new THREE.MeshStandardMaterial({ color: 0xffdd77, emissive: 0x442200 });
         for (let z = -55; z <= 55; z += 4) {
             if (Math.abs(z) < 3) continue;
             const line = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 3.5), lineMat);
-            line.position.set(0, 0.05, z);
+            line.position.set(0, 0.08, z);
             scene.add(line);
         }
         for (let x = -55; x <= 55; x += 4) {
             if (Math.abs(x) < 3) continue;
             const lineV = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.08, 0.25), lineMat);
-            lineV.position.set(x, 0.05, 0);
+            lineV.position.set(x, 0.08, 0);
             scene.add(lineV);
         }
         
-        // WYSOKIE BUDYNKI (2-4 piętra)
-        const buildingColors = [0x8b5a2b, 0xa0663a, 0x7a4c2a, 0x6d8f7a, 0x5e7c6e, 0xbd8a5a, 0x4a6b62, 0x957b4e, 0x6a4c3c, 0x587b6e];
-        const buildings = []; // przechowujemy budynki do kolizji
+        // ---------- WYSOKIE BUDYNKI (JASNE KOLORY) ----------
+        const buildingColors = [
+            0xc9a87c, 0xb89a6e, 0xa88b62, 0x9d7e58, 0x8d6b48,
+            0x7c8f7a, 0x6c8b72, 0x5a7d68, 0x8b9a7a, 0x9aae8a
+        ];
+        const buildings = [];
         
         for (let i = -12; i <= 12; i++) {
             for (let j = -12; j <= 12; j++) {
-                // Pomijamy centrum i drogi
                 const distToCenter = Math.hypot(i * 2.5, j * 2.5);
                 if (distToCenter < 8) continue;
-                if (Math.random() > 0.65) continue;
+                if (Math.random() > 0.6) continue;
                 
-                const width = 1.4 + Math.random() * 1.0;
-                const depth = 1.4 + Math.random() * 1.0;
-                const height = 1.5 + Math.random() * 2.5; // WYSOKIE: od 1.5 do 4
+                const width = 1.3 + Math.random() * 1.1;
+                const depth = 1.3 + Math.random() * 1.1;
+                const height = 1.8 + Math.random() * 2.8;
                 const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
                 
                 const building = new THREE.Mesh(
                     new THREE.BoxGeometry(width, height, depth),
-                    new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.1 })
+                    new THREE.MeshStandardMaterial({ color: color, roughness: 0.2, metalness: 0.1 })
                 );
                 const posX = (i * 2.8) + (Math.random() - 0.5) * 1.2;
                 const posZ = (j * 2.8) + (Math.random() - 0.5) * 1.2;
@@ -280,7 +279,6 @@
                 building.receiveShadow = true;
                 scene.add(building);
                 
-                // Zapisz dane do kolizji
                 buildings.push({
                     mesh: building,
                     x: posX - width/2,
@@ -291,17 +289,17 @@
                     depth: depth
                 });
                 
-                // Dach
+                // Dach (czerwony/brązowy)
                 const roof = new THREE.Mesh(
-                    new THREE.BoxGeometry(width + 0.1, 0.15, depth + 0.1),
-                    new THREE.MeshStandardMaterial({ color: 0xaa7c55, roughness: 0.5 })
+                    new THREE.BoxGeometry(width + 0.1, 0.12, depth + 0.1),
+                    new THREE.MeshStandardMaterial({ color: 0xcc8866, roughness: 0.4 })
                 );
-                roof.position.set(posX, height + 0.08, posZ);
+                roof.position.set(posX, height + 0.06, posZ);
                 roof.castShadow = true;
                 scene.add(roof);
                 
-                // Okna (dekoracja)
-                const windowMat = new THREE.MeshStandardMaterial({ color: 0xffcc88, emissive: 0x442200 });
+                // Okna (jasne)
+                const windowMat = new THREE.MeshStandardMaterial({ color: 0xffdd99, emissive: 0x331100 });
                 for (let w = 0; w < 3; w++) {
                     const windowGeo = new THREE.BoxGeometry(0.35, 0.45, 0.05);
                     const windowObj = new THREE.Mesh(windowGeo, windowMat);
@@ -317,68 +315,79 @@
             }
         }
         
-        // Drzewa
+        // Drzewa (zielone)
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
-        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x5A9E4E });
-        for (let t = 0; t < 250; t++) {
+        const foliageMat = new THREE.MeshStandardMaterial({ color: 0x6AAB4E });
+        for (let t = 0; t < 300; t++) {
             const angle = Math.random() * Math.PI * 2;
-            const radius = 16 + Math.random() * 30;
+            const radius = 15 + Math.random() * 32;
             const x = Math.cos(angle) * radius;
             const z = Math.sin(angle) * radius;
             if (Math.abs(x) < 9 && Math.abs(z) < 9) continue;
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.55, 1.0, 6), trunkMat);
-            trunk.position.set(x, 0.45, z);
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.55, 1.1, 6), trunkMat);
+            trunk.position.set(x, 0.5, z);
             trunk.castShadow = true;
-            const foliage = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.9, 8), foliageMat);
-            foliage.position.set(x, 1.0, z);
+            const foliage = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.0, 8), foliageMat);
+            foliage.position.set(x, 1.1, z);
             foliage.castShadow = true;
             scene.add(trunk);
             scene.add(foliage);
         }
         
-        // ---------- TWORZENIE GRAFIK DLA AUT (kolorowe, atrakcyjne) ----------
-        // Zamiast wczytywania zewnętrznych plików, tworzymy dynamiczne canvas z numerami
+        // Trawa / krzaki
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x6cae6c });
+        for (let g = 0; g < 400; g++) {
+            const x = (Math.random() - 0.5) * 90;
+            const z = (Math.random() - 0.5) * 90;
+            if (Math.abs(x) < 10 && Math.abs(z) < 10) continue;
+            const bush = new THREE.Mesh(new THREE.SphereGeometry(0.2 + Math.random() * 0.2, 5), grassMat);
+            bush.position.set(x, 0, z);
+            bush.castShadow = false;
+            scene.add(bush);
+        }
+        
+        // ---------- TWORZENIE KOLOROWYCH TEKSTUR DLA AUT ----------
         function createCarTexture(color, number, name) {
             const canvas = document.createElement('canvas');
             canvas.width = 512;
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             
-            // Tło z gradientem
+            // Jasne tło z gradientem
             const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
             grad.addColorStop(0, color);
-            grad.addColorStop(1, this.adjustBrightness ? this.adjustBrightness(color, -20) : color);
+            grad.addColorStop(1, this.adjustBrightness ? this.adjustBrightness(color, -30) : color);
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Ramka chromowana
+            // Chromowana ramka
             ctx.strokeStyle = '#FFD966';
-            ctx.lineWidth = 25;
-            ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
+            ctx.lineWidth = 20;
+            ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
             
-            // Główne okno
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(canvas.width * 0.2, canvas.height * 0.3, canvas.width * 0.6, canvas.height * 0.4);
+            // Okno
+            ctx.fillStyle = '#AADDFF';
+            ctx.fillRect(canvas.width * 0.2, canvas.height * 0.28, canvas.width * 0.6, canvas.height * 0.44);
             
             // Reflektory
-            ctx.fillStyle = '#FFD966';
+            ctx.fillStyle = '#FFDD88';
             ctx.beginPath();
-            ctx.arc(canvas.width * 0.15, canvas.height * 0.5, 30, 0, Math.PI * 2);
+            ctx.arc(canvas.width * 0.12, canvas.height * 0.5, 28, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(canvas.width * 0.85, canvas.height * 0.5, 30, 0, Math.PI * 2);
+            ctx.arc(canvas.width * 0.88, canvas.height * 0.5, 28, 0, Math.PI * 2);
             ctx.fill();
             
-            // Numer auta
+            // Numer
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = `Bold ${canvas.width * 0.25}px "Segoe UI"`;
+            ctx.font = `Bold ${canvas.width * 0.28}px "Segoe UI"`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`#${number}`, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(`${number}`, canvas.width / 2, canvas.height / 2);
             
-            // Nazwa modelu
-            ctx.font = `${canvas.width * 0.07}px "Segoe UI"`;
-            ctx.fillStyle = '#FFDDAA';
+            // Nazwa
+            ctx.font = `${canvas.width * 0.08}px "Segoe UI"`;
+            ctx.fillStyle = '#FFEEBB';
             ctx.fillText(name, canvas.width / 2, canvas.height * 0.85);
             
             const texture = new THREE.CanvasTexture(canvas);
@@ -386,12 +395,11 @@
             return texture;
         }
         
-        // Kolory dla 10 aut
         const carColors = [
-            '#E34234', '#2E8B57', '#4682B4', '#DAA520', '#9370DB',
-            '#FF69B4', '#20B2AA', '#FF8C00', '#6A5ACD', '#CD5C5C'
+            '#E34D3A', '#3A9B6E', '#4A8FC4', '#E5B83C', '#B87CD6',
+            '#F57CB3', '#38C9B8', '#FF9F4A', '#7A5FC0', '#D65C5C'
         ];
-        const carNames = ['SPEEDSTER', 'PHANTOM', 'THUNDER', 'NOVA', 'STRIKE', 'BLAZE', 'SHADOW', 'TITAN', 'VIPER', 'COMET'];
+        const carNames = ['SPEED', 'PHANTOM', 'THUNDER', 'NOVA', 'STRIKE', 'BLAZE', 'SHADOW', 'TITAN', 'VIPER', 'COMET'];
         
         const carTextures = [];
         for (let i = 0; i < 10; i++) {
@@ -399,25 +407,25 @@
             carTextures.push(tex);
         }
         
-        // ---------- KLASA AUTA Z POPRAWNĄ KOLIZJĄ ----------
+        // ---------- KLASA AUTA ----------
         class Car3D {
             constructor(scene, texture, colorFallback, isPlayer = false, name = "Auto") {
                 this.scene = scene;
                 this.isPlayer = isPlayer;
                 this.speed = 0;
                 this.angle = 0;
-                this.maxSpeed = isPlayer ? 20 : 10;
-                this.acceleration = isPlayer ? 30 : 14;
-                this.turnSpeed = isPlayer ? 2.4 : 1.8;
+                this.maxSpeed = isPlayer ? 22 : 11;
+                this.acceleration = isPlayer ? 32 : 15;
+                this.turnSpeed = isPlayer ? 2.5 : 1.9;
                 this.friction = 0.96;
                 this.width = 0.9;
                 this.length = 1.7;
                 
-                const geometry = new THREE.BoxGeometry(0.95, 0.5, 1.75);
+                const geometry = new THREE.BoxGeometry(0.95, 0.52, 1.75);
                 const material = new THREE.MeshStandardMaterial({ 
                     map: texture, 
-                    roughness: 0.2, 
-                    metalness: 0.8,
+                    roughness: 0.25, 
+                    metalness: 0.75,
                     color: 0xffffff
                 });
                 this.mesh = new THREE.Mesh(geometry, material);
@@ -425,26 +433,26 @@
                 this.mesh.receiveShadow = true;
                 scene.add(this.mesh);
                 
-                // Dodanie świateł
-                const lightMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0x442200 });
-                const headlightL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8), lightMat);
-                headlightL.position.set(-0.3, 0.2, 0.88);
-                const headlightR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8), lightMat);
-                headlightR.position.set(0.3, 0.2, 0.88);
+                // Światła
+                const lightMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0x552200 });
+                const headlightL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8), lightMat);
+                headlightL.position.set(-0.32, 0.22, 0.9);
+                const headlightR = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8), lightMat);
+                headlightR.position.set(0.32, 0.22, 0.9);
                 this.mesh.add(headlightL);
                 this.mesh.add(headlightR);
                 
-                // CSS2D etykieta
+                // Etykieta dla AI
                 if (!isPlayer) {
                     const div = document.createElement('div');
-                    div.textContent = `${name} 🚗`;
-                    div.style.color = '#ffdd99';
+                    div.textContent = `${name} 🚘`;
+                    div.style.color = '#FFDD99';
                     div.style.fontSize = '12px';
                     div.style.fontWeight = 'bold';
                     div.style.textShadow = '1px 1px 0px black';
                     div.style.background = 'rgba(0,0,0,0.7)';
-                    div.style.padding = '2px 10px';
-                    div.style.borderRadius = '20px';
+                    div.style.padding = '2px 12px';
+                    div.style.borderRadius = '25px';
                     div.style.borderLeft = `3px solid ${carColors[Math.floor(Math.random() * carColors.length)]}`;
                     div.style.whiteSpace = 'nowrap';
                     this.label = new CSS2DObject(div);
@@ -453,7 +461,7 @@
                     this.label = null;
                 }
                 
-                this.position = new THREE.Vector3(0, 0.28, 0);
+                this.position = new THREE.Vector3(0, 0.3, 0);
                 this.mesh.position.copy(this.position);
                 this.updateLabelPos();
             }
@@ -461,12 +469,12 @@
             updateLabelPos() {
                 if (this.label) {
                     this.label.position.copy(this.position);
-                    this.label.position.y += 0.9;
+                    this.label.position.y += 0.95;
                 }
             }
             
             setPosition(x, z) {
-                this.position.set(x, 0.28, z);
+                this.position.set(x, 0.3, z);
                 this.mesh.position.copy(this.position);
                 this.updateLabelPos();
             }
@@ -476,7 +484,6 @@
                 this.mesh.rotation.y = angleRad;
             }
             
-            // Sprawdzanie kolizji z budynkami
             checkCollisionWithBuildings(buildingsList, newX, newZ) {
                 const carHalfW = this.width / 2;
                 const carHalfL = this.length / 2;
@@ -493,7 +500,7 @@
                 return false;
             }
             
-            update(deltaTime, keysPressed = null, aiBehavior = null) {
+            update(deltaTime, keysPressed = null) {
                 if (!deltaTime || deltaTime > 0.033) deltaTime = 0.016;
                 
                 let acc = 0;
@@ -504,21 +511,22 @@
                     if (keysPressed['KeyS'] || keysPressed['ArrowDown']) acc = -1;
                     if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) turn = 1;
                     if (keysPressed['KeyD'] || keysPressed['ArrowRight']) turn = -1;
-                } else if (!this.isPlayer && aiBehavior) {
-                    // AI losowo zmienia kierunek co jakiś czas
+                } else if (!this.isPlayer) {
+                    // AI losowe zachowanie
                     if (!this.aiTimer) this.aiTimer = 0;
+                    if (!this.aiTargetAngle) this.aiTargetAngle = this.angle;
+                    
                     this.aiTimer += deltaTime;
-                    if (this.aiTimer > 2.5) {
+                    if (this.aiTimer > 2.2) {
                         this.aiTimer = 0;
-                        this.aiTargetAngle = this.angle + (Math.random() - 0.5) * 1.8;
+                        this.aiTargetAngle = this.angle + (Math.random() - 0.5) * 2.2;
                     }
-                    if (this.aiTargetAngle === undefined) this.aiTargetAngle = this.angle;
                     
                     let angleDiff = this.aiTargetAngle - this.angle;
                     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                    turn = Math.min(0.8, Math.max(-0.8, angleDiff * 2.0));
-                    acc = 0.6 + Math.random() * 0.3;
+                    turn = Math.min(0.7, Math.max(-0.7, angleDiff * 1.8));
+                    acc = 0.55 + Math.random() * 0.35;
                 }
                 
                 if (acc !== 0) {
@@ -529,7 +537,7 @@
                     if (Math.abs(this.speed) < 0.2) this.speed = 0;
                 }
                 
-                if (turn !== 0 && Math.abs(this.speed) > 0.5) {
+                if (turn !== 0 && Math.abs(this.speed) > 0.8) {
                     this.angle += turn * this.turnSpeed * deltaTime * (Math.abs(this.speed) / this.maxSpeed);
                 }
                 
@@ -538,23 +546,21 @@
                 let newX = this.position.x + moveX;
                 let newZ = this.position.z + moveZ;
                 
-                // Granice miasta
-                const bound = 48;
+                // Granice
+                const bound = 52;
                 newX = Math.min(Math.max(newX, -bound), bound);
                 newZ = Math.min(Math.max(newZ, -bound), bound);
                 
-                // KOLIZJA Z BUDYNKAMI
+                // Kolizja z budynkami
                 if (!this.checkCollisionWithBuildings(buildings, newX, newZ)) {
-                    this.position.set(newX, 0.28, newZ);
+                    this.position.set(newX, 0.3, newZ);
                 } else {
-                    // Kolizja - odbicie i strata prędkości
-                    this.speed *= -0.4;
+                    this.speed *= -0.35;
                     if (Math.abs(this.speed) < 0.8) this.speed = 0;
-                    // Próba cofnięcia
-                    const backX = this.position.x - moveX * 0.8;
-                    const backZ = this.position.z - moveZ * 0.8;
+                    const backX = this.position.x - moveX * 0.7;
+                    const backZ = this.position.z - moveZ * 0.7;
                     if (!this.checkCollisionWithBuildings(buildings, backX, backZ)) {
-                        this.position.set(backX, 0.28, backZ);
+                        this.position.set(backX, 0.3, backZ);
                     }
                 }
                 
@@ -565,34 +571,31 @@
         }
         
         // ---------- GRACZ ----------
-        let playerCar = new Car3D(scene, carTextures[0], 0xe34234, true, "TWOJE AUTO");
+        let playerCar = new Car3D(scene, carTextures[0], 0xe34d3a, true, "TWOJE AUTO");
         playerCar.setPosition(0, 0);
         playerCar.setRotation(0);
         
-        // ---------- AUTA AI (10 sztuk, losowe poruszanie) ----------
+        // ---------- AUTA AI ----------
         const aiCars = [];
         for (let i = 0; i < 10; i++) {
             const tex = carTextures[i % carTextures.length];
             const aiCar = new Car3D(scene, tex, 0x77aaff, false, carNames[i % carNames.length]);
-            // Rozstawienie po mieście z dala od centrum
+            
             let placed = false;
             let attempts = 0;
-            while (!placed && attempts < 30) {
+            while (!placed && attempts < 40) {
                 const angleRad = Math.random() * Math.PI * 2;
-                const radius = 12 + Math.random() * 30;
+                const radius = 12 + Math.random() * 32;
                 const x = Math.cos(angleRad) * radius;
                 const z = Math.sin(angleRad) * radius;
-                // Sprawdź kolizję z budynkami przy starcie
-                const carHalfW = 0.45, carHalfL = 0.85;
                 let collision = false;
                 for (let b of buildings) {
-                    if (x + carHalfW > b.x && x - carHalfW < b.x2 && 
-                        z + carHalfL > b.z && z - carHalfL < b.z2) {
+                    if (x + 0.5 > b.x && x - 0.5 < b.x2 && z + 0.8 > b.z && z - 0.8 < b.z2) {
                         collision = true;
                         break;
                     }
                 }
-                if (!collision && Math.abs(x) < 45 && Math.abs(z) < 45) {
+                if (!collision && Math.abs(x) < 50 && Math.abs(z) < 50) {
                     aiCar.setPosition(x, z);
                     aiCar.setRotation(Math.random() * Math.PI * 2);
                     placed = true;
@@ -600,8 +603,7 @@
                 attempts++;
             }
             if (!placed) {
-                aiCar.setPosition(15, 15);
-                aiCar.setRotation(0);
+                aiCar.setPosition(12 + (i * 3) % 40, 12 + (i * 5) % 40);
             }
             aiCars.push(aiCar);
         }
@@ -641,24 +643,23 @@
             });
         }
         
-        // Budowanie UI
+        // UI
         const selectorDiv = document.getElementById('carSelector');
         for (let i = 0; i < 10; i++) {
             const btn = document.createElement('button');
             btn.className = 'car-btn';
             if (i === 0) btn.classList.add('active');
             const img = document.createElement('img');
-            // Tworzymy miniaturkę z canvas
             const thumbCanvas = document.createElement('canvas');
             thumbCanvas.width = 100;
             thumbCanvas.height = 100;
             const tCtx = thumbCanvas.getContext('2d');
             tCtx.fillStyle = carColors[i];
             tCtx.fillRect(0, 0, 100, 100);
-            tCtx.fillStyle = '#FFD966';
-            tCtx.font = 'bold 40px sans-serif';
+            tCtx.fillStyle = '#FFDD99';
+            tCtx.font = 'bold 42px sans-serif';
             tCtx.textAlign = 'center';
-            tCtx.fillText(`${i+1}`, 50, 65);
+            tCtx.fillText(`${i+1}`, 50, 68);
             img.src = thumbCanvas.toDataURL();
             const span = document.createElement('span');
             span.textContent = carNames[i];
@@ -668,6 +669,19 @@
             selectorDiv.appendChild(btn);
         }
         
+        // ---------- KONTROLKI ORBIT ----------
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 1.2;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 0.9;
+        controls.enablePan = false;
+        controls.maxPolarAngle = Math.PI / 2.2;
+        controls.minDistance = 5;
+        controls.maxDistance = 26;
+        controls.target.set(0, 0, 0);
+        
         // ---------- PĘTLA GRY ----------
         let lastTime = performance.now();
         
@@ -676,30 +690,26 @@
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
             
-            // Aktualizacja gracza
             playerCar.update(delta, keyState);
             
-            // Aktualizacja AI (losowe zachowanie, nie jadą za graczem)
             for (let ai of aiCars) {
-                ai.update(delta, null, { type: 'random' });
+                ai.update(delta, null);
                 
-                // Kolizje między AI a graczem
-                if (playerCar.position.distanceTo(ai.position) < 1.1) {
+                // Kolizja gracz-AI
+                if (playerCar.position.distanceTo(ai.position) < 1.15) {
                     const dir = new THREE.Vector3().subVectors(playerCar.position, ai.position).normalize();
                     playerCar.speed *= -0.4;
-                    ai.speed *= -0.3;
-                    playerCar.position.addScaledVector(dir, 0.25);
-                    ai.position.addScaledVector(dir, -0.2);
+                    ai.speed *= -0.35;
+                    playerCar.position.addScaledVector(dir, 0.28);
+                    ai.position.addScaledVector(dir, -0.22);
                     playerCar.mesh.position.copy(playerCar.position);
                     ai.mesh.position.copy(ai.position);
-                    playerCar.updateLabelPos();
-                    ai.updateLabelPos();
                 }
                 
-                // Kolizje między AI a AI
+                // Kolizje AI-AI
                 for (let other of aiCars) {
                     if (other === ai) continue;
-                    if (ai.position.distanceTo(other.position) < 1.0) {
+                    if (ai.position.distanceTo(other.position) < 1.05) {
                         const dir = new THREE.Vector3().subVectors(ai.position, other.position).normalize();
                         ai.position.addScaledVector(dir, 0.12);
                         other.position.addScaledVector(dir, -0.12);
@@ -709,8 +719,8 @@
                 }
             }
             
-            // Aktualizacja kamery
-            controls.target.lerp(playerCar.position, 0.08);
+            // Kamera podąża za graczem
+            controls.target.lerp(playerCar.position, 0.1);
             controls.update();
             
             renderer.render(scene, camera);
@@ -720,22 +730,25 @@
         }
         
         controls.target.set(0, 0, 0);
-        camera.position.set(12, 9, 15);
+        camera.position.set(14, 10, 16);
         controls.update();
         
-        // Gwiazdy
-        const stars = new THREE.Points(
-            new THREE.BufferGeometry(),
-            new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 })
-        );
-        const starPos = [];
-        for (let i = 0; i < 1200; i++) {
-            starPos.push((Math.random() - 0.5) * 400);
-            starPos.push((Math.random() - 0.5) * 100 + 20);
-            starPos.push((Math.random() - 0.5) * 200 - 80);
+        // Dekoracje - chmury
+        const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xeeeeee });
+        for (let c = 0; c < 30; c++) {
+            const cloudGroup = new THREE.Group();
+            const cloudX = (Math.random() - 0.5) * 180;
+            const cloudZ = (Math.random() - 0.5) * 150 - 50;
+            const cloudY = 18 + Math.random() * 10;
+            const parts = 3 + Math.floor(Math.random() * 3);
+            for (let p = 0; p < parts; p++) {
+                const part = new THREE.Mesh(new THREE.SphereGeometry(0.6 + Math.random() * 0.5, 7), cloudMat);
+                part.position.set((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 1);
+                cloudGroup.add(part);
+            }
+            cloudGroup.position.set(cloudX, cloudY, cloudZ);
+            scene.add(cloudGroup);
         }
-        stars.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
-        scene.add(stars);
         
         animate();
         
@@ -746,7 +759,7 @@
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        console.log('Gra uruchomiona! Kolizje z budynkami działają, AI jeździ losowo, wysokie budynki!');
+        console.log('Gra uruchomiona! Jasne kolory, kolizje działają, AI losowo jeździ.');
     </script>
 </body>
 </html>
