@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Miejska jazda - wybierz auto i jedź</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a2f2a 0%, #06312c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Roboto', sans-serif;
+            padding: 20px;
+        }
+
+        /* GŁÓWNY KONTENER GRY */
+        .game-container {
+            background: #1e2a2a;
+            border-radius: 2rem;
+            padding: 1rem;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 1.2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            cursor: none;
+            background-color: #2d3e3b;
+        }
+
+        /* PANEL WYBORU AUTA */
+        .car-selector {
+            background: #0f1c1aee;
+            backdrop-filter: blur(8px);
+            margin-top: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 3rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 150, 0.3);
+        }
+
+        .car-btn {
+            background: #1f2e2b;
+            border: none;
+            border-radius: 2rem;
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .car-btn img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+            pointer-events: none;
+        }
+
+        .car-btn span {
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffecb3;
+            background: #00000066;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .car-btn.active {
+            background: #f5b042;
+            box-shadow: 0 0 0 2px #ffdd99, 0 0 0 4px #2c4a44;
+            transform: scale(1.02);
+        }
+
+        .car-btn.active span {
+            color: #2c1e0a;
+            background: #ffefc0;
+            font-weight: bold;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 6px 18px;
+            background: #000000aa;
+            border-radius: 60px;
+            color: #f0f0e0;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+        }
+
+        .controls-hint {
+            font-size: 12px;
+            background: #1e2a28;
+            padding: 4px 12px;
+            border-radius: 32px;
+            letter-spacing: 1px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .controls-hint kbd {
+            background: #2b3b38;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-weight: bold;
+            color: #ffdd99;
+            margin: 0 2px;
+        }
+
+        @media (max-width: 850px) {
+            .car-btn img {
+                width: 44px;
+                height: 44px;
+            }
+            .car-btn span {
+                font-size: 9px;
+            }
+            .controls-hint {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="info-panel">
+            <div>🏙️ MIASTO DRIVING</div>
+            <div class="controls-hint">
+                <span><kbd>W A S D</kbd> → jedź</span>
+                <span>🖱️ kamera auto-centrum</span>
+            </div>
+        </div>
+        <canvas id="gameCanvas" width="1000" height="600" style="width:100%; height:auto; max-width:1000px; aspect-ratio:1000/600"></canvas>
+        
+        <div class="car-selector" id="carSelector">
+            <!-- dynamicznie wypełnione przyciski aut photo1.png ... photo10.png -->
+        </div>
+        <div style="text-align: center; font-size: 11px; margin-top: 8px; color:#b7cfc9;">⭐ wybierz auto z galerii, poruszaj się po mieście</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- KONFIGURACJA MAPY MIEJSKIEJ ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // WYMIARY ŚWIATA (większe niż canvas, żeby było gdzie jeździć)
+        const WORLD_WIDTH = 3200;
+        const WORLD_HEIGHT = 2400;
+        
+        // Parametry kamery (podąża za autem)
+        let cameraX = 0, cameraY = 0;
+        
+        // ---------- DANE O AUTACH (10 różnych pojazdów) ----------
+        // każdy ma nazwę i ścieżkę do pliku graficznego (photo1.png ... photo10.png)
+        const carModels = [];
+        for (let i = 1; i <= 10; i++) {
+            carModels.push({
+                id: i,
+                name: `Auto ${i}`,
+                imgSrc: `photo${i}.png`
+            });
+        }
+        
+        // Obiekt gracza (auto)
+        let player = {
+            x: WORLD_WIDTH / 2,
+            y: WORLD_HEIGHT / 2,
+            angle: 0,         // w radianach
+            speed: 0,
+            maxSpeed: 280,
+            acceleration: 420,
+            turnSpeed: 2.8,   // radianów na sekundę
+            friction: 0.96,
+            width: 48,
+            height: 32,
+            selectedCarIndex: 0,   // 0-based (photo1.png)
+            carImage: null,
+            imageLoaded: false
+        };
+        
+        // stany klawiszy
+        const keys = {
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            KeyW: false, KeyS: false, KeyA: false, KeyD: false
+        };
+        
+        let lastTimestamp = 0;
+        let animationId = null;
+        
+        // ---------- GENEROWANIE MIEJSKIEJ MAPY (ULICE, BUDYNKI, TRAWNIKI, DRZEWA) ----------
+        // Użyjemy prostych struktur: prostokątne budynki, linie ulic, zieleń.
+        // Aby wyglądało miejsko i przyjemnie - generujemy losowo na podstawie siatki 80x60 (ale z sensem)
+        
+        class CityElement {
+            constructor(type, x, y, w, h, color, detail = null) {
+                this.type = type;   // 'building', 'road', 'green', 'tree'
+                this.x = x;
+                this.y = y;
+                this.w = w;
+                this.h = h;
+                this.color = color;
+                this.detail = detail;
+            }
+        }
+        
+        let cityObjects = [];   // wszystkie obiekty do rysowania (kolejność ma znaczenie: najpierw tło, potem drogi, budynki, detale)
+        let roadLines = [];     // pasy jezdni
+        
+        // Funkcja generująca miasto z przesunięciami i powtarzalnymi wzorami
+        function generateCity() {
+            cityObjects = [];
+            roadLines = [];
+            
+            // 1. TŁO - trawa / ziemia
+            cityObjects.push({ type: 'bg', x: 0, y: 0, w: WORLD_WIDTH, h: WORLD_HEIGHT, color: '#3c7a5e' });
+            
+            // 2. GŁÓWNE OSIE DRÓG (siatka ulic)
+            // poziome ulice co 220-280px, pionowe co 240-320px
+            const roadHorizY = [];
+            for (let y = 140; y < WORLD_HEIGHT; y += 260) {
+                roadHorizY.push(y);
+            }
+            // dodatkowe drogi pomocnicze
+            for (let y = 70; y < WORLD_HEIGHT; y += 510) roadHorizY.push(y);
+            roadHorizY.sort((a,b)=>a-b);
+            
+            const roadVertX = [];
+            for (let x = 180; x < WORLD_WIDTH; x += 290) {
+                roadVertX.push(x);
+            }
+            for (let x = 80; x < WORLD_WIDTH; x += 570) roadVertX.push(x);
+            roadVertX.sort((a,b)=>a-b);
+            
+            // rysowanie asfaltu (szerokie pasy)
+            const ROAD_WIDTH = 68;
+            roadHorizY.forEach(y => {
+                cityObjects.push({ type: 'road', x: 0, y: y - ROAD_WIDTH/2, w: WORLD_WIDTH, h: ROAD_WIDTH, color: '#2e2f2e', isRoad: true });
+                // linie przerywane dla poziomych
+                for (let x = 30; x < WORLD_WIDTH; x += 45) {
+                    roadLines.push({ type: 'dash', x: x, y: y, w: 24, h: 4, horizontal: true });
+                }
+            });
+            
+            roadVertX.forEach(x => {
+                cityObjects.push({ type: 'road', x: x - ROAD_WIDTH/2, y: 0, w: ROAD_WIDTH, h: WORLD_HEIGHT, color: '#2e2f2e', isRoad: true });
+                for (let y = 30; y < WORLD_HEIGHT; y += 50) {
+                    roadLines.push({ type: 'dash', x: x, y: y, w: 4, h: 22, horizontal: false });
+                }
+            });
+            
+            // 3. BUDYNKI (na wolnych polach między drogami, ale nie na drogach)
+            // prosty algorytm: wstawiamy budynki w siatce co 70-150px, omijając obszary dróg
+            const buildingColors = ['#8b5a2b', '#a0663a', '#7a4c2a', '#6d8f7a', '#5e7c6e', '#bd8a5a', '#4a6b62', '#957b4e', '#b87c4a', '#607d6b'];
+            for (let gridX = 40; gridX < WORLD_WIDTH; gridX += 86) {
+                for (let gridY = 40; gridY < WORLD_HEIGHT; gridY += 78) {
+                    // sprawdź czy nie wjeżdża w drogę
+                    let onRoad = false;
+                    for (let ry of roadHorizY) {
+                        if (Math.abs(gridY - ry) < ROAD_WIDTH/2 + 20) { onRoad = true; break; }
+                    }
+                    for (let rx of roadVertX) {
+                        if (Math.abs(gridX - rx) < ROAD_WIDTH/2 + 20) { onRoad = true; break; }
+                    }
+                    if (onRoad) continue;
+                    // losuj czy w ogóle postawić budynek (70% szans)
+                    if (Math.random() > 0.68) continue;
+                    const w = 42 + Math.random() * 34;
+                    const h = 38 + Math.random() * 42;
+                    const col = buildingColors[Math.floor(Math.random() * buildingColors.length)];
+                    cityObjects.push({ type: 'building', x: gridX - w/2, y: gridY - h/2, w: w, h: h, color: col, roof: '#6a3e1a' });
+                }
+            }
+            
+            // 4. DRZEWA I PARKI (zielone kropki i krzaki)
+            for (let i = 0; i < 420; i++) {
+                const treeX = Math.random() * WORLD_WIDTH;
+                const treeY = Math.random() * WORLD_HEIGHT;
+                // unikaj dróg
+                let tooClose = false;
+                for (let ry of roadHorizY) {
+                    if (Math.abs(treeY - ry) < 38) { tooClose = true; break; }
+                }
+                for (let rx of roadVertX) {
+                    if (Math.abs(treeX - rx) < 38) { tooClose = true; break; }
+                }
+                if (tooClose) continue;
+                cityObjects.push({ type: 'tree', x: treeX-12, y: treeY-15, w: 26, h: 28, color: '#3f6b47', trunk: '#6b4c3b' });
+            }
+            
+            // dodatkowe chodniki / trawniki wokół dróg – małe akcenty
+            for (let ry of roadHorizY) {
+                for (let sx = 0; sx < WORLD_WIDTH; sx += 95) {
+                    cityObjects.push({ type: 'sidewalk', x: sx, y: ry + 34, w: 18, h: 8, color: '#ac8e68' });
+                    cityObjects.push({ type: 'sidewalk', x: sx, y: ry - 42, w: 18, h: 8, color: '#ac8e68' });
+                }
+            }
+            for (let rx of roadVertX) {
+                for (let sy = 0; sy < WORLD_HEIGHT; sy += 95) {
+                    cityObjects.push({ type: 'sidewalk', x: rx + 34, y: sy, w: 8, h: 18, color: '#ac8e68' });
+                    cityObjects.push({ type: 'sidewalk', x: rx - 42, y: sy, w: 8, h: 18, color: '#ac8e68' });
+                }
+            }
+        }
+        
+        // ---------- RYSOWANIE CAŁEGO MIASTA (zależne od kamery) ----------
+        function drawCity() {
+            if (!ctx) return;
+            // offset kamery
+            const camX = cameraX;
+            const camY = cameraY;
+            
+            // najpierw tło
+            for (let obj of cityObjects) {
+                if (obj.type === 'bg') {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x - camX, obj.y - camY, obj.w, obj.h);
+                }
+            }
+            // drogi (asfalt)
+            for (let obj of cityObjects) {
+                if (obj.type === 'road') {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x - camX, obj.y - camY, obj.w, obj.h);
+                    // ciemniejsze pasy
+                    ctx.fillStyle = '#1a1a1a';
+                    if (obj.w > obj.h) {
+                        ctx.fillRect(obj.x - camX, obj.y+obj.h/2-4 - camY, obj.w, 6);
+                    } else {
+                        ctx.fillRect(obj.x+obj.w/2-4 - camX, obj.y - camY, 6, obj.h);
+                    }
+                }
+            }
+            // linie przerywane
+            ctx.fillStyle = '#ffde9e';
+            for (let line of roadLines) {
+                if (line.horizontal) {
+                    ctx.fillRect(line.x - camX, line.y-2 - camY, line.w, line.h);
+                } else {
+                    ctx.fillRect(line.x-2 - camX, line.y - camY, line.h, line.w);
+                }
+            }
+            // budynki
+            for (let obj of cityObjects) {
+                if (obj.type === 'building') {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x - camX, obj.y - camY, obj.w, obj.h);
+                    ctx.fillStyle = '#3f2a1c';
+                    ctx.fillRect(obj.x+4 - camX, obj.y-6 - camY, obj.w-8, 8);
+                    // okna
+                    ctx.fillStyle = '#ffe1a0';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillRect(obj.x+8 + i*12 - camX, obj.y+12 - camY, 7, 9);
+                        ctx.fillRect(obj.x+8 + i*12 - camX, obj.y+28 - camY, 7, 9);
+                    }
+                }
+                if (obj.type === 'tree') {
+                    ctx.fillStyle = obj.color;
+                    ctx.beginPath();
+                    ctx.arc(obj.x+13 - camX, obj.y+10 - camY, 14, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillStyle = obj.trunk;
+                    ctx.fillRect(obj.x+10 - camX, obj.y+18 - camY, 7, 14);
+                }
+                if (obj.type === 'sidewalk') {
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(obj.x - camX, obj.y - camY, obj.w, obj.h);
+                }
+            }
+            
+            // dodatkowe trawniki i latarnie (małe detale)
+            ctx.fillStyle = '#87b38f';
+            for (let i = 0; i < 140; i++) {
+                let x = (i * 131) % WORLD_WIDTH;
+                let y = (i * 97) % WORLD_HEIGHT;
+                if (Math.random() > 0.7) continue;
+                ctx.beginPath();
+                ctx.arc(x - camX, y - camY, 5, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+        
+        // ---------- RYSOWANIE AUTA (z wykorzystaniem obrazka) ----------
+        function drawCar() {
+            if (!ctx) return;
+            const carImg = player.carImage;
+            const w = player.width;
+            const h = player.height;
+            const xCar = player.x - cameraX;
+            const yCar = player.y - cameraY;
+            
+            ctx.save();
+            ctx.translate(xCar, yCar);
+            ctx.rotate(player.angle);
+            if (carImg && player.imageLoaded) {
+                // rysuj obrazek auta (zachowując proporcje, ale dostosowując do boxa)
+                try {
+                    ctx.drawImage(carImg, -w/2, -h/2, w, h);
+                } catch(e) { drawFallbackCar(); }
+            } else {
+                drawFallbackCar();
+            }
+            // mały cień pod autem
+            ctx.restore();
+            
+            function drawFallbackCar() {
+                ctx.fillStyle = '#e34234';
+                ctx.fillRect(-w/2, -h/2, w, h);
+                ctx.fillStyle = '#ffcc44';
+                ctx.fillRect(-w/2+6, -h/2+4, 8, 6);
+                ctx.fillStyle = '#222';
+                ctx.fillRect(-w/2+4, h/2-8, 8, 6);
+                ctx.fillRect(w/2-12, h/2-8, 8, 6);
+            }
+        }
+        
+        // ---------- ŁADOWANIE OBRAZKÓW AUT I WYBÓR ----------
+        let carImages = [null, null, null, null, null, null, null, null, null, null];
+        let imagesLoadedCount = 0;
+        
+        function preloadCarImages() {
+            for (let i = 0; i < carModels.length; i++) {
+                const img = new Image();
+                img.src = carModels[i].imgSrc;
+                img.onload = () => {
+                    imagesLoadedCount++;
+                    if (imagesLoadedCount === carModels.length) {
+                        // wszystkie obrazy gotowe, ustawiamy domyślne auto
+                        updateSelectedCar(0);
+                    }
+                };
+                img.onerror = () => {
+                    // fallback: tworzymy płótno zastępcze z tekstem
+                    console.warn(`Nie udało się załadować ${carModels[i].imgSrc} - użyję fallback`);
+                    const fallbackCanvas = document.createElement('canvas');
+                    fallbackCanvas.width = 64;
+                    fallbackCanvas.height = 64;
+                    const fctx = fallbackCanvas.getContext('2d');
+                    fctx.fillStyle = `hsl(${i * 36}, 65%, 55%)`;
+                    fctx.fillRect(0,0,64,64);
+                    fctx.fillStyle = 'white';
+                    fctx.font = 'bold 24px sans-serif';
+                    fctx.fillText(`${i+1}`, 20, 44);
+                    const fallImg = new Image();
+                    fallImg.src = fallbackCanvas.toDataURL();
+                    carImages[i] = fallImg;
+                    imagesLoadedCount++;
+                    if (imagesLoadedCount === carModels.length) updateSelectedCar(0);
+                };
+                carImages[i] = img;
+            }
+        }
+        
+        function updateSelectedCar(index) {
+            player.selectedCarIndex = index;
+            const newImg = carImages[index];
+            if (newImg && newImg.complete && newImg.naturalWidth > 0) {
+                player.carImage = newImg;
+                player.imageLoaded = true;
+            } else if (newImg) {
+                player.carImage = newImg;
+                player.imageLoaded = false;
+                newImg.onload = () => { player.imageLoaded = true; };
+            } else {
+                player.imageLoaded = false;
+            }
+            // odśwież UI aktywnego przycisku
+            document.querySelectorAll('.car-btn').forEach((btn, idx) => {
+                if (idx === index) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+        
+        // ---------- STEROWANIE I FIZYKA ----------
+        function handleInput(deltaSec) {
+            let acc = 0;
+            let turn = 0;
+            if (keys.KeyW || keys.ArrowUp) acc = 1;
+            if (keys.KeyS || keys.ArrowDown) acc = -1;
+            if (keys.KeyA || keys.ArrowLeft) turn = -1;
+            if (keys.KeyD || keys.ArrowRight) turn = 1;
+            
+            // przyspieszenie/opóźnienie
+            if (acc !== 0) {
+                player.speed += acc * player.acceleration * deltaSec;
+                player.speed = Math.min(Math.max(player.speed, -player.maxSpeed * 0.7), player.maxSpeed);
+            } else {
+                player.speed *= player.friction;
+                if (Math.abs(player.speed) < 0.5) player.speed = 0;
+            }
+            
+            // skręt tylko gdy prędkość > 1 lub wsteczna (realistycznie)
+            if (turn !== 0 && Math.abs(player.speed) > 5) {
+                const turnAmount = turn * player.turnSpeed * deltaSec * (Math.abs(player.speed) / player.maxSpeed);
+                player.angle += turnAmount;
+            }
+            
+            // przesunięcie
+            const dx = Math.cos(player.angle) * player.speed * deltaSec;
+            const dy = Math.sin(player.angle) * player.speed * deltaSec;
+            let newX = player.x + dx;
+            let newY = player.y + dy;
+            
+            // granice świata (zabezpieczenie przed wyjechaniem poza mapę)
+            newX = Math.min(Math.max(newX, 30), WORLD_WIDTH - 30);
+            newY = Math.min(Math.max(newY, 30), WORLD_HEIGHT - 30);
+            
+            // kolizje z budynkami (prosta detekcja)
+            let collision = false;
+            for (let obj of cityObjects) {
+                if (obj.type === 'building') {
+                    const carLeft = newX - player.width/2;
+                    const carRight = newX + player.width/2;
+                    const carTop = newY - player.height/2;
+                    const carBottom = newY + player.height/2;
+                    if (carRight > obj.x && carLeft < obj.x+obj.w && carBottom > obj.y && carTop < obj.y+obj.h) {
+                        collision = true;
+                        break;
+                    }
+                }
+            }
+            if (!collision) {
+                player.x = newX;
+                player.y = newY;
+            } else {
+                // przy kolizji odejmij prędkość
+                player.speed *= -0.3;
+                if (Math.abs(player.speed) < 10) player.speed = 0;
+            }
+        }
+        
+        function updateCamera() {
+            // kamera podąża za autem, wyśrodkowana
+            let targetCamX = player.x - canvas.width/2;
+            let targetCamY = player.y - canvas.height/2;
+            targetCamX = Math.min(Math.max(targetCamX, 0), WORLD_WIDTH - canvas.width);
+            targetCamY = Math.min(Math.max(targetCamY, 0), WORLD_HEIGHT - canvas.height);
+            cameraX = targetCamX;
+            cameraY = targetCamY;
+        }
+        
+        // ---------- RENDERING ----------
+        function render() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCity();
+            drawCar();
+            // dodatkowy cień i napis prędkości
+            ctx.font = 'bold 16monospace';
+            ctx.fillStyle = '#fff5e0';
+            ctx.shadowBlur = 0;
+            ctx.fillText(`⚡ ${Math.floor(Math.abs(player.speed))} km/h`, cameraX + 20, cameraY + 45);
+            ctx.font = '12px monospace';
+            ctx.fillStyle = '#ddddbb';
+            ctx.fillText(`auto: ${carModels[player.selectedCarIndex].name}`, cameraX + 20, cameraY + 80);
+        }
+        
+        // ---------- GŁÓWNA PĘTLA ----------
+        let lastFrameTime = 0;
+        function gameLoop(nowMs) {
+            if (!lastFrameTime) lastFrameTime = nowMs;
+            let delta = Math.min(0.033, (nowMs - lastFrameTime) / 1000);
+            if (delta <= 0) {
+                lastFrameTime = nowMs;
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            lastFrameTime = nowMs;
+            
+            handleInput(delta);
+            updateCamera();
+            render();
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // ---------- OBSŁUGA KLAWIATURY ----------
+        function handleKeyDown(e) {
+            let code = e.code;
+            if (keys.hasOwnProperty(code)) keys[code] = true;
+            e.preventDefault();
+        }
+        
+        function handleKeyUp(e) {
+            let code = e.code;
+            if (keys.hasOwnProperty(code)) keys[code] = false;
+            e.preventDefault();
+        }
+        
+        // ---------- TWORZENIE PRZYCISKÓW WYBORU AUT ----------
+        function buildCarSelectorUI() {
+            const container = document.getElementById('carSelector');
+            container.innerHTML = '';
+            carModels.forEach((model, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'car-btn';
+                if (idx === 0) btn.classList.add('active');
+                const img = document.createElement('img');
+                img.src = model.imgSrc;
+                img.alt = model.name;
+                img.onerror = () => { img.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20fill%3D%22%23b5651d%22%2F%3E%3Ctext%20x%3D%2220%22%20y%3D%2240%22%20fill%3D%22white%22%3E%23'+(idx+1)+'%3C%2Ftext%3E%3C%2Fsvg%3E'; };
+                const span = document.createElement('span');
+                span.innerText = model.name;
+                btn.appendChild(img);
+                btn.appendChild(span);
+                btn.addEventListener('click', () => {
+                    updateSelectedCar(idx);
+                });
+                container.appendChild(btn);
+            });
+        }
+        
+        // ---------- INICJALIZACJA ----------
+        function init() {
+            generateCity();
+            buildCarSelectorUI();
+            preloadCarImages();
+            
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            // zapobieganie przewijaniu strzałkami
+            window.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // początkowa pozycja gracza w bezpiecznym miejscu (blisko środka miasta)
+            player.x = WORLD_WIDTH/2;
+            player.y = WORLD_HEIGHT/2;
+            player.angle = 0;
+            player.speed = 0;
+            
+            updateCamera();
+            lastFrameTime = 0;
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
