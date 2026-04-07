@@ -2,80 +2,164 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TikTok Style Feed</title>
+<title>TikTok Clone</title>
 
 <style>
   body {
     margin: 0;
+    background: black;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+
+  .feed {
+    height: 100vh;
+    width: 100vw;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
-    font-family: Arial, sans-serif;
-    background: black;
   }
 
   .video-container {
     height: 100vh;
     width: 100%;
-    position: relative;
     scroll-snap-align: start;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+  }
+
+  .video-wrapper {
+    height: 100%;
+    aspect-ratio: 9/16;
+    max-width: 100vw;
     background: black;
+    position: relative;
   }
 
   video, img {
-    height: 100%;
     width: 100%;
+    height: 100%;
     object-fit: cover;
   }
+
+  /* UI overlay */
+  .overlay {
+    position: absolute;
+    right: 10px;
+    bottom: 80px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .btn {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sound-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
 </style>
 </head>
 <body>
 
-<div id="feed"></div>
+<div class="feed" id="feed"></div>
 
 <script>
 const feed = document.getElementById("feed");
+let isMuted = true;
 
 for (let i = 1; i <= 100; i++) {
   const container = document.createElement("div");
   container.className = "video-container";
 
+  const wrapper = document.createElement("div");
+  wrapper.className = "video-wrapper";
+
   const video = document.createElement("video");
   video.src = `video${i}.mp4`;
-  video.autoplay = true;
   video.loop = true;
   video.muted = true;
   video.playsInline = true;
 
-  // If video fails → replace with image
+  // fallback image
   video.onerror = () => {
     const img = document.createElement("img");
     img.src = "photo3.png";
-    container.innerHTML = "";
-    container.appendChild(img);
+    wrapper.innerHTML = "";
+    wrapper.appendChild(img);
   };
 
-  container.appendChild(video);
+  // UI overlay
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+
+  const like = document.createElement("div");
+  like.className = "btn";
+  like.innerHTML = "❤️";
+  like.onclick = () => {
+    like.innerHTML = like.innerHTML === "❤️" ? "💔" : "❤️";
+  };
+
+  const comment = document.createElement("div");
+  comment.className = "btn";
+  comment.innerHTML = "💬";
+  comment.onclick = () => {
+    alert("Comments coming soon!");
+  };
+
+  overlay.appendChild(like);
+  overlay.appendChild(comment);
+
+  // sound button
+  const soundBtn = document.createElement("div");
+  soundBtn.className = "sound-btn";
+  soundBtn.innerText = "🔇";
+
+  soundBtn.onclick = () => {
+    isMuted = !isMuted;
+    document.querySelectorAll("video").forEach(v => v.muted = isMuted);
+    soundBtn.innerText = isMuted ? "🔇" : "🔊";
+  };
+
+  wrapper.appendChild(video);
+  wrapper.appendChild(overlay);
+  wrapper.appendChild(soundBtn);
+  container.appendChild(wrapper);
   feed.appendChild(container);
 }
 
-// Optional: pause videos not in view (performance boost)
-const videos = document.querySelectorAll("video");
-
+// autoplay only visible video
 const observer = new IntersectionObserver(entries => {
   entries.forEach(entry => {
-    const video = entry.target;
+    const video = entry.target.querySelector("video");
+    if (!video) return;
+
     if (entry.isIntersecting) {
       video.play();
     } else {
       video.pause();
     }
   });
-}, { threshold: 0.6 });
+}, { threshold: 0.8 });
 
-document.querySelectorAll("video").forEach(v => observer.observe(v));
+document.querySelectorAll(".video-container").forEach(el => {
+  observer.observe(el);
+});
 </script>
 
 </body>
