@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>PopekTok</title>
+<title>PopekTok Clone</title>
 <style>
 body, html {margin:0; padding:0; background:black; font-family: Arial; height:100%; overflow:hidden;}
 #loginPanel, #registerPanel, #uploadPanel {position:absolute; top:10px; left:10px; color:white; z-index:10; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;}
@@ -49,7 +49,7 @@ input[type=file]{color:white;}
 
 <div id="app"></div>
 
-<!-- Firebase SDK -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -70,31 +70,46 @@ const CLOUD_NAME = "duc5gcbz4";
 const UPLOAD_PRESET = "unsigned_upload";
 
 /* ================= Global Variables ================= */
-let current=0, videos=[], isMuted=true;
-const app=document.getElementById("app");
-const fallbackVideos=["video1.mp4","video2.mp4","video3.mp4","video4.mp4","video5.mp4","video6.mp4"];
+let current = 0, videos = [], isMuted = true;
+const app = document.getElementById("app");
+const fallbackVideos = ["video1.mp4","video2.mp4","video3.mp4","video4.mp4","video5.mp4","video6.mp4"];
 
 /* ================= Auth ================= */
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(user => {
   if(user){
     document.getElementById("loginPanel").style.display="none";
     document.getElementById("registerPanel").style.display="none";
     document.getElementById("uploadPanel").style.display="block";
-    loadVideos();
   } else {
     document.getElementById("loginPanel").style.display="block";
     document.getElementById("registerPanel").style.display="none";
     document.getElementById("uploadPanel").style.display="none";
   }
+  loadVideos(); // Load videos for everyone
 });
-function login(){const email=document.getElementById("loginEmail").value; const pass=document.getElementById("loginPass").value; auth.signInWithEmailAndPassword(email,pass).catch(alert);}
-function register(){const email=document.getElementById("regEmail").value; const pass=document.getElementById("regPass").value; auth.createUserWithEmailAndPassword(email,pass).catch(alert);}
-function showRegister(){document.getElementById("loginPanel").style.display="none"; document.getElementById("registerPanel").style.display="block";}
-function showLogin(){document.getElementById("loginPanel").style.display="block"; document.getElementById("registerPanel").style.display="none";}
 
-/* ================= Upload to Cloudinary ================= */
+function login(){
+  const email = document.getElementById("loginEmail").value;
+  const pass = document.getElementById("loginPass").value;
+  auth.signInWithEmailAndPassword(email, pass).catch(alert);
+}
+function register(){
+  const email = document.getElementById("regEmail").value;
+  const pass = document.getElementById("regPass").value;
+  auth.createUserWithEmailAndPassword(email, pass).catch(alert);
+}
+function showRegister(){
+  document.getElementById("loginPanel").style.display="none";
+  document.getElementById("registerPanel").style.display="block";
+}
+function showLogin(){
+  document.getElementById("loginPanel").style.display="block";
+  document.getElementById("registerPanel").style.display="none";
+}
+
+/* ================= Upload Video ================= */
 function uploadVideo(){
-  const file=document.getElementById("uploadFile").files[0];
+  const file = document.getElementById("uploadFile").files[0];
   if(!file) return alert("Select a file");
 
   const formData = new FormData();
@@ -116,108 +131,123 @@ function uploadVideo(){
 /* ================= Load Videos ================= */
 function loadVideos(){
   db.collection("videos").orderBy("time","desc").get().then(snap=>{
-    videos=[]; snap.forEach(doc=>videos.push({id:doc.id, ...doc.data()}));
-    if(videos.length===0){fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));}
-    current=0; render();
+    videos=[]; snap.forEach(doc => videos.push({id:doc.id, ...doc.data()}));
+    if(videos.length===0) fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));
+    current = 0; render();
   }).catch(()=>{
     videos=[]; fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));
-    current=0; render();
+    current = 0; render();
   });
 }
 
 /* ================= Create Video Element ================= */
 function createVideoElement(video){
-  const wrapper=document.createElement("div"); wrapper.className="video-wrapper"; wrapper.dataset.id=video.id;
-  wrapper.style.transform=`translateY(0%)`;
-  const inner=document.createElement("div"); inner.className="video-inner";
-
-  const vid=document.createElement("video");
-  vid.src=video.url; vid.loop=true; vid.muted=isMuted; vid.playsInline=true;
-  vid.onerror=()=>{const img=document.createElement("img"); img.src="photo3.png"; inner.innerHTML=""; inner.appendChild(img);};
-
-  const heart=document.createElement("div"); heart.className="heart"; heart.innerHTML="❤️";
-  inner.addEventListener("dblclick", ()=>{toggleLike(video.id); heart.classList.add("show"); setTimeout(()=>heart.classList.remove("show"),300);});
-
-  const overlay=document.createElement("div"); overlay.className="overlay";
-  const likeBtn = document.createElement("div"); likeBtn.className="btn";
-  likeBtn.onclick = () => toggleLike(video.id);
-
-  // Real-time likes
-  db.collection("likes").where("videoId","==",video.id).onSnapshot(snap=>{
-    const count = snap.size;
-    const liked = snap.docs.some(d=>d.id===auth.currentUser.uid+"_"+video.id);
-    likeBtn.innerText = liked ? `💔 ${count}` : `❤️ ${count}`;
+  const wrapper = document.createElement("div"); 
+  wrapper.className = "video-wrapper"; 
+  wrapper.dataset.id = video.id;
+  wrapper.style.transform = `translateY(0%)`;
+  
+  const inner = document.createElement("div"); inner.className = "video-inner";
+  
+  const vid = document.createElement("video");
+  vid.src = video.url; vid.loop = true; vid.muted = isMuted; vid.playsInline = true;
+  vid.onerror = ()=>{ const img = document.createElement("img"); img.src = "photo3.png"; inner.innerHTML=""; inner.appendChild(img);};
+  
+  const heart = document.createElement("div"); heart.className = "heart"; heart.innerHTML = "❤️";
+  inner.addEventListener("dblclick", ()=>{ 
+    if(auth.currentUser) toggleLike(video.id); 
+    heart.classList.add("show"); setTimeout(()=>heart.classList.remove("show"),300); 
   });
 
-  const commentBtn=document.createElement("div"); commentBtn.className="btn"; commentBtn.innerText="💬";
-  const comments=document.createElement("div"); comments.className="comments";
-  const list=document.createElement("div"); list.className="comments-list";
-  const input=document.createElement("input"); input.placeholder="Write comment...";
+  const overlay = document.createElement("div"); overlay.className = "overlay";
+  
+  const likeBtn = document.createElement("div"); likeBtn.className = "btn";
 
-  input.addEventListener("keypress", e=>{
-    if(e.key==="Enter"){
-      saveComment(video.id,input.value);
-      input.value="";
-    }
-  });
+  // Real-time like count visible to all
+  db.collection("likes").where("videoId","==",video.id)
+    .onSnapshot(snapshot => {
+      const count = snapshot.size;
+      if(auth.currentUser){
+        const liked = snapshot.docs.some(d => d.id === auth.currentUser.uid + "_" + video.id);
+        likeBtn.innerText = liked ? `💔 ${count}` : `❤️ ${count}`;
+      } else {
+        likeBtn.innerText = `❤️ ${count}`;
+      }
+    });
 
-  comments.appendChild(list);
-  comments.appendChild(input);
+  // Only allow like if logged in
+  likeBtn.onclick = () => { if(auth.currentUser) toggleLike(video.id); };
 
-  commentBtn.onclick = ()=>{
-    comments.classList.toggle("active");
-    renderComments(video.id, list);
-  };
-
-  // Real-time comments
-  function renderComments(videoId, listDiv){
-    db.collection("comments").where("videoId","==",videoId).orderBy("time")
-      .onSnapshot(snapshot=>{
-        listDiv.innerHTML="";
-        snapshot.forEach(doc=>{
-          const div=document.createElement("div");
-          div.innerText = doc.data().user + ": " + doc.data().text;
-          listDiv.appendChild(div);
-        });
-      });
+  const commentBtn = document.createElement("div"); commentBtn.className="btn"; commentBtn.innerText="💬";
+  const comments = document.createElement("div"); comments.className="comments";
+  const list = document.createElement("div"); list.className="comments-list";
+  const input = document.createElement("input"); input.placeholder="Write comment...";
+  if(auth.currentUser){
+    input.addEventListener("keypress", e=>{
+      if(e.key==="Enter"){ saveComment(video.id,input.value); input.value=""; renderComments(video.id, list);}
+    });
+  } else {
+    input.disabled = true;
   }
-
+  comments.appendChild(list); comments.appendChild(input);
+  commentBtn.onclick = ()=>{ comments.classList.toggle("active"); if(auth.currentUser) renderComments(video.id, list); };
+  
   overlay.appendChild(likeBtn); overlay.appendChild(commentBtn);
 
-  const sound=document.createElement("div"); sound.className="sound"; sound.innerText=isMuted?"🔇":"🔊";
-  sound.onclick=()=>{isMuted=!isMuted; document.querySelectorAll("video").forEach(v=>v.muted=isMuted); sound.innerText=isMuted?"🔇":"🔊";};
+  const sound = document.createElement("div"); sound.className="sound"; sound.innerText=isMuted?"🔇":"🔊";
+  sound.onclick = ()=>{ isMuted=!isMuted; document.querySelectorAll("video").forEach(v=>v.muted=isMuted); sound.innerText=isMuted?"🔇":"🔊";};
 
   inner.appendChild(vid); inner.appendChild(heart); inner.appendChild(overlay); inner.appendChild(sound); inner.appendChild(comments);
-  wrapper.appendChild(inner);
+  wrapper.appendChild(inner); 
   return wrapper;
 }
 
 /* ================= Likes & Comments ================= */
 function toggleLike(videoId){
-  const ref=db.collection("likes").doc(auth.currentUser.uid+"_"+videoId);
-  ref.get().then(doc=>{
-    if(doc.exists){ref.delete();}else{ref.set({videoId:videoId,user:auth.currentUser.email});}
+  if(!auth.currentUser) return;
+  const ref = db.collection("likes").doc(auth.currentUser.uid + "_" + videoId);
+  ref.get().then(doc => { if(doc.exists) ref.delete(); else ref.set({videoId: videoId, user: auth.currentUser.email}); });
+}
+function saveComment(videoId, text){
+  if(!text || !auth.currentUser) return;
+  db.collection("comments").add({videoId,text,user:auth.currentUser.email,time:Date.now()});
+}
+function renderComments(videoId, listDiv){
+  db.collection("comments").where("videoId", "==", videoId).orderBy("time").onSnapshot(snapshot=>{
+    listDiv.innerHTML = "";
+    snapshot.forEach(doc=>{
+      const div = document.createElement("div");
+      div.innerText = doc.data().user + ": " + doc.data().text;
+      listDiv.appendChild(div);
+    });
   });
 }
-function saveComment(videoId,text){if(!text) return; db.collection("comments").add({videoId,text,user:auth.currentUser.email,time:Date.now()});}
 
 /* ================= Render ================= */
 function render(){
-  app.innerHTML=""; if(videos.length===0) return;
-  for(let i=current-1;i<=current+1;i++){if(i<0||i>=videos.length) continue;
-    const el=createVideoElement(videos[i]); el.style.transform=`translateY(${(i-current)*100}%)`; app.appendChild(el);
+  app.innerHTML="";
+  if(videos.length===0) return;
+  for(let i=current-1;i<=current+1;i++){
+    if(i<0 || i>=videos.length) continue;
+    const el = createVideoElement(videos[i]); 
+    el.style.transform = `translateY(${(i-current)*100}%)`; 
+    app.appendChild(el);
     if(i===current) el.querySelector("video").play();
   }
 }
 
 /* ================= Swipe Feed ================= */
-function next(){if(current<videos.length-1) current++; render();}
-function prev(){if(current>0) current--; render();}
+function next(){ if(current<videos.length-1) current++; render();}
+function prev(){ if(current>0) current--; render();}
 
 let startY=0;
-app.addEventListener("wheel", e=>{if(e.deltaY>0) next(); else prev();});
-app.addEventListener("touchstart", e=>{startY=e.touches[0].clientY;});
-app.addEventListener("touchend", e=>{let endY=e.changedTouches[0].clientY;if(startY-endY>50) next(); if(endY-startY>50) prev();});
+app.addEventListener("wheel", e=>{ if(e.deltaY>0) next(); else prev(); });
+app.addEventListener("touchstart", e=>{ startY = e.touches[0].clientY; });
+app.addEventListener("touchend", e=>{
+  let endY = e.changedTouches[0].clientY;
+  if(startY - endY > 50) next();
+  if(endY - startY > 50) prev();
+});
 </script>
 </body>
 </html>
