@@ -66,8 +66,8 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 /* ================= Cloudinary Config ================= */
-const CLOUD_NAME = "duc5gcbz4"; // from dashboard
-const UPLOAD_PRESET = "unsigned_upload"; // unsigned preset
+const CLOUD_NAME = "duc5gcbz4";
+const UPLOAD_PRESET = "unsigned_upload";
 
 /* ================= Global Variables ================= */
 let current=0, videos=[], isMuted=true;
@@ -117,11 +117,9 @@ function uploadVideo(){
 function loadVideos(){
   db.collection("videos").orderBy("time","desc").get().then(snap=>{
     videos=[]; snap.forEach(doc=>videos.push({id:doc.id, ...doc.data()}));
-    // fallback local videos if no Cloudinary videos
     if(videos.length===0){fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));}
     current=0; render();
   }).catch(()=>{
-    // fallback local videos if DB fails
     videos=[]; fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));
     current=0; render();
   });
@@ -141,17 +139,48 @@ function createVideoElement(video){
   inner.addEventListener("dblclick", ()=>{toggleLike(video.id); heart.classList.add("show"); setTimeout(()=>heart.classList.remove("show"),300);});
 
   const overlay=document.createElement("div"); overlay.className="overlay";
-  const likeBtn=document.createElement("div"); likeBtn.className="btn"; likeBtn.innerText="❤️";
-  likeBtn.onclick=()=>{toggleLike(video.id); likeBtn.innerText=getLike(video.id)?"💔":"❤️";};
+  const likeBtn = document.createElement("div"); likeBtn.className="btn";
+  likeBtn.onclick = () => toggleLike(video.id);
+
+  // Real-time likes
+  db.collection("likes").where("videoId","==",video.id).onSnapshot(snap=>{
+    const count = snap.size;
+    const liked = snap.docs.some(d=>d.id===auth.currentUser.uid+"_"+video.id);
+    likeBtn.innerText = liked ? `💔 ${count}` : `❤️ ${count}`;
+  });
 
   const commentBtn=document.createElement("div"); commentBtn.className="btn"; commentBtn.innerText="💬";
   const comments=document.createElement("div"); comments.className="comments";
   const list=document.createElement("div"); list.className="comments-list";
   const input=document.createElement("input"); input.placeholder="Write comment...";
-  input.addEventListener("keypress", e=>{if(e.key==="Enter"){saveComment(video.id,input.value); input.value=""; renderComments();}});
-  comments.appendChild(list); comments.appendChild(input);
-  commentBtn.onclick=()=>{comments.classList.toggle("active"); renderComments();};
-  function renderComments(){list.innerHTML=""; db.collection("comments").where("videoId","==",video.id).orderBy("time").get().then(snap=>{snap.forEach(d=>{const div=document.createElement("div"); div.innerText=d.data().user+": "+d.data().text; list.appendChild(div);});});}
+
+  input.addEventListener("keypress", e=>{
+    if(e.key==="Enter"){
+      saveComment(video.id,input.value);
+      input.value="";
+    }
+  });
+
+  comments.appendChild(list);
+  comments.appendChild(input);
+
+  commentBtn.onclick = ()=>{
+    comments.classList.toggle("active");
+    renderComments(video.id, list);
+  };
+
+  // Real-time comments
+  function renderComments(videoId, listDiv){
+    db.collection("comments").where("videoId","==",videoId).orderBy("time")
+      .onSnapshot(snapshot=>{
+        listDiv.innerHTML="";
+        snapshot.forEach(doc=>{
+          const div=document.createElement("div");
+          div.innerText = doc.data().user + ": " + doc.data().text;
+          listDiv.appendChild(div);
+        });
+      });
+  }
 
   overlay.appendChild(likeBtn); overlay.appendChild(commentBtn);
 
@@ -159,12 +188,17 @@ function createVideoElement(video){
   sound.onclick=()=>{isMuted=!isMuted; document.querySelectorAll("video").forEach(v=>v.muted=isMuted); sound.innerText=isMuted?"🔇":"🔊";};
 
   inner.appendChild(vid); inner.appendChild(heart); inner.appendChild(overlay); inner.appendChild(sound); inner.appendChild(comments);
-  wrapper.appendChild(inner); return wrapper;
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 /* ================= Likes & Comments ================= */
-function toggleLike(id){ const ref=db.collection("likes").doc(auth.currentUser.uid+"_"+id); ref.get().then(doc=>{if(doc.exists){ref.delete();}else{ref.set({videoId:id});}});}
-function getLike(id){return false;}
+function toggleLike(videoId){
+  const ref=db.collection("likes").doc(auth.currentUser.uid+"_"+videoId);
+  ref.get().then(doc=>{
+    if(doc.exists){ref.delete();}else{ref.set({videoId:videoId,user:auth.currentUser.email});}
+  });
+}
 function saveComment(videoId,text){if(!text) return; db.collection("comments").add({videoId,text,user:auth.currentUser.email,time:Date.now()});}
 
 /* ================= Render ================= */
