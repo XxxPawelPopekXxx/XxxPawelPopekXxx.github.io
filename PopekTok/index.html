@@ -2,165 +2,188 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TikTok Clone</title>
-
+<title>TikTok Clone Online</title>
 <style>
-  body {
-    margin: 0;
-    background: black;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-  }
-
-  .feed {
-    height: 100vh;
-    width: 100vw;
-    overflow-y: scroll;
-    scroll-snap-type: y mandatory;
-  }
-
-  .video-container {
-    height: 100vh;
-    width: 100%;
-    scroll-snap-align: start;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-
-  .video-wrapper {
-    height: 100%;
-    aspect-ratio: 9/16;
-    max-width: 100vw;
-    background: black;
-    position: relative;
-  }
-
-  video, img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* UI overlay */
-  .overlay {
-    position: absolute;
-    right: 10px;
-    bottom: 80px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    font-size: 24px;
-    text-align: center;
-  }
-
-  .btn {
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .sound-btn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: white;
-    font-size: 20px;
-    background: rgba(0,0,0,0.5);
-    padding: 5px 10px;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-
+body, html {margin:0; padding:0; background:black; font-family: Arial; height:100%; overflow:hidden;}
+#loginPanel, #registerPanel, #uploadPanel {position:absolute; top:10px; left:10px; color:white; z-index:10; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;}
+#app {width:100vw; height:100vh; position:relative; overflow:hidden;}
+.video-wrapper {position:absolute; width:100%; height:100%; display:flex; justify-content:center; align-items:center; transition: transform 0.4s ease;}
+.video-inner {height:100%; aspect-ratio:9/16; position:relative;}
+video, img {width:100%; height:100%; object-fit:cover; border-radius:10px;}
+.overlay {position:absolute; right:10px; bottom:80px; color:white; display:flex; flex-direction:column; gap:20px; font-size:26px;}
+.btn {cursor:pointer; text-align:center; user-select:none;}
+.heart {position:absolute; font-size:80px; color:white; opacity:0; transform:scale(0.5); transition:0.3s;}
+.heart.show {opacity:1; transform:scale(1.2);}
+.sound {position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:6px 10px; border-radius:10px; cursor:pointer;}
+.comments {position:absolute; bottom:0; left:0; width:100%; max-height:50%; background:rgba(0,0,0,0.8); color:white; display:none; flex-direction:column;}
+.comments.active {display:flex;}
+.comments-list {flex:1; overflow-y:auto; padding:10px;}
+.comments input {border:none; padding:10px; width:100%; border-radius:5px;}
+input[type=file]{color:white;}
 </style>
 </head>
 <body>
 
-<div class="feed" id="feed"></div>
+<!-- LOGIN / REGISTER -->
+<div id="loginPanel">
+  <strong>Login</strong><br>
+  Email: <input id="loginEmail"><br>
+  Password: <input type="password" id="loginPass"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="showRegister()">Register</button>
+</div>
+<div id="registerPanel" style="display:none;">
+  <strong>Register</strong><br>
+  Email: <input id="regEmail"><br>
+  Password: <input type="password" id="regPass"><br>
+  <button onclick="register()">Register</button>
+  <button onclick="showLogin()">Back</button>
+</div>
+
+<!-- UPLOAD PANEL -->
+<div id="uploadPanel" style="display:none;">
+  <strong>Upload Video</strong><br>
+  <input type="file" id="uploadFile" accept="video/*"><br>
+  <button onclick="uploadVideo()">Upload</button>
+</div>
+
+<div id="app"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
 
 <script>
-const feed = document.getElementById("feed");
-let isMuted = true;
+/* ================= Firebase Init ================= */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-for (let i = 1; i <= 100; i++) {
-  const container = document.createElement("div");
-  container.className = "video-container";
+/* ================= Cloudinary Config ================= */
+const CLOUD_NAME = "YOUR_CLOUD_NAME"; // from dashboard
+const UPLOAD_PRESET = "unsigned_upload"; // unsigned preset
 
-  const wrapper = document.createElement("div");
-  wrapper.className = "video-wrapper";
+/* ================= Global Variables ================= */
+let current=0, videos=[], isMuted=true;
+const app=document.getElementById("app");
+const fallbackVideos=["video1.mp4","video2.mp4","video3.mp4","video4.mp4","video5.mp4","video6.mp4"];
 
-  const video = document.createElement("video");
-  video.src = `video${i}.mp4`;
-  video.loop = true;
-  video.muted = true;
-  video.playsInline = true;
+/* ================= Auth ================= */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("loginPanel").style.display="none";
+    document.getElementById("registerPanel").style.display="none";
+    document.getElementById("uploadPanel").style.display="block";
+    loadVideos();
+  } else {
+    document.getElementById("loginPanel").style.display="block";
+    document.getElementById("registerPanel").style.display="none";
+    document.getElementById("uploadPanel").style.display="none";
+  }
+});
+function login(){const email=document.getElementById("loginEmail").value; const pass=document.getElementById("loginPass").value; auth.signInWithEmailAndPassword(email,pass).catch(alert);}
+function register(){const email=document.getElementById("regEmail").value; const pass=document.getElementById("regPass").value; auth.createUserWithEmailAndPassword(email,pass).catch(alert);}
+function showRegister(){document.getElementById("loginPanel").style.display="none"; document.getElementById("registerPanel").style.display="block";}
+function showLogin(){document.getElementById("loginPanel").style.display="block"; document.getElementById("registerPanel").style.display="none";}
 
-  // fallback image
-  video.onerror = () => {
-    const img = document.createElement("img");
-    img.src = "photo3.png";
-    wrapper.innerHTML = "";
-    wrapper.appendChild(img);
-  };
+/* ================= Upload to Cloudinary ================= */
+function uploadVideo(){
+  const file=document.getElementById("uploadFile").files[0];
+  if(!file) return alert("Select a file");
 
-  // UI overlay
-  const overlay = document.createElement("div");
-  overlay.className = "overlay";
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
 
-  const like = document.createElement("div");
-  like.className = "btn";
-  like.innerHTML = "❤️";
-  like.onclick = () => {
-    like.innerHTML = like.innerHTML === "❤️" ? "💔" : "❤️";
-  };
-
-  const comment = document.createElement("div");
-  comment.className = "btn";
-  comment.innerHTML = "💬";
-  comment.onclick = () => {
-    alert("Comments coming soon!");
-  };
-
-  overlay.appendChild(like);
-  overlay.appendChild(comment);
-
-  // sound button
-  const soundBtn = document.createElement("div");
-  soundBtn.className = "sound-btn";
-  soundBtn.innerText = "🔇";
-
-  soundBtn.onclick = () => {
-    isMuted = !isMuted;
-    document.querySelectorAll("video").forEach(v => v.muted = isMuted);
-    soundBtn.innerText = isMuted ? "🔇" : "🔊";
-  };
-
-  wrapper.appendChild(video);
-  wrapper.appendChild(overlay);
-  wrapper.appendChild(soundBtn);
-  container.appendChild(wrapper);
-  feed.appendChild(container);
+  fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,{
+    method:"POST", body:formData
+  }).then(res=>res.json()).then(data=>{
+    if(!data.secure_url) return alert("Upload failed");
+    db.collection("videos").add({url:data.secure_url, time:Date.now(), user:auth.currentUser.email});
+    alert("Uploaded!");
+    loadVideos();
+  }).catch(err=>{
+    alert("Cloud upload failed, using local fallback"); console.error(err);
+  });
 }
 
-// autoplay only visible video
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    const video = entry.target.querySelector("video");
-    if (!video) return;
-
-    if (entry.isIntersecting) {
-      video.play();
-    } else {
-      video.pause();
-    }
+/* ================= Load Videos ================= */
+function loadVideos(){
+  db.collection("videos").orderBy("time","desc").get().then(snap=>{
+    videos=[]; snap.forEach(doc=>videos.push({id:doc.id, ...doc.data()}));
+    // fallback local videos if no Cloudinary videos
+    if(videos.length===0){fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));}
+    current=0; render();
+  }).catch(()=>{
+    // fallback local videos if DB fails
+    videos=[]; fallbackVideos.forEach((v,i)=>videos.push({id:"local"+i,url:v,time:Date.now()}));
+    current=0; render();
   });
-}, { threshold: 0.8 });
+}
 
-document.querySelectorAll(".video-container").forEach(el => {
-  observer.observe(el);
-});
+/* ================= Create Video Element ================= */
+function createVideoElement(video){
+  const wrapper=document.createElement("div"); wrapper.className="video-wrapper"; wrapper.dataset.id=video.id;
+  wrapper.style.transform=`translateY(0%)`;
+  const inner=document.createElement("div"); inner.className="video-inner";
+
+  const vid=document.createElement("video");
+  vid.src=video.url; vid.loop=true; vid.muted=isMuted; vid.playsInline=true;
+  vid.onerror=()=>{const img=document.createElement("img"); img.src="photo3.png"; inner.innerHTML=""; inner.appendChild(img);};
+
+  const heart=document.createElement("div"); heart.className="heart"; heart.innerHTML="❤️";
+  inner.addEventListener("dblclick", ()=>{toggleLike(video.id); heart.classList.add("show"); setTimeout(()=>heart.classList.remove("show"),300);});
+
+  const overlay=document.createElement("div"); overlay.className="overlay";
+  const likeBtn=document.createElement("div"); likeBtn.className="btn"; likeBtn.innerText="❤️";
+  likeBtn.onclick=()=>{toggleLike(video.id); likeBtn.innerText=getLike(video.id)?"💔":"❤️";};
+
+  const commentBtn=document.createElement("div"); commentBtn.className="btn"; commentBtn.innerText="💬";
+  const comments=document.createElement("div"); comments.className="comments";
+  const list=document.createElement("div"); list.className="comments-list";
+  const input=document.createElement("input"); input.placeholder="Write comment...";
+  input.addEventListener("keypress", e=>{if(e.key==="Enter"){saveComment(video.id,input.value); input.value=""; renderComments();}});
+  comments.appendChild(list); comments.appendChild(input);
+  commentBtn.onclick=()=>{comments.classList.toggle("active"); renderComments();};
+  function renderComments(){list.innerHTML=""; db.collection("comments").where("videoId","==",video.id).orderBy("time").get().then(snap=>{snap.forEach(d=>{const div=document.createElement("div"); div.innerText=d.data().user+": "+d.data().text; list.appendChild(div);});});}
+
+  overlay.appendChild(likeBtn); overlay.appendChild(commentBtn);
+
+  const sound=document.createElement("div"); sound.className="sound"; sound.innerText=isMuted?"🔇":"🔊";
+  sound.onclick=()=>{isMuted=!isMuted; document.querySelectorAll("video").forEach(v=>v.muted=isMuted); sound.innerText=isMuted?"🔇":"🔊";};
+
+  inner.appendChild(vid); inner.appendChild(heart); inner.appendChild(overlay); inner.appendChild(sound); inner.appendChild(comments);
+  wrapper.appendChild(inner); return wrapper;
+}
+
+/* ================= Likes & Comments ================= */
+function toggleLike(id){ const ref=db.collection("likes").doc(auth.currentUser.uid+"_"+id); ref.get().then(doc=>{if(doc.exists){ref.delete();}else{ref.set({videoId:id});}});}
+function getLike(id){return false;}
+function saveComment(videoId,text){if(!text) return; db.collection("comments").add({videoId,text,user:auth.currentUser.email,time:Date.now()});}
+
+/* ================= Render ================= */
+function render(){
+  app.innerHTML=""; if(videos.length===0) return;
+  for(let i=current-1;i<=current+1;i++){if(i<0||i>=videos.length) continue;
+    const el=createVideoElement(videos[i]); el.style.transform=`translateY(${(i-current)*100}%)`; app.appendChild(el);
+    if(i===current) el.querySelector("video").play();
+  }
+}
+
+/* ================= Swipe Feed ================= */
+function next(){if(current<videos.length-1) current++; render();}
+function prev(){if(current>0) current--; render();}
+
+let startY=0;
+app.addEventListener("wheel", e=>{if(e.deltaY>0) next(); else prev();});
+app.addEventListener("touchstart", e=>{startY=e.touches[0].clientY;});
+app.addEventListener("touchend", e=>{let endY=e.changedTouches[0].clientY;if(startY-endY>50) next(); if(endY-startY>50) prev();});
 </script>
-
 </body>
 </html>
