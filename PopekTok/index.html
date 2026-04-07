@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TikTok Style Feed</title>
+
+<style>
+  body {
+    margin: 0;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    font-family: Arial, sans-serif;
+    background: black;
+  }
+
+  .video-container {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    scroll-snap-align: start;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: black;
+  }
+
+  video, img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+</style>
+</head>
+<body>
+
+<div id="feed"></div>
+
+<script>
+const feed = document.getElementById("feed");
+
+for (let i = 1; i <= 100; i++) {
+  const container = document.createElement("div");
+  container.className = "video-container";
+
+  const video = document.createElement("video");
+  video.src = `video${i}.mp4`;
+  video.autoplay = true;
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+
+  // If video fails → replace with image
+  video.onerror = () => {
+    const img = document.createElement("img");
+    img.src = "photo3.png";
+    container.innerHTML = "";
+    container.appendChild(img);
+  };
+
+  container.appendChild(video);
+  feed.appendChild(container);
+}
+
+// Optional: pause videos not in view (performance boost)
+const videos = document.querySelectorAll("video");
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const video = entry.target;
+    if (entry.isIntersecting) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  });
+}, { threshold: 0.6 });
+
+document.querySelectorAll("video").forEach(v => observer.observe(v));
+</script>
+
+</body>
+</html>
