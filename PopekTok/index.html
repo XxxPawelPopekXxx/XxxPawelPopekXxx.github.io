@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PopekTok Feed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <style>
         :root {
             --bg-black: #010101;
@@ -13,109 +17,63 @@
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0a0a0a;
-            font-family: 'ProximaNova', sans-serif;
-            color: var(--text-white);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #0a0a0a; font-family: 'ProximaNova', sans-serif;
+            color: var(--text-white); display: flex; justify-content: center; align-items: center;
         }
 
         /* Wygląd aplikacji */
         #app-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100dvh;
-            background-color: var(--bg-black);
-            overflow: hidden;
+            position: relative; width: 100%; height: 100dvh;
+            background-color: var(--bg-black); overflow: hidden;
         }
 
-        /* --- STYL DLA PC (Komputery) --- */
         @media (min-width: 768px) {
             #app-wrapper {
-                height: 90vh; 
-                max-width: 400px; 
-                border-radius: 30px; 
-                border: 8px solid #222; 
-                box-shadow: 0 0 30px rgba(0,0,0,0.8);
+                height: 90vh; max-width: 400px; border-radius: 30px; 
+                border: 8px solid #222; box-shadow: 0 0 30px rgba(0,0,0,0.8);
             }
         }
 
         /* Kontener ze scrollowaniem */
         #video-container {
-            width: 100%;
-            height: 100%;
-            scroll-snap-type: y mandatory;
-            overflow-y: scroll; 
-            scrollbar-width: none; 
-            overscroll-behavior-y: none; 
-            -webkit-overflow-scrolling: touch; 
+            width: 100%; height: 100%; scroll-snap-type: y mandatory;
+            overflow-y: scroll; scrollbar-width: none; 
+            overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; 
         }
         #video-container::-webkit-scrollbar { display: none; } 
 
         .video-player {
-            width: 100%;
-            height: 100%;
-            scroll-snap-align: start; 
-            scroll-snap-stop: always; 
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            overflow: hidden; 
+            width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; 
+            position: relative; display: flex; align-items: center; justify-content: center;
+            background: #000; overflow: hidden; 
         }
 
         video, .fallback-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; 
-            cursor: pointer;
-            z-index: 2;
+            width: 100%; height: 100%; object-fit: contain; cursor: pointer; z-index: 2;
         }
 
         /* Animacja Ładowania */
         .loader {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--text-white);
-            animation: spin 1s ease-in-out infinite;
-            z-index: 1; 
+            position: absolute; width: 40px; height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%;
+            border-top-color: var(--text-white); animation: spin 1s ease-in-out infinite; z-index: 1; 
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Ikona Play */
         .play-indicator {
-            position: absolute;
-            font-size: 80px;
-            color: rgba(255, 255, 255, 0.6);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            z-index: 5;
+            position: absolute; font-size: 80px; color: rgba(255, 255, 255, 0.6);
+            pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 5;
         }
         .is-paused .play-indicator { opacity: 1; }
 
         /* Latające Serce */
         .floating-heart {
-            position: absolute;
-            color: var(--tiktok-red);
-            font-size: 80px;
-            pointer-events: none;
-            transform: translate(-50%, -50%) scale(0);
-            animation: popHeart 0.8s ease-out forwards;
-            z-index: 15;
-            text-shadow: 0 0 15px rgba(0,0,0,0.4);
+            position: absolute; color: var(--tiktok-red); font-size: 80px; pointer-events: none;
+            transform: translate(-50%, -50%) scale(0); animation: popHeart 0.8s ease-out forwards;
+            z-index: 15; text-shadow: 0 0 15px rgba(0,0,0,0.4);
         }
-
         @keyframes popHeart {
             0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
             20% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
@@ -135,6 +93,26 @@
         .nav-item { cursor: pointer; opacity: 0.6; transition: 0.2s; }
         .active-tab { opacity: 1; border-bottom: 2px solid white; padding-bottom: 3px; }
         .bottom-menu { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.95)); display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+
+        /* --- NOWE: Sekcja Komentarzy (Bottom Sheet) --- */
+        .comment-modal {
+            position: absolute; bottom: -100%; left: 0; width: 100%; height: 65%;
+            background-color: #1a1a1a; border-top-left-radius: 15px; border-top-right-radius: 15px;
+            z-index: 30; transition: bottom 0.3s ease-in-out; display: flex; flex-direction: column;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
+        }
+        .comment-modal.active { bottom: 0; }
+        .comment-header { padding: 15px; text-align: center; border-bottom: 1px solid #333; position: relative; }
+        .comment-header h3 { margin: 0; font-size: 16px; }
+        .comment-header .fa-times { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 20px; }
+        .comment-list { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .comment-item { margin-bottom: 15px; font-size: 14px; background: #222; padding: 10px; border-radius: 10px; }
+        .comment-item strong { color: #888; font-size: 12px; }
+        .comment-item p { margin: 5px 0 0 0; word-break: break-word; }
+        .comment-input-area { padding: 15px; border-top: 1px solid #333; display: flex; gap: 10px; align-items: center; background: #111; }
+        .comment-input-area input { flex-grow: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
+        .send-btn { color: var(--tiktok-red); cursor: pointer; font-size: 24px; transition: transform 0.2s; }
+        .send-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
@@ -152,16 +130,53 @@
             <i class="fas fa-home icon-btn" onclick="showFeed()" style="font-size: 24px;"></i>
             <i class="fas fa-heart icon-btn" onclick="showLiked()" style="font-size: 24px;"></i>
         </div>
+
+        <div id="comment-modal" class="comment-modal">
+            <div class="comment-header">
+                <h3>Komentarze <span id="comment-count">(0)</span></h3>
+                <i class="fas fa-times" onclick="closeComments()"></i>
+            </div>
+            <div id="comment-list" class="comment-list">
+                </div>
+            <div class="comment-input-area">
+                <input type="text" id="comment-input" placeholder="Dodaj fajny komentarz..." onkeypress="handleEnter(event)">
+                <i class="fas fa-arrow-circle-up send-btn" onclick="addComment()"></i>
+            </div>
+        </div>
     </div>
 
     <script>
+        // ==========================================
+        // 1. KONFIGURACJA FIREBASE - WPISZ SWOJE DANE!
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnxvLaH6HF6gWqlJO9pCVaKvEC5eCrMzA",
+            authDomain: "popektok.firebaseapp.com",
+            projectId: "popektok",
+            storageBucket: "popektok.firebasestorage.app",
+            messagingSenderId: "805938481983",
+            appId: "1:805938481983:web:755947062531b57e24618a"
+        };
+        
+        // Inicjalizacja Firebase (zabezpieczenie na wypadek braku wpisanych danych)
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch(e) {
+            console.error("Firebase nie zostało skonfigurowane poprawnie. Sprawdź config.");
+        }
+
+        // ==========================================
+        // 2. GŁÓWNA LOGIKA APLIKACJI (WIDEO, LAJKI)
+        // ==========================================
         const container = document.getElementById('video-container');
         const TOTAL_VIDEOS = 300;
         let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || [];
         let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
         let isShowingLiked = false;
+        let currentCommentVideoId = null;
 
-        // Obserwator do dynamicznego wstrzykiwania kodu HTML
         const loadObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -173,7 +188,6 @@
             });
         }, { rootMargin: "100% 0px 100% 0px" });
 
-        // Obserwator do Play/Pause i zapisu postępu
         const playObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const wrapper = entry.target;
@@ -198,7 +212,6 @@
             });
         }, { threshold: 0.6 });
 
-        // Główna funkcja startowa
         function initFeed() {
             isShowingLiked = false;
             container.innerHTML = '';
@@ -226,7 +239,7 @@
             playObserver.observe(wrapper);
         }
 
-        // --- ZMIANA TUTAJ: src przeniesione prosto do tagu <video>, brak tagu <source> ---
+        // --- ZMIANA TUTAJ: Usunięto ikonę "share", dodano onclick do "comment" ---
         function renderVideoHTML(wrapper) {
             const index = parseInt(wrapper.dataset.index);
             const isLiked = likedVideos.includes(index) ? 'liked' : '';
@@ -238,8 +251,7 @@
                 <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})" src="video${index}.mp4"></video>
                 <div class="side-bar">
                     <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
-                    <i class="fas fa-comment-dots icon-btn"></i>
-                    <i class="fas fa-share icon-btn"></i>
+                    <i class="fas fa-comment-dots icon-btn" onclick="openComments(${index})"></i>
                 </div>
                 <div class="ui-overlay">
                     <h4 style="margin:0 0 5px 0;">@Popek</h4>
@@ -247,14 +259,13 @@
                 </div>
             `;
 
-            // Teraz błąd (np. brak pliku) bezbłędnie odpali tę funkcję
             const videoElement = wrapper.querySelector('video');
             videoElement.onerror = function() {
-                // Usuwamy wszystko i wrzucamy fallback-img (image2.png)
                 wrapper.innerHTML = `
                     <img src="image2.png" class="fallback-img" onclick="handleTap(event, this, ${index})">
                     <div class="side-bar">
                         <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
+                        <i class="fas fa-comment-dots icon-btn" onclick="openComments(${index})"></i>
                     </div>
                     <div class="ui-overlay">
                         <h4 style="margin:0 0 5px 0;">@Popek</h4>
@@ -264,7 +275,94 @@
             };
         }
 
-        // Podwójne tapnięcie i serce
+        // ==========================================
+        // 3. OBSŁUGA KOMENTARZY (FIREBASE)
+        // ==========================================
+        function openComments(index) {
+            if (!db) {
+                alert("Najpierw wklej konfigurację Firebase w kodzie HTML!");
+                return;
+            }
+            currentCommentVideoId = index;
+            document.getElementById('comment-modal').classList.add('active');
+            loadComments(index);
+        }
+
+        function closeComments() {
+            document.getElementById('comment-modal').classList.remove('active');
+            currentCommentVideoId = null;
+        }
+
+        // Nasłuchiwanie komentarzy w czasie rzeczywistym
+        function loadComments(index) {
+            const list = document.getElementById('comment-list');
+            list.innerHTML = '<div class="loader" style="position:relative; margin: 20px auto;"></div>';
+
+            db.collection("comments").where("videoId", "==", index).onSnapshot((querySnapshot) => {
+                list.innerHTML = '';
+                document.getElementById('comment-count').innerText = `(${querySnapshot.size})`;
+                
+                if (querySnapshot.empty) {
+                    list.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Brak komentarzy. Bądź pierwszy!</p>';
+                    return;
+                }
+
+                // Sortowanie po czasie lokalnie (żeby pominąć tworzenie skomplikowanych indeksów w Firebase)
+                let commentsArr = [];
+                querySnapshot.forEach((doc) => commentsArr.push(doc.data()));
+                
+                commentsArr.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
+                    const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                    return timeA - timeB; // Starsze u góry, najnowsze na dole
+                });
+
+                commentsArr.forEach((data) => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    div.innerHTML = `
+                        <strong>Anonim</strong>
+                        <p>${data.text}</p>
+                    `;
+                    list.appendChild(div);
+                });
+
+                // Auto-scroll do samego dołu po dodaniu komentarza
+                setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+
+            }, (error) => {
+                console.error("Błąd bazy:", error);
+                list.innerHTML = '<p style="color:red; text-align:center;">Błąd uprawnień Firebase. Ustaw zasady reguł (rules) w Firestore.</p>';
+            });
+        }
+
+        function addComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            
+            if (text === '' || currentCommentVideoId === null) return;
+            
+            input.value = ''; // Wyczyść pole tekstowe po kliknięciu wyślij
+            
+            db.collection("comments").add({
+                videoId: currentCommentVideoId,
+                text: text,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(error => {
+                console.error("Błąd zapisu:", error);
+                alert("Brak uprawnień. Sprawdź Firestore Rules.");
+            });
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                addComment();
+            }
+        }
+
+        // ==========================================
+        // 4. INTERAKCJE UI (Tapnięcia i Lajki)
+        // ==========================================
         let clickTimer = null;
         function handleTap(e, element, index) {
             const wrapper = element.closest('.video-player');
@@ -299,7 +397,6 @@
             setTimeout(() => { heart.remove(); }, 800);
         }
 
-        // Lajki
         function toggleLike(index) {
             const heartIcons = document.querySelectorAll(`.like-btn-${index}`);
             if (likedVideos.includes(index)) {
@@ -312,7 +409,6 @@
             localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
         }
 
-        // Zakładka ulubione
         function showLiked() {
             isShowingLiked = true;
             container.innerHTML = '';
@@ -323,10 +419,7 @@
                 container.innerHTML = '<div class="video-player"><h2>Brak polubionych filmów</h2></div>';
                 return;
             }
-            
-            likedVideos.forEach(id => {
-                createEmptyWrapper(id);
-            });
+            likedVideos.forEach(id => { createEmptyWrapper(id); });
         }
 
         function showFeed() {
