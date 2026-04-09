@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Video Feed</title>
+    <title>PopekTok Feed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -30,10 +30,9 @@
             height: 100vh;
             scroll-snap-type: y mandatory;
             overflow-y: scroll;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
+            scrollbar-width: none; 
         }
-
-        #video-container::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome */
+        #video-container::-webkit-scrollbar { display: none; } 
 
         .video-player {
             width: 100%;
@@ -44,12 +43,45 @@
             align-items: center;
             justify-content: center;
             background: #000;
+            overflow: hidden; /* Contains the floating hearts */
         }
 
         video, .fallback-img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            cursor: pointer;
+        }
+
+        /* Play/Pause Indicator */
+        .play-indicator {
+            position: absolute;
+            font-size: 80px;
+            color: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 5;
+        }
+        .is-paused .play-indicator { opacity: 1; }
+
+        /* Floating Heart Animation */
+        .floating-heart {
+            position: absolute;
+            color: var(--tiktok-red);
+            font-size: 80px;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            animation: popHeart 0.8s ease-out forwards;
+            z-index: 15;
+            text-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+
+        @keyframes popHeart {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
+            40% { transform: translate(-50%, -50%) scale(1) rotate(-5deg); }
+            100% { transform: translate(-50%, -150%) scale(1.5) rotate(0deg); opacity: 0; }
         }
 
         /* UI Overlays */
@@ -58,6 +90,7 @@
             bottom: 80px;
             left: 15px;
             z-index: 10;
+            pointer-events: none; 
         }
 
         .side-bar {
@@ -72,12 +105,11 @@
         }
 
         .icon-btn {
-            font-size: 30px;
+            font-size: 32px;
             cursor: pointer;
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
             transition: transform 0.2s;
         }
-
         .icon-btn:active { transform: scale(0.9); }
         .liked { color: var(--tiktok-red); }
 
@@ -91,11 +123,10 @@
             gap: 20px;
             font-weight: bold;
             z-index: 20;
-            opacity: 0.8;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
         }
-
-        .nav-item { cursor: pointer; }
-        .active-tab { border-bottom: 2px solid white; }
+        .nav-item { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .active-tab { opacity: 1; border-bottom: 2px solid white; padding-bottom: 3px; }
 
         /* Bottom Menu */
         .bottom-menu {
@@ -103,8 +134,7 @@
             bottom: 0;
             width: 100%;
             height: 60px;
-            background: black;
-            border-top: 0.5px solid #333;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -123,8 +153,8 @@
         </div>
 
     <div class="bottom-menu">
-        <i class="fas fa-home" onclick="showFeed()"></i>
-        <i class="fas fa-heart" onclick="showLiked()"></i>
+        <i class="fas fa-home icon-btn" onclick="showFeed()" style="font-size: 24px;"></i>
+        <i class="fas fa-heart icon-btn" onclick="showLiked()" style="font-size: 24px;"></i>
     </div>
 
     <script>
@@ -132,12 +162,50 @@
         const TOTAL_VIDEOS = 300;
         let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || [];
         let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
+        let highestLoadedIndex = 0;
+        let isShowingLiked = false;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const wrapper = entry.target;
+                const video = wrapper.querySelector('video');
+                const index = parseInt(wrapper.dataset.index);
+
+                if (entry.isIntersecting) {
+                    if (video) {
+                        video.play();
+                        wrapper.classList.remove('is-paused');
+                    }
+                    
+                    if (!isShowingLiked) {
+                        localStorage.setItem('lastWatched', index);
+                    }
+
+                    if (!isShowingLiked && index >= highestLoadedIndex - 1) {
+                        loadMoreVideos(2); 
+                    }
+                } else {
+                    if (video) {
+                        video.pause();
+                        video.currentTime = 0; 
+                        wrapper.classList.add('is-paused');
+                    }
+                }
+            });
+        }, { threshold: 0.6 });
 
         async function initFeed() {
+            isShowingLiked = false;
             container.innerHTML = '';
-            // Generate videos from the last watched index forward
-            for (let i = lastWatched; i <= TOTAL_VIDEOS; i++) {
-                addVideoToDOM(i);
+            highestLoadedIndex = lastWatched - 1; 
+            loadMoreVideos(3);
+        }
+
+        function loadMoreVideos(count) {
+            for (let i = 0; i < count; i++) {
+                highestLoadedIndex++;
+                if (highestLoadedIndex > TOTAL_VIDEOS) break;
+                addVideoToDOM(highestLoadedIndex);
             }
         }
 
@@ -149,59 +217,128 @@
             const isLiked = likedVideos.includes(index) ? 'liked' : '';
 
             wrapper.innerHTML = `
-                <video id="vid-${index}" loop playsinline preload="metadata" onplay="saveProgress(${index})">
+                <i class="fas fa-play play-indicator"></i>
+                <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})">
                     <source src="video${index}.mp4" type="video/mp4">
                 </video>
                 <div class="side-bar">
-                    <i class="fas fa-heart icon-btn ${isLiked}" onclick="toggleLike(${index}, this)"></i>
-                    <i class="fas fa-comment icon-btn"></i>
+                    <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
+                    <i class="fas fa-comment-dots icon-btn"></i>
                     <i class="fas fa-share icon-btn"></i>
                 </div>
                 <div class="ui-overlay">
-                    <h4>@Creator</h4>
-                    <p>This is video description #${index} #premium</p>
+                    <h4 style="margin:0 0 5px 0;">@Popek</h4>
+                    <p style="margin:0; font-size: 14px;">PopekTok #${index}</p>
                 </div>
             `;
 
             const videoElement = wrapper.querySelector('video');
 
-            // Handle missing video file
             videoElement.onerror = function() {
                 this.parentElement.innerHTML = `
-                    <img src="image2.png" class="fallback-img">
+                    <img src="image2.png" class="fallback-img" onclick="handleTap(event, this, ${index})">
                     <div class="side-bar">
-                        <i class="fas fa-heart icon-btn ${isLiked}" onclick="toggleLike(${index}, this)"></i>
+                        <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
                     </div>
-                    <div class="ui-overlay"><h4>Video ${index} missing</h4></div>
+                    <div class="ui-overlay">
+                        <h4 style="margin:0 0 5px 0;">@Popek</h4>
+                        <p style="margin:0;">PopekTok #${index} (Unavailable)</p>
+                    </div>
                 `;
             };
 
             container.appendChild(wrapper);
+            observer.observe(wrapper); 
         }
 
-        // Logic to track scroll and save progress
-        function saveProgress(index) {
-            localStorage.setItem('lastWatched', index);
+        // --- NEW: Double Tap & Animation Logic ---
+        let clickTimer = null;
+
+        function handleTap(e, element, index) {
+            const wrapper = element.closest('.video-player');
+            
+            if (clickTimer == null) {
+                // First tap - wait slightly to see if a second tap comes
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    // If it was just a single tap, toggle play/pause
+                    if (element.tagName === 'VIDEO') {
+                        if (element.paused) {
+                            element.play();
+                            wrapper.classList.remove('is-paused');
+                        } else {
+                            element.pause();
+                            wrapper.classList.add('is-paused');
+                        }
+                    }
+                }, 250); 
+            } else {
+                // Second tap detected within 250ms! Clear the single-tap timer
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                
+                // 1. Force the video to keep playing if they double-tapped
+                if (element.tagName === 'VIDEO' && element.paused) {
+                    element.play();
+                    wrapper.classList.remove('is-paused');
+                }
+
+                // 2. Like the video (if not already liked)
+                if (!likedVideos.includes(index)) {
+                    toggleLike(index);
+                }
+
+                // 3. Spawn the floating heart exactly where they clicked
+                spawnHeart(e, wrapper);
+            }
         }
 
-        function toggleLike(index, el) {
+        function spawnHeart(e, wrapper) {
+            const heart = document.createElement('i');
+            heart.className = 'fas fa-heart floating-heart';
+            
+            // Get coordinates of the tap relative to the video container
+            const rect = wrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            
+            wrapper.appendChild(heart);
+            
+            // Remove the heart from the DOM after the animation finishes
+            setTimeout(() => {
+                heart.remove();
+            }, 800);
+        }
+
+        // --- Updated Like Logic ---
+        function toggleLike(index) {
+            const heartIcons = document.querySelectorAll(`.like-btn-${index}`);
+            
             if (likedVideos.includes(index)) {
                 likedVideos = likedVideos.filter(id => id !== index);
-                el.classList.remove('liked');
+                heartIcons.forEach(icon => icon.classList.remove('liked'));
             } else {
                 likedVideos.push(index);
-                el.classList.add('liked');
+                heartIcons.forEach(icon => icon.classList.add('liked'));
             }
             localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
         }
 
         function showLiked() {
+            isShowingLiked = true;
             container.innerHTML = '';
             if (likedVideos.length === 0) {
-                container.innerHTML = '<div class="video-player"><h1>No Liked Videos</h1></div>';
+                container.innerHTML = '<div class="video-player"><h2>No Liked Videos Yet</h2></div>';
+                document.querySelectorAll('.nav-item')[1].classList.add('active-tab');
+                document.querySelectorAll('.nav-item')[0].classList.remove('active-tab');
                 return;
             }
+            
             likedVideos.forEach(id => addVideoToDOM(id));
+            
             document.querySelectorAll('.nav-item')[1].classList.add('active-tab');
             document.querySelectorAll('.nav-item')[0].classList.remove('active-tab');
         }
@@ -212,28 +349,6 @@
             initFeed();
         }
 
-        // Intersection Observer to Auto-play/Pause videos
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const video = entry.target.querySelector('video');
-                if (video) {
-                    if (entry.isIntersecting) {
-                        video.play();
-                    } else {
-                        video.pause();
-                        video.currentTime = 0;
-                    }
-                }
-            });
-        }, { threshold: 0.6 });
-
-        // Update observer when new elements added
-        const mutationObserver = new MutationObserver(() => {
-            document.querySelectorAll('.video-player').forEach(v => observer.observe(v));
-        });
-        mutationObserver.observe(container, { childList: true });
-
-        // On Load
         window.onload = initFeed;
     </script>
 </body>
