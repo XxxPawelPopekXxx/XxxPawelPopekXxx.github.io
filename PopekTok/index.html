@@ -37,10 +37,10 @@
         /* --- STYL DLA PC (Komputery) --- */
         @media (min-width: 768px) {
             #app-wrapper {
-                height: 90vh; /* Zostawia lekki margines na górze i dole */
-                max-width: 400px; /* Szerokość telefonu */
-                border-radius: 30px; /* Zaokrąglone rogi jak w smartfonie */
-                border: 8px solid #222; /* Ramka telefonu */
+                height: 90vh; 
+                max-width: 400px; 
+                border-radius: 30px; 
+                border: 8px solid #222; 
                 box-shadow: 0 0 30px rgba(0,0,0,0.8);
             }
         }
@@ -161,7 +161,7 @@
         let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
         let isShowingLiked = false;
 
-        // Obserwator do dynamicznego wstrzykiwania kodu HTML (działa z wyprzedzeniem: 1 film w dół, 1 w górę)
+        // Obserwator do dynamicznego wstrzykiwania kodu HTML
         const loadObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -203,12 +203,10 @@
             isShowingLiked = false;
             container.innerHTML = '';
             
-            // Tworzymy natychmiast 300 PUSTYCH kontenerów, co naprawia scrollowanie w górę
             for (let i = 1; i <= TOTAL_VIDEOS; i++) {
                 createEmptyWrapper(i);
             }
 
-            // Automatyczny zjazd do ostatnio oglądanego filmu
             setTimeout(() => {
                 const target = document.getElementById(`wrapper-${lastWatched}`);
                 if (target) {
@@ -224,12 +222,11 @@
             wrapper.dataset.index = index;
             container.appendChild(wrapper);
             
-            // Podpinamy obserwatory
             loadObserver.observe(wrapper);
             playObserver.observe(wrapper);
         }
 
-        // Ta funkcja wrzuca sam odtwarzacz, tylko wtedy gdy kontener zblizy sie do ekranu
+        // --- ZMIANA TUTAJ: src przeniesione prosto do tagu <video>, brak tagu <source> ---
         function renderVideoHTML(wrapper) {
             const index = parseInt(wrapper.dataset.index);
             const isLiked = likedVideos.includes(index) ? 'liked' : '';
@@ -238,9 +235,7 @@
             wrapper.innerHTML = `
                 <div class="loader"></div>
                 <i class="fas fa-play play-indicator"></i>
-                <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})">
-                    <source src="video${index}.mp4" type="video/mp4">
-                </video>
+                <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})" src="video${index}.mp4"></video>
                 <div class="side-bar">
                     <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
                     <i class="fas fa-comment-dots icon-btn"></i>
@@ -252,9 +247,11 @@
                 </div>
             `;
 
+            // Teraz błąd (np. brak pliku) bezbłędnie odpali tę funkcję
             const videoElement = wrapper.querySelector('video');
             videoElement.onerror = function() {
-                this.parentElement.innerHTML = `
+                // Usuwamy wszystko i wrzucamy fallback-img (image2.png)
+                wrapper.innerHTML = `
                     <img src="image2.png" class="fallback-img" onclick="handleTap(event, this, ${index})">
                     <div class="side-bar">
                         <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
@@ -329,7 +326,6 @@
             
             likedVideos.forEach(id => {
                 createEmptyWrapper(id);
-                // Nie używamy scrollIntoView tutaj, bo lista zaczyna się od początku
             });
         }
 
