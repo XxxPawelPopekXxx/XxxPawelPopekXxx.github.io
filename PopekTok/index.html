@@ -1,239 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>PopekTok Clone</title>
-<style>
-  body, html {margin:0; padding:0; background:black; font-family:Arial; height:100%; overflow:hidden;}
-  #loginPanel, #registerPanel, #uploadPanel {position:absolute; top:10px; left:10px; color:white; z-index:10; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;}
-  #app {width:100vw; height:100vh; position:relative; overflow:hidden;}
-  .video-wrapper {position:absolute; width:100%; height:100%; display:flex; justify-content:center; align-items:center; transition: transform 0.4s ease;}
-  .video-inner {height:100%; aspect-ratio:9/16; position:relative;}
-  video, img {width:100%; height:100%; object-fit:cover; border-radius:10px;}
-  .overlay {position:absolute; right:10px; bottom:80px; color:white; display:flex; flex-direction:column; gap:20px; font-size:26px;}
-  .btn {cursor:pointer; text-align:center; user-select:none;}
-  .heart {position:absolute; font-size:80px; color:white; opacity:0; transform:scale(0.5); transition:0.3s;}
-  .heart.show {opacity:1; transform:scale(1.2);}
-  .sound {position:absolute; top:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:6px 10px; border-radius:10px; cursor:pointer;}
-  .comments {position:absolute; bottom:0; left:0; width:100%; max-height:50%; background:rgba(0,0,0,0.8); color:white; display:none; flex-direction:column;}
-  .comments.active {display:flex;}
-  .comments-list {flex:1; overflow-y:auto; padding:10px;}
-  .comments input {border:none; padding:10px; width:100%; border-radius:5px;}
-  input[type=file]{color:white;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Video Feed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-black: #010101;
+            --tiktok-red: #ff0050;
+            --tiktok-cyan: #00f2ea;
+            --text-white: #ffffff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-black);
+            font-family: 'ProximaNova', sans-serif;
+            overflow: hidden;
+            color: var(--text-white);
+        }
+
+        /* Video Container */
+        #video-container {
+            width: 100%;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+
+        #video-container::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome */
+
+        .video-player {
+            width: 100%;
+            height: 100vh;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+
+        video, .fallback-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* UI Overlays */
+        .ui-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 15px;
+            z-index: 10;
+        }
+
+        .side-bar {
+            position: absolute;
+            right: 15px;
+            bottom: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .icon-btn {
+            font-size: 30px;
+            cursor: pointer;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .icon-btn:active { transform: scale(0.9); }
+        .liked { color: var(--tiktok-red); }
+
+        /* Navigation */
+        .nav-tabs {
+            position: fixed;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-weight: bold;
+            z-index: 20;
+            opacity: 0.8;
+        }
+
+        .nav-item { cursor: pointer; }
+        .active-tab { border-bottom: 2px solid white; }
+
+        /* Bottom Menu */
+        .bottom-menu {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: black;
+            border-top: 0.5px solid #333;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 20;
+        }
+    </style>
 </head>
 <body>
 
-<!-- LOGIN / REGISTER -->
-<div id="loginPanel">
-  <strong>Login</strong><br>
-  Email: <input id="loginEmail"><br>
-  Password: <input type="password" id="loginPass"><br>
-  <button onclick="login()">Login</button>
-  <button onclick="showRegister()">Register</button>
-</div>
-<div id="registerPanel" style="display:none;">
-  <strong>Register</strong><br>
-  Email: <input id="regEmail"><br>
-  Password: <input type="password" id="regPass"><br>
-  <button onclick="register()">Register</button>
-  <button onclick="showLogin()">Back</button>
-</div>
+    <div class="nav-tabs">
+        <span class="nav-item active-tab" onclick="showFeed()">For You</span>
+        <span class="nav-item" onclick="showLiked()">Liked</span>
+    </div>
 
-<!-- UPLOAD PANEL -->
-<div id="uploadPanel" style="display:none;">
-  <strong>Upload Video</strong><br>
-  <input type="file" id="uploadFile" accept="video/*"><br>
-  <button onclick="uploadVideo()">Upload</button>
-</div>
+    <div id="video-container">
+        </div>
 
-<div id="app"></div>
+    <div class="bottom-menu">
+        <i class="fas fa-home" onclick="showFeed()"></i>
+        <i class="fas fa-heart" onclick="showLiked()"></i>
+    </div>
 
-<!-- Firebase SDK (no import/export) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script>
+        const container = document.getElementById('video-container');
+        const TOTAL_VIDEOS = 300;
+        let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || [];
+        let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
 
-<script>
-/* ================= Firebase Init ================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyBnxvLaH6HF6gWqlJO9pCVaKvEC5eCrMzA",
-  authDomain: "popektok.firebaseapp.com",
-  projectId: "popektok"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+        async function initFeed() {
+            container.innerHTML = '';
+            // Generate videos from the last watched index forward
+            for (let i = lastWatched; i <= TOTAL_VIDEOS; i++) {
+                addVideoToDOM(i);
+            }
+        }
 
-/* ================= Cloudinary Config ================= */
-const CLOUD_NAME = "duc5gcbz4";
-const UPLOAD_PRESET = "unsigned_upload";
+        function addVideoToDOM(index) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'video-player';
+            wrapper.dataset.index = index;
 
-/* ================= Global Variables ================= */
-let current=0, videos=[], isMuted=true;
-const app=document.getElementById("app");
+            const isLiked = likedVideos.includes(index) ? 'liked' : '';
 
-/* ================= Auth ================= */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.getElementById("loginPanel").style.display="none";
-    document.getElementById("registerPanel").style.display="none";
-    document.getElementById("uploadPanel").style.display="block";
-    loadVideos();
-  } else {
-    document.getElementById("loginPanel").style.display="block";
-    document.getElementById("registerPanel").style.display="none";
-    document.getElementById("uploadPanel").style.display="none";
-  }
-});
-function login(){
-  const email=document.getElementById("loginEmail").value;
-  const pass=document.getElementById("loginPass").value;
-  auth.signInWithEmailAndPassword(email,pass).catch(alert);
-}
-function register(){
-  const email=document.getElementById("regEmail").value;
-  const pass=document.getElementById("regPass").value;
-  auth.createUserWithEmailAndPassword(email,pass).catch(alert);
-}
-function showRegister(){document.getElementById("loginPanel").style.display="none"; document.getElementById("registerPanel").style.display="block";}
-function showLogin(){document.getElementById("loginPanel").style.display="block"; document.getElementById("registerPanel").style.display="none";}
+            wrapper.innerHTML = `
+                <video id="vid-${index}" loop playsinline preload="metadata" onplay="saveProgress(${index})">
+                    <source src="video${index}.mp4" type="video/mp4">
+                </video>
+                <div class="side-bar">
+                    <i class="fas fa-heart icon-btn ${isLiked}" onclick="toggleLike(${index}, this)"></i>
+                    <i class="fas fa-comment icon-btn"></i>
+                    <i class="fas fa-share icon-btn"></i>
+                </div>
+                <div class="ui-overlay">
+                    <h4>@Creator</h4>
+                    <p>This is video description #${index} #premium</p>
+                </div>
+            `;
 
-/* ================= Upload Video ================= */
-function uploadVideo(){
-  const file=document.getElementById("uploadFile").files[0];
-  if(!file) return alert("Select a file");
+            const videoElement = wrapper.querySelector('video');
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
+            // Handle missing video file
+            videoElement.onerror = function() {
+                this.parentElement.innerHTML = `
+                    <img src="image2.png" class="fallback-img">
+                    <div class="side-bar">
+                        <i class="fas fa-heart icon-btn ${isLiked}" onclick="toggleLike(${index}, this)"></i>
+                    </div>
+                    <div class="ui-overlay"><h4>Video ${index} missing</h4></div>
+                `;
+            };
 
-  fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, {
-    method:"POST", body:formData
-  }).then(res=>res.json()).then(data=>{
-    if(!data.secure_url) return alert("Upload failed");
-    db.collection("videos").add({url:data.secure_url, time:Date.now(), user:auth.currentUser.email});
-    alert("Uploaded!");
-    loadVideos();
-  }).catch(err=>{
-    alert("Upload failed"); console.error(err);
-  });
-}
+            container.appendChild(wrapper);
+        }
 
-/* ================= Load Videos ================= */
-function loadVideos(){
-  db.collection("videos").orderBy("time","desc").get().then(snap=>{
-    videos=[];
-    snap.forEach(doc => videos.push({id:doc.id, ...doc.data()}));
-    current=0; render();
-  });
-}
+        // Logic to track scroll and save progress
+        function saveProgress(index) {
+            localStorage.setItem('lastWatched', index);
+        }
 
-/* ================= Create Video ================= */
-function createVideoElement(video){
-  const wrapper=document.createElement("div"); wrapper.className="video-wrapper"; wrapper.dataset.id=video.id;
-  wrapper.style.transform=`translateY(0%)`;
-  const inner=document.createElement("div"); inner.className="video-inner";
+        function toggleLike(index, el) {
+            if (likedVideos.includes(index)) {
+                likedVideos = likedVideos.filter(id => id !== index);
+                el.classList.remove('liked');
+            } else {
+                likedVideos.push(index);
+                el.classList.add('liked');
+            }
+            localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
+        }
 
-  const vid=document.createElement("video");
-  vid.src=video.url; vid.loop=true; vid.muted=isMuted; vid.playsInline=true;
+        function showLiked() {
+            container.innerHTML = '';
+            if (likedVideos.length === 0) {
+                container.innerHTML = '<div class="video-player"><h1>No Liked Videos</h1></div>';
+                return;
+            }
+            likedVideos.forEach(id => addVideoToDOM(id));
+            document.querySelectorAll('.nav-item')[1].classList.add('active-tab');
+            document.querySelectorAll('.nav-item')[0].classList.remove('active-tab');
+        }
 
-  const heart=document.createElement("div"); heart.className="heart"; heart.innerHTML="❤️";
-  inner.addEventListener("dblclick", ()=>{
-    toggleLike(video.id); 
-    heart.classList.add("show"); 
-    setTimeout(()=>heart.classList.remove("show"),300);
-  });
+        function showFeed() {
+            document.querySelectorAll('.nav-item')[0].classList.add('active-tab');
+            document.querySelectorAll('.nav-item')[1].classList.remove('active-tab');
+            initFeed();
+        }
 
-  /* Overlay buttons */
-  const overlay=document.createElement("div"); overlay.className="overlay";
+        // Intersection Observer to Auto-play/Pause videos
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                if (video) {
+                    if (entry.isIntersecting) {
+                        video.play();
+                    } else {
+                        video.pause();
+                        video.currentTime = 0;
+                    }
+                }
+            });
+        }, { threshold: 0.6 });
 
-  // Like button
-  const likeBtn = document.createElement("div"); likeBtn.className="btn";
-  likeBtn.onclick = () => toggleLike(video.id);
-  db.collection("likes").where("videoId", "==", video.id)
-    .onSnapshot(snapshot => {
-      const count = snapshot.size;
-      const liked = snapshot.docs.some(d => d.id === auth.currentUser.uid + "_" + video.id);
-      likeBtn.innerText = liked ? `💔 ${count}` : `❤️ ${count}`;
-    });
+        // Update observer when new elements added
+        const mutationObserver = new MutationObserver(() => {
+            document.querySelectorAll('.video-player').forEach(v => observer.observe(v));
+        });
+        mutationObserver.observe(container, { childList: true });
 
-  // Comments button
-  const commentBtn=document.createElement("div"); commentBtn.className="btn"; commentBtn.innerText="💬";
-  const comments=document.createElement("div"); comments.className="comments";
-  const list=document.createElement("div"); list.className="comments-list";
-  const input=document.createElement("input"); input.placeholder="Write comment...";
-  input.addEventListener("keypress", e=>{
-    if(e.key==="Enter"){
-      saveComment(video.id,input.value);
-      input.value="";
-    }
-  });
-  comments.appendChild(list); comments.appendChild(input);
-  commentBtn.onclick=()=>{
-    comments.classList.toggle("active");
-    renderComments(video.id, list);
-  };
-
-  overlay.appendChild(likeBtn); overlay.appendChild(commentBtn);
-
-  // Sound toggle
-  const sound=document.createElement("div"); sound.className="sound"; sound.innerText=isMuted?"🔇":"🔊";
-  sound.onclick=()=>{
-    isMuted=!isMuted;
-    document.querySelectorAll("video").forEach(v=>v.muted=isMuted);
-    sound.innerText=isMuted?"🔇":"🔊";
-  };
-
-  inner.appendChild(vid); inner.appendChild(heart); inner.appendChild(overlay); inner.appendChild(sound); inner.appendChild(comments);
-  wrapper.appendChild(inner);
-  return wrapper;
-}
-
-/* ================= Likes & Comments ================= */
-function toggleLike(videoId){
-  const ref=db.collection("likes").doc(auth.currentUser.uid+"_"+videoId);
-  ref.get().then(doc=>{
-    if(doc.exists) ref.delete();
-    else ref.set({videoId:videoId,user:auth.currentUser.email});
-  });
-}
-function saveComment(videoId,text){
-  if(!text) return;
-  db.collection("comments").add({videoId,text,user:auth.currentUser.email,time:Date.now()});
-}
-function renderComments(videoId,listDiv){
-  db.collection("comments").where("videoId","==",videoId).orderBy("time")
-    .onSnapshot(snapshot=>{
-      listDiv.innerHTML="";
-      snapshot.forEach(doc=>{
-        const div=document.createElement("div");
-        div.innerText=doc.data().user+": "+doc.data().text;
-        listDiv.appendChild(div);
-      });
-    });
-}
-
-/* ================= Render ================= */
-function render(){
-  app.innerHTML="";
-  if(videos.length===0) return;
-  for(let i=current-1;i<=current+1;i++){
-    if(i<0||i>=videos.length) continue;
-    const el=createVideoElement(videos[i]);
-    el.style.transform=`translateY(${(i-current)*100}%)`;
-    app.appendChild(el);
-    if(i===current) el.querySelector("video").play();
-  }
-}
-
-/* ================= Swipe Feed ================= */
-function next(){if(current<videos.length-1) current++; render();}
-function prev(){if(current>0) current--; render();}
-let startY=0;
-app.addEventListener("wheel", e=>{if(e.deltaY>0) next(); else prev();});
-app.addEventListener("touchstart", e=>{startY=e.touches[0].clientY;});
-app.addEventListener("touchend", e=>{let endY=e.changedTouches[0].clientY;if(startY-endY>50) next(); if(endY-startY>50) prev();});
-</script>
+        // On Load
+        window.onload = initFeed;
+    </script>
 </body>
 </html>
