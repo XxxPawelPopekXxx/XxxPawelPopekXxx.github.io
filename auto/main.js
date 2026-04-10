@@ -1,7 +1,7 @@
-// BEZPOŚREDNIE IMPORTY - To zadziała w 100% przeglądarek bez dodatków w HTML
-import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
+// CZYSTE IMPORTY KORZYSTAJĄCE Z IMPORTMAP Z PLIKU HTML
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // --- 1. INTERFEJS (PRĘDKOŚCIOMIERZ) ---
 const speedoDiv = document.createElement('div');
