@@ -96,9 +96,9 @@ const laneGroup = new THREE.Group();
 const lineGeo = new THREE.PlaneGeometry(0.2, 3);
 const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-// Pasy ruchu: L1(-10), L2(-6), L3(-2) | P1(2), P2(6), P3(10) - Prawa strona to Twój kierunek!
-const laneCenters = [2, 6, 10]; // Środki pasów, na których będą się pojawiać auta NPC (Prawa jezdnia)
-const laneLines = [-8, -4, 4, 8]; // Kreski oddzielające pasy
+// Prawa jezdnia: Pasy środkowe (tam, gdzie jedziesz) to x = 2 (Lewy), x = 6 (Środek), x = 10 (Prawy)
+const laneCenters = [2, 6, 10]; 
+const laneLines = [-8, -4, 4, 8]; 
 
 for (let x of laneLines) {
     for (let z = -roadLength/2; z < roadLength/2; z += 8) {
@@ -146,9 +146,8 @@ fallbackCar.position.y = 0.4;
 fallbackCar.castShadow = true;
 playerCar.add(fallbackCar);
 
-// Startujemy na środkowym prawym pasie
+// Startujemy na środkowym pasie prawej jezdni (x = 6)
 playerCar.position.set(6, 0, 0); 
-// Skrzynka kolizyjna gracza (odnawiana co klatkę)
 const playerBox = new THREE.Box3();
 
 const loader = new GLTFLoader();
@@ -186,28 +185,28 @@ loader.load('auto.glb', (gltf) => {
 
 // --- 7. RUCH ULICZNY (TRAFFIC / NO HESI) ---
 const trafficCars = [];
-const npcSpeedMs = 120 / 3.6; // NPC jadą sztywno 120 km/h (ok. 33.3 m/s)
+const npcSpeedMs = 120 / 3.6; // 120 km/h
 
-// Prosty model dla NPC (Szare "sedany")
+// Wyraźny model NPC, żebyś go zauważył (Niebieski sześcian)
 const npcGeo = new THREE.BoxGeometry(1.8, 1.2, 4.5);
-const npcMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+const npcMat = new THREE.MeshStandardMaterial({ color: 0x0000ff });
 
+// POPRAWKA: Przewidywalny Spawn
 function spawnTrafficCar() {
-    // Losujemy jeden z 3 pasów w Twoim kierunku
-    const lane = laneCenters[Math.floor(Math.random() * laneCenters.length)];
+    const laneIndex = Math.floor(Math.random() * laneCenters.length);
+    const lane = laneCenters[laneIndex];
     
-    // Auto pojawia się daleko przed graczem (ok 250 - 350 metrów)
-    const spawnZ = playerCar.position.z + 250 + Math.random() * 100;
+    // Auto respi się ZAWSZE 250 metrów przed graczem
+    const spawnZ = playerCar.position.z + 250; 
     
     const npcMesh = new THREE.Mesh(npcGeo, npcMat);
-    npcMesh.position.set(lane, 0.6, spawnZ);
+    // Podnosimy lekko, żeby środek (y=0) był nad asfaltem
+    npcMesh.position.set(lane, 0.6, spawnZ); 
     npcMesh.castShadow = true;
     
     scene.add(npcMesh);
     
-    // Tworzymy skrzynkę kolizyjną dla NPC
     const box = new THREE.Box3().setFromObject(npcMesh);
-    
     trafficCars.push({ mesh: npcMesh, box: box });
 }
 
@@ -226,9 +225,12 @@ window.addEventListener('resize', () => {
 const clock = new THREE.Clock(); 
 let speedKmh = 0; 
 
-// TIMER JAZDY (Zaczyna liczyć dopiero gdy gracz jedzie szybciej niż 10km/h)
+// TIMER JAZDY (Teraz ustawiony na 1 SEKUNDĘ do testów)
 let driveTimeSeconds = 0;
-const TIME_UNTIL_TRAFFIC = 120; // 120 sekund (2 minuty)
+const TIME_UNTIL_TRAFFIC = 1; // ZMIEŃ NA 120 PO TESTACH!
+
+// Licznik spawnowania NPC, żeby nie respawiły się co klatkę
+let npcSpawnTimer = 0;
 
 function animate() {
     requestAnimationFrame(animate);
@@ -263,12 +265,10 @@ function animate() {
 
     speedKmh += acceleration * delta;
 
-    // Aktualizacja czasu ciągłej jazdy (potrzebnego na wyzwolenie ruchu)
     if (speedKmh > 10) {
         driveTimeSeconds += delta;
     }
 
-    // Blokada przed wyjechaniem za bariery energochłonne
     if (Math.abs(speedKmh) > 1) { 
         const baseTurnSpeed = 1.0;
         const currentTurnSpeed = baseTurnSpeed / (1 + Math.abs(speedKmh) / 30);
@@ -279,50 +279,39 @@ function animate() {
     }
 
     const speedMs = speedKmh / 3.6; 
-    
-    // Zapisujemy pozycję przed ruchem w celach weryfikacji kolizji ze ścianami
     const oldPosition = playerCar.position.clone();
     
     playerCar.translateZ(speedMs * delta); 
     
-    // Prosta blokada fizyczna: Nie wyjeżdżaj na lewą stronę (bariera centralna) ani za prawą barierę
-    if(playerCar.position.x < 0.8) playerCar.position.x = 0.8; // Zabezpieczenie lewej strony (bariera)
-    if(playerCar.position.x > 11.2) playerCar.position.x = 11.2; // Zabezpieczenie prawej strony (bariera)
+    if(playerCar.position.x < 0.8) playerCar.position.x = 0.8; 
+    if(playerCar.position.x > 11.2) playerCar.position.x = 11.2; 
 
-    // --- AKTUALIZACJA TRAFFICU (NO HESI) ---
-    // Spawnujemy nowe auta tylko, jeśli minęły 2 minuty aktywnej jazdy
+    // --- AKTUALIZACJA TRAFFICU (POPRAWIONA) ---
     if (driveTimeSeconds > TIME_UNTIL_TRAFFIC) {
-        // Staramy się utrzymać np. 6-10 aut na mapie jednocześnie
-        if (trafficCars.length < 8 && Math.random() < 0.02) { // 2% szans na spawn co klatkę, gdy jest miejsce
+        // Spawnowanie oparte na czasie (np. co 1-2 sekundy)
+        npcSpawnTimer += delta;
+        if (npcSpawnTimer > 1.5 && trafficCars.length < 10) { 
             spawnTrafficCar();
+            npcSpawnTimer = 0; // Resetujemy licznik
         }
     }
 
-    // Odświeżamy Box gracza (Kolizje) - Zmniejszamy go lekko (-0.2), żeby dało się ciąć "na żyletki" (No Hesi)
     playerBox.setFromObject(playerCar);
     playerBox.expandByScalar(-0.2); 
 
-    // Ruch i kolizje aut NPC
     for (let i = trafficCars.length - 1; i >= 0; i--) {
         const npc = trafficCars[i];
         
-        // NPC jedzie prosto
         npc.mesh.translateZ(npcSpeedMs * delta);
-        
-        // Aktualizacja Boxa NPC dla zderzeń
         npc.box.setFromObject(npc.mesh);
         
-        // Sprawdzanie KOLIZJI z Graczem (Crash!)
         if (playerBox.intersectsBox(npc.box)) {
-            // DRASTYCZNY SPADEK PRĘDKOŚCI - Zderzyłeś się!
-            speedKmh = Math.max(0, speedKmh - 150); // Tracisz od razu 150 km/h
-            
-            // Lekko odrzuca gracza od auta, żeby się nie zaciął w środku
+            speedKmh = Math.max(0, speedKmh - 150); 
             playerCar.position.copy(oldPosition); 
         }
 
-        // Usuwanie aut, które zostały daleko w tyle, żeby nie zapychać RAMu
-        if (playerCar.position.z - npc.mesh.position.z > 50) {
+        // POPRAWKA: Auto jest usuwane, gdy zostaje z tyłu ORAZ gdy dojeżdża do końca mapy
+        if (playerCar.position.z - npc.mesh.position.z > 50 || npc.mesh.position.z > 10000) {
             scene.remove(npc.mesh);
             npc.mesh.geometry.dispose();
             npc.mesh.material.dispose();
@@ -332,7 +321,6 @@ function animate() {
 
     speedoDiv.innerHTML = `${Math.abs(Math.round(speedKmh))} <span style="font-size: 20px">KM/H</span>`;
 
-    // Aktualizacja kamery 
     controls.target.copy(playerCar.position);
     controls.target.y += 1.5; 
     controls.update();
