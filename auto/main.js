@@ -24,7 +24,6 @@ scene.background = new THREE.Color(skyColor);
 scene.fog = new THREE.Fog(skyColor, 50, 400); 
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-// POPRAWKA: Kamera ustawiona wyżej i odrobinę dalej
 camera.position.set(0, 4, -8); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -36,9 +35,8 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-// POPRAWKA: Blokada przed zejściem za nisko (kamera nie dotknie asfaltu)
 controls.maxPolarAngle = Math.PI / 2 - 0.15; 
-controls.minDistance = 4.0; // Więcej przestrzeni
+controls.minDistance = 4.0;
 controls.maxDistance = 10.0;
 controls.enableZoom = false; 
 
@@ -56,29 +54,26 @@ sun.shadow.camera.bottom = -200;
 sun.shadow.camera.far = 1000;
 scene.add(sun);
 
-// --- 5. PRAWDZIWY AUTOBAHN (BEZ MIGOTANIA) ---
+// --- 5. PRAWDZIWY AUTOBAHN ---
 const roadLength = 20000; 
 
-// POPRAWKA: Tylko JEDNA podłoga (Trawa), żeby uniknąć migotania Z-fighting
 const grassGeo = new THREE.PlaneGeometry(10000, roadLength);
 const grassMat = new THREE.MeshLambertMaterial({ color: 0x2e5c1e }); 
 const grass = new THREE.Mesh(grassGeo, grassMat);
 grass.rotation.x = -Math.PI / 2;
-grass.position.y = 0; // Trawa jest na samym dole
+grass.position.y = 0; 
 grass.receiveShadow = true;
 scene.add(grass);
 
-// Asfalt (wyraźnie ponad trawą, żeby z nią nie walczył o piksele)
 const roadWidth = 24; 
 const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
 const roadMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); 
 const road = new THREE.Mesh(roadGeo, roadMat);
 road.rotation.x = -Math.PI / 2;
-road.position.y = 0.05; // 5 centymetrów nad trawą
+road.position.y = 0.05; 
 road.receiveShadow = true;
 scene.add(road);
 
-// Bariery energochłonne (Środek i Boki)
 const barrierMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
 const barrierGeo = new THREE.BoxGeometry(0.6, 1.2, roadLength);
 
@@ -97,26 +92,26 @@ rightBarrier.position.set(roadWidth/2 + 0.5, 0.6, 0);
 rightBarrier.castShadow = true;
 scene.add(rightBarrier);
 
-// Pasy ruchu (Linie na asfalcie)
 const laneGroup = new THREE.Group();
 const lineGeo = new THREE.PlaneGeometry(0.2, 3);
 const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-const lanePositions = [-8, -4, 4, 8]; 
-for (let x of lanePositions) {
+// Pasy ruchu: L1(-10), L2(-6), L3(-2) | P1(2), P2(6), P3(10) - Prawa strona to Twój kierunek!
+const laneCenters = [2, 6, 10]; // Środki pasów, na których będą się pojawiać auta NPC (Prawa jezdnia)
+const laneLines = [-8, -4, 4, 8]; // Kreski oddzielające pasy
+
+for (let x of laneLines) {
     for (let z = -roadLength/2; z < roadLength/2; z += 8) {
         const line = new THREE.Mesh(lineGeo, lineMat);
         line.rotation.x = -Math.PI / 2;
-        line.position.set(x, 0.07, z); // Wyraźnie nad asfaltem
+        line.position.set(x, 0.07, z);
         laneGroup.add(line);
     }
 }
 scene.add(laneGroup);
 
-// Lasy po bokach 
 const treeCount = 2000;
 const treeGroup = new THREE.Group();
-
 const trunkGeo = new THREE.CylinderGeometry(0.2, 0.4, 2);
 const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
 const leavesGeo = new THREE.ConeGeometry(1.5, 4, 8);
@@ -124,30 +119,23 @@ const leavesMat = new THREE.MeshLambertMaterial({ color: 0x1e4d2b });
 
 for (let i = 0; i < treeCount; i++) {
     const tree = new THREE.Group();
-    
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.y = 1;
     trunk.castShadow = true;
-    
     const leaves = new THREE.Mesh(leavesGeo, leavesMat);
     leaves.position.y = 3;
     leaves.castShadow = true;
-    
     tree.add(trunk);
     tree.add(leaves);
     
     let rx = (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 80);
     let rz = (Math.random() - 0.5) * roadLength;
-    
     tree.position.set(rx, 0, rz);
-    
-    if(Math.abs(rz) < 2000) {
-        treeGroup.add(tree);
-    }
+    if(Math.abs(rz) < 2000) treeGroup.add(tree);
 }
 scene.add(treeGroup);
 
-// --- 6. MODEL AUTA ---
+// --- 6. MODEL AUTA GRACZA ---
 const playerCar = new THREE.Group();
 scene.add(playerCar);
 
@@ -158,7 +146,10 @@ fallbackCar.position.y = 0.4;
 fallbackCar.castShadow = true;
 playerCar.add(fallbackCar);
 
-playerCar.position.set(-6, 0, 0); 
+// Startujemy na środkowym prawym pasie
+playerCar.position.set(6, 0, 0); 
+// Skrzynka kolizyjna gracza (odnawiana co klatkę)
+const playerBox = new THREE.Box3();
 
 const loader = new GLTFLoader();
 loader.load('auto.glb', (gltf) => {
@@ -182,9 +173,7 @@ loader.load('auto.glb', (gltf) => {
             if (node.material) {
                 node.material.side = THREE.DoubleSide;
                 node.material.depthWrite = true;
-                if (node.material.transparent && node.material.opacity > 0.9) {
-                    node.material.transparent = false; 
-                }
+                if (node.material.transparent && node.material.opacity > 0.9) node.material.transparent = false; 
             }
         }
     });
@@ -193,9 +182,36 @@ loader.load('auto.glb', (gltf) => {
     realCarModel.position.y -= finalBox.min.y; 
     
     playerCar.add(realCarModel);
-}, undefined, (err) => console.log("Czekam na Twój plik auto.glb... Używam auta zastępczego."));
+}, undefined, (err) => console.log("Brak auto.glb - tryb zastępczy"));
 
-// --- 7. STEROWANIE ---
+// --- 7. RUCH ULICZNY (TRAFFIC / NO HESI) ---
+const trafficCars = [];
+const npcSpeedMs = 120 / 3.6; // NPC jadą sztywno 120 km/h (ok. 33.3 m/s)
+
+// Prosty model dla NPC (Szare "sedany")
+const npcGeo = new THREE.BoxGeometry(1.8, 1.2, 4.5);
+const npcMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+
+function spawnTrafficCar() {
+    // Losujemy jeden z 3 pasów w Twoim kierunku
+    const lane = laneCenters[Math.floor(Math.random() * laneCenters.length)];
+    
+    // Auto pojawia się daleko przed graczem (ok 250 - 350 metrów)
+    const spawnZ = playerCar.position.z + 250 + Math.random() * 100;
+    
+    const npcMesh = new THREE.Mesh(npcGeo, npcMat);
+    npcMesh.position.set(lane, 0.6, spawnZ);
+    npcMesh.castShadow = true;
+    
+    scene.add(npcMesh);
+    
+    // Tworzymy skrzynkę kolizyjną dla NPC
+    const box = new THREE.Box3().setFromObject(npcMesh);
+    
+    trafficCars.push({ mesh: npcMesh, box: box });
+}
+
+// --- 8. STEROWANIE ---
 const keys = { w: false, a: false, s: false, d: false };
 document.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
 document.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
@@ -206,9 +222,13 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-// --- 8. ZAAWANSOWANA FIZYKA JAZDY ---
+// --- 9. ZAAWANSOWANA FIZYKA JAZDY ---
 const clock = new THREE.Clock(); 
 let speedKmh = 0; 
+
+// TIMER JAZDY (Zaczyna liczyć dopiero gdy gracz jedzie szybciej niż 10km/h)
+let driveTimeSeconds = 0;
+const TIME_UNTIL_TRAFFIC = 120; // 120 sekund (2 minuty)
 
 function animate() {
     requestAnimationFrame(animate);
@@ -226,9 +246,8 @@ function animate() {
             acceleration = 60;
         }
     } else if (keys.s) {
-        if (speedKmh > 0) {
-            acceleration = -80; 
-        } else {
+        if (speedKmh > 0) acceleration = -80; 
+        else {
             acceleration = -15; 
             if (speedKmh < -40) acceleration = 0; 
         }
@@ -244,6 +263,12 @@ function animate() {
 
     speedKmh += acceleration * delta;
 
+    // Aktualizacja czasu ciągłej jazdy (potrzebnego na wyzwolenie ruchu)
+    if (speedKmh > 10) {
+        driveTimeSeconds += delta;
+    }
+
+    // Blokada przed wyjechaniem za bariery energochłonne
     if (Math.abs(speedKmh) > 1) { 
         const baseTurnSpeed = 1.0;
         const currentTurnSpeed = baseTurnSpeed / (1 + Math.abs(speedKmh) / 30);
@@ -254,18 +279,63 @@ function animate() {
     }
 
     const speedMs = speedKmh / 3.6; 
+    
+    // Zapisujemy pozycję przed ruchem w celach weryfikacji kolizji ze ścianami
+    const oldPosition = playerCar.position.clone();
+    
     playerCar.translateZ(speedMs * delta); 
+    
+    // Prosta blokada fizyczna: Nie wyjeżdżaj na lewą stronę (bariera centralna) ani za prawą barierę
+    if(playerCar.position.x < 0.8) playerCar.position.x = 0.8; // Zabezpieczenie lewej strony (bariera)
+    if(playerCar.position.x > 11.2) playerCar.position.x = 11.2; // Zabezpieczenie prawej strony (bariera)
+
+    // --- AKTUALIZACJA TRAFFICU (NO HESI) ---
+    // Spawnujemy nowe auta tylko, jeśli minęły 2 minuty aktywnej jazdy
+    if (driveTimeSeconds > TIME_UNTIL_TRAFFIC) {
+        // Staramy się utrzymać np. 6-10 aut na mapie jednocześnie
+        if (trafficCars.length < 8 && Math.random() < 0.02) { // 2% szans na spawn co klatkę, gdy jest miejsce
+            spawnTrafficCar();
+        }
+    }
+
+    // Odświeżamy Box gracza (Kolizje) - Zmniejszamy go lekko (-0.2), żeby dało się ciąć "na żyletki" (No Hesi)
+    playerBox.setFromObject(playerCar);
+    playerBox.expandByScalar(-0.2); 
+
+    // Ruch i kolizje aut NPC
+    for (let i = trafficCars.length - 1; i >= 0; i--) {
+        const npc = trafficCars[i];
+        
+        // NPC jedzie prosto
+        npc.mesh.translateZ(npcSpeedMs * delta);
+        
+        // Aktualizacja Boxa NPC dla zderzeń
+        npc.box.setFromObject(npc.mesh);
+        
+        // Sprawdzanie KOLIZJI z Graczem (Crash!)
+        if (playerBox.intersectsBox(npc.box)) {
+            // DRASTYCZNY SPADEK PRĘDKOŚCI - Zderzyłeś się!
+            speedKmh = Math.max(0, speedKmh - 150); // Tracisz od razu 150 km/h
+            
+            // Lekko odrzuca gracza od auta, żeby się nie zaciął w środku
+            playerCar.position.copy(oldPosition); 
+        }
+
+        // Usuwanie aut, które zostały daleko w tyle, żeby nie zapychać RAMu
+        if (playerCar.position.z - npc.mesh.position.z > 50) {
+            scene.remove(npc.mesh);
+            npc.mesh.geometry.dispose();
+            npc.mesh.material.dispose();
+            trafficCars.splice(i, 1);
+        }
+    }
 
     speedoDiv.innerHTML = `${Math.abs(Math.round(speedKmh))} <span style="font-size: 20px">KM/H</span>`;
 
-    // POPRAWKA KAMERY: Kamera patrzy 1.5 metra NAD autem (na dach), a nie na koła!
+    // Aktualizacja kamery 
     controls.target.copy(playerCar.position);
     controls.target.y += 1.5; 
     controls.update();
-
-    if (playerCar.position.z > 5000 || playerCar.position.z < -5000) {
-        playerCar.position.z = 0;
-    }
 
     renderer.render(scene, camera);
 }
