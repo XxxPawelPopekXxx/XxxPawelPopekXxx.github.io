@@ -9,20 +9,12 @@
         canvas { display: block; }
         #info {
             position: absolute; top: 10px; left: 10px; color: white;
-            font-family: sans-serif; background: rgba(0,0,0,0.5); padding: 10px;
+            font-family: sans-serif; background: rgba(0,0,0,0.5); padding: 10px; z-index: 100;
         }
     </style>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
-    <div id="info">Sterowanie: W, A, S, D - jazda | Myszka (lewy przycisk) - rozglądanie się</div>
+    <div id="info">Sterowanie: W, A, S, D - jazda | Myszka - rozglądanie się</div>
     <script type="module" src="main.js"></script>
 </body>
 </html>
