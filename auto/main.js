@@ -21,12 +21,11 @@ document.body.appendChild(speedoDiv);
 const scene = new THREE.Scene();
 const skyColor = 0x87ceeb;
 scene.background = new THREE.Color(skyColor);
-// Liniowa mgła - ukrywa koniec mapy i daje poczucie głębi
 scene.fog = new THREE.Fog(skyColor, 50, 400); 
 
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-// BARDZO BLISKO I NISKO: Kamera tuż za autem
-camera.position.set(0, 2.5, -6); 
+// POPRAWKA: Kamera ustawiona wyżej i odrobinę dalej
+camera.position.set(0, 4, -8); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,9 +36,10 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2 - 0.05; // Blokada przed wejściem w asfalt
-controls.minDistance = 3.5; // Kamera bardzo blisko auta
-controls.maxDistance = 6.0; // Maksymalne oddalenie mocno ograniczone
+// POPRAWKA: Blokada przed zejściem za nisko (kamera nie dotknie asfaltu)
+controls.maxPolarAngle = Math.PI / 2 - 0.15; 
+controls.minDistance = 4.0; // Więcej przestrzeni
+controls.maxDistance = 10.0;
 controls.enableZoom = false; 
 
 // --- 4. ŚWIATŁA ---
@@ -56,24 +56,25 @@ sun.shadow.camera.bottom = -200;
 sun.shadow.camera.far = 1000;
 scene.add(sun);
 
-// --- 5. PRAWDZIWY AUTOBAHN ---
-const roadLength = 20000; // Ekstremalnie długa trasa
+// --- 5. PRAWDZIWY AUTOBAHN (BEZ MIGOTANIA) ---
+const roadLength = 20000; 
 
-// Trawa (Pobocze)
-const grassGeo = new THREE.PlaneGeometry(1000, roadLength);
-const grassMat = new THREE.MeshLambertMaterial({ color: 0x2e5c1e }); // Naturalna zieleń
+// POPRAWKA: Tylko JEDNA podłoga (Trawa), żeby uniknąć migotania Z-fighting
+const grassGeo = new THREE.PlaneGeometry(10000, roadLength);
+const grassMat = new THREE.MeshLambertMaterial({ color: 0x2e5c1e }); 
 const grass = new THREE.Mesh(grassGeo, grassMat);
 grass.rotation.x = -Math.PI / 2;
+grass.position.y = 0; // Trawa jest na samym dole
 grass.receiveShadow = true;
 scene.add(grass);
 
-// Asfalt
-const roadWidth = 24; // Szeroka autostrada
+// Asfalt (wyraźnie ponad trawą, żeby z nią nie walczył o piksele)
+const roadWidth = 24; 
 const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
-const roadMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); // Ciemny asfalt
+const roadMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); 
 const road = new THREE.Mesh(roadGeo, roadMat);
 road.rotation.x = -Math.PI / 2;
-road.position.y = 0.02; // Lekko nad trawą
+road.position.y = 0.05; // 5 centymetrów nad trawą
 road.receiveShadow = true;
 scene.add(road);
 
@@ -81,19 +82,16 @@ scene.add(road);
 const barrierMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
 const barrierGeo = new THREE.BoxGeometry(0.6, 1.2, roadLength);
 
-// Środkowa bariera
 const midBarrier = new THREE.Mesh(barrierGeo, barrierMat);
 midBarrier.position.set(0, 0.6, 0);
 midBarrier.castShadow = true;
 scene.add(midBarrier);
 
-// Lewa bariera
 const leftBarrier = new THREE.Mesh(barrierGeo, barrierMat);
 leftBarrier.position.set(-roadWidth/2 - 0.5, 0.6, 0);
 leftBarrier.castShadow = true;
 scene.add(leftBarrier);
 
-// Prawa bariera
 const rightBarrier = new THREE.Mesh(barrierGeo, barrierMat);
 rightBarrier.position.set(roadWidth/2 + 0.5, 0.6, 0);
 rightBarrier.castShadow = true;
@@ -104,23 +102,21 @@ const laneGroup = new THREE.Group();
 const lineGeo = new THREE.PlaneGeometry(0.2, 3);
 const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-// Rysujemy przerywane linie dla 3 pasów w każdą stronę
 const lanePositions = [-8, -4, 4, 8]; 
 for (let x of lanePositions) {
     for (let z = -roadLength/2; z < roadLength/2; z += 8) {
         const line = new THREE.Mesh(lineGeo, lineMat);
         line.rotation.x = -Math.PI / 2;
-        line.position.set(x, 0.04, z);
+        line.position.set(x, 0.07, z); // Wyraźnie nad asfaltem
         laneGroup.add(line);
     }
 }
 scene.add(laneGroup);
 
-// Lasy po bokach (Zamiast klocków)
+// Lasy po bokach 
 const treeCount = 2000;
 const treeGroup = new THREE.Group();
 
-// Geometria drzewa (Prosta sosna)
 const trunkGeo = new THREE.CylinderGeometry(0.2, 0.4, 2);
 const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
 const leavesGeo = new THREE.ConeGeometry(1.5, 4, 8);
@@ -140,13 +136,11 @@ for (let i = 0; i < treeCount; i++) {
     tree.add(trunk);
     tree.add(leaves);
     
-    // Losowe pozycjonowanie po bokach autostrady (żeby nie rosły na asfalcie)
     let rx = (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 80);
     let rz = (Math.random() - 0.5) * roadLength;
     
     tree.position.set(rx, 0, rz);
     
-    // Dodajemy tylko drzewa blisko startu, żeby przeglądarka nie eksplodowała
     if(Math.abs(rz) < 2000) {
         treeGroup.add(tree);
     }
@@ -157,7 +151,6 @@ scene.add(treeGroup);
 const playerCar = new THREE.Group();
 scene.add(playerCar);
 
-// Auto zastępcze (Sportowy, płaski sześcian, żeby lepiej pasował do kamery)
 const fallbackGeo = new THREE.BoxGeometry(1.8, 0.8, 4);
 const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 const fallbackCar = new THREE.Mesh(fallbackGeo, fallbackMat);
@@ -165,7 +158,6 @@ fallbackCar.position.y = 0.4;
 fallbackCar.castShadow = true;
 playerCar.add(fallbackCar);
 
-// Twój startowy pas na autostradzie (żeby nie wjechać w barierki)
 playerCar.position.set(-6, 0, 0); 
 
 const loader = new GLTFLoader();
@@ -177,7 +169,7 @@ loader.load('auto.glb', (gltf) => {
     const size = new THREE.Vector3();
     box.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 4 / maxDim; // Auto długości 4 metrów
+    const scale = 4 / maxDim; 
     realCarModel.scale.set(scale, scale, scale);
     
     const newBox = new THREE.Box3().setFromObject(realCarModel);
@@ -266,11 +258,11 @@ function animate() {
 
     speedoDiv.innerHTML = `${Math.abs(Math.round(speedKmh))} <span style="font-size: 20px">KM/H</span>`;
 
-    // Aktualizacja kamery - sztywno za autem!
+    // POPRAWKA KAMERY: Kamera patrzy 1.5 metra NAD autem (na dach), a nie na koła!
     controls.target.copy(playerCar.position);
+    controls.target.y += 1.5; 
     controls.update();
 
-    // Reset trasy w nieskończoność (Iluzja bez końca)
     if (playerCar.position.z > 5000 || playerCar.position.z < -5000) {
         playerCar.position.z = 0;
     }
