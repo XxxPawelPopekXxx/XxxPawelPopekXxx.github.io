@@ -125,11 +125,22 @@ loader.load('auto.glb', (gltf) => {
     newBox.getSize(newSize);
     realCarModel.position.y += newSize.y / 2;
     
-    // Włączamy cienie
+    // Włączamy cienie i NAPRAWIAMY MATERIAŁY
     realCarModel.traverse((node) => {
         if (node.isMesh) {
             node.castShadow = true;
             node.receiveShadow = true;
+            
+            // Jeśli obiekt ma materiał, wymuszamy poprawne rysowanie
+            if (node.material) {
+                node.material.side = THREE.DoubleSide; // Rysuj obiekt z zewnątrz i od wewnątrz
+                node.material.depthWrite = true;       // Naprawia błędy z dziwnym przenikaniem warstw
+                
+                // Czasami modele mają włączoną przezroczystość na 100% dla blachy, wyłączamy to:
+                if (node.material.transparent && node.material.opacity === 1) {
+                    node.material.transparent = false;
+                }
+            }
         }
     });
     
