@@ -94,19 +94,38 @@ fallbackCar.position.y = 0.5;
 fallbackCar.castShadow = true;
 playerCar.add(fallbackCar);
 
-// Ładowanie PRAWDZIWEGO modelu (wymaga pliku auto.glb na GitHubie)
+// Ładowanie PRAWDZIWEGO modelu (wersja z automatycznym skalowaniem)
 const loader = new GLTFLoader();
 loader.load('auto.glb', (gltf) => {
-    // Kiedy model się wczyta, usuwamy czerwony sześcian
+    // Usuwamy czerwony sześcian
     playerCar.remove(fallbackCar);
     
     const realCarModel = gltf.scene;
-    // Skalujemy model, bo często z internetu są gigantyczne
-    realCarModel.scale.set(0.01, 0.01, 0.01);
-    // To wyśrodkuje model idealnie wokół naszego punktu 0
-new THREE.Box3().setFromObject(realCarModel).getCenter(realCarModel.position).multiplyScalar(-1);
     
-    // Włączamy cienie dla załadowanego modelu
+    // 1. Sprawdzamy oryginalny rozmiar tego "potwora"
+    const box = new THREE.Box3().setFromObject(realCarModel);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    
+    // 2. Chcemy, żeby auto miało równe 4 jednostki długości (zazwyczaj oś Z)
+    // Jeśli twórca obrócił auto bokiem, możemy użyć największego wymiaru:
+    const maxDimension = Math.max(size.x, size.y, size.z);
+    const targetSize = 4; // Nasza docelowa wielkość
+    const scaleRatio = targetSize / maxDimension;
+    
+    // 3. Aplikujemy wyliczoną skalę!
+    realCarModel.scale.set(scaleRatio, scaleRatio, scaleRatio);
+    
+    // 4. Centrujemy przeskalowany model (żeby nie kręcił się wokół złej osi)
+    const newBox = new THREE.Box3().setFromObject(realCarModel);
+    newBox.getCenter(realCarModel.position).multiplyScalar(-1);
+    
+    // 5. Podnosimy go lekko, żeby koła nie wpadły pod asfalt
+    const newSize = new THREE.Vector3();
+    newBox.getSize(newSize);
+    realCarModel.position.y += newSize.y / 2;
+    
+    // Włączamy cienie
     realCarModel.traverse((node) => {
         if (node.isMesh) {
             node.castShadow = true;
@@ -115,63 +134,8 @@ new THREE.Box3().setFromObject(realCarModel).getCenter(realCarModel.position).mu
     });
     
     playerCar.add(realCarModel);
-    console.log("Realistyczny model załadowany!");
-}, undefined, (error) => {
-    console.log("Brak pliku auto.glb, użyto modelu zastępczego.");
-});
-
-// --- STEROWANIE ---
-const keys = { w: false, a: false, s: false, d: false };
-document.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
-document.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
-
-window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-});
-
-// --- PĘTLA GRY ---
-let speed = 0;
-const maxSpeed = 1.0;
-const acceleration = 0.02;
-const braking = 0.05;
-const friction = 0.01;
-const turnSpeed = 0.04;
-
-function animate() {
-    requestAnimationFrame(animate);
-
-    // 1. Fizyka i ruch samochodu (WASD)
-    if (keys.w) { speed += acceleration; }
-    else if (keys.s) { speed -= braking; }
-    else {
-        // Tarcie (auto zwalnia jak puścisz gaz)
-        if (speed > 0) speed -= friction;
-        if (speed < 0) speed += friction;
-        if (Math.abs(speed) < friction) speed = 0;
-    }
+    console.log("Realistyczny model załadowany i idealnie dopasowany!");
     
-    // Ograniczenie prędkości
-    speed = Math.max(Math.min(speed, maxSpeed), -maxSpeed / 2);
-
-    // Skręcanie działa tylko, gdy auto się porusza
-    if (speed !== 0) {
-        // Zmiana kierunku skręcania podczas jazdy do tyłu
-        const turnDir = speed > 0 ? 1 : -1;
-        if (keys.a) playerCar.rotation.y += turnSpeed * turnDir;
-        if (keys.d) playerCar.rotation.y -= turnSpeed * turnDir;
-    }
-
-    // Ruch do przodu/tyłu
-    playerCar.translateZ(speed);
-
-    // 2. Aktualizacja kamery (Myszka)
-    // Ustawiamy środek obrotu kamery na pozycję naszego samochodu
-    controls.target.copy(playerCar.position);
-    controls.update(); // Wymagane dla płynnego ruchu (damping)
-
-    renderer.render(scene, camera);
-}
-
-animate();
+}, undefined, (error) => {
+    console.error("Wystąpił błąd podczas ładowania modelu: ", error);
+});
