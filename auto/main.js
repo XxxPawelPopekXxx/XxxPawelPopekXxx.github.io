@@ -1,172 +1,124 @@
-// --- KONFIGURACJA I INICJALIZACJA ---
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa0a0a0); // Niebo - lekko szare dla kontrastu
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+// --- INICJALIZACJA ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb); // Niebo
+scene.fog = new THREE.FogExp2(0x87ceeb, 0.002); // Mgła, żeby ukryć kraniec mapy
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+// Ustawienie kamery lekko z tyłu i góry
+camera.position.set(0, 5, -10);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true; // Włączamy cienie
 document.body.appendChild(renderer.domElement);
 
+// --- STEROWANIE KAMERĄ MYSZKĄ ---
+// OrbitControls pozwala na idealne obracanie kamery wokół zadanego punktu (naszego auta)
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // Płynne ruchy myszką
+controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI / 2 - 0.05; // Blokada, żeby nie zejść kamerą pod ziemię
+controls.minDistance = 5; // Minimalne przybliżenie (zoom)
+controls.maxDistance = 20; // Maksymalne oddalenie
+
 // --- OŚWIETLENIE ---
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(50, 100, 50);
-directionalLight.castShadow = true; // Włączamy cienie
-scene.add(directionalLight);
+const sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(200, 500, 200);
+sun.castShadow = true;
+sun.shadow.camera.left = -500;
+sun.shadow.camera.right = 500;
+sun.shadow.camera.top = 500;
+sun.shadow.camera.bottom = -500;
+scene.add(sun);
 
-// --- GENEROWANIE TEKSTUR ---
-function createAsphaltTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#333333'; // Ciemny szary asfalt
-    ctx.fillRect(0, 0, 256, 256);
-    // Dodajemy trochę "szumu" dla realizmu
-    ctx.fillStyle = '#444444';
-    for (let i = 0; i < 1000; i++) {
-        ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 1);
-    }
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(10, 10);
-    return texture;
-}
-
-const asphaltTexture = createAsphaltTexture();
-const grassMaterial = new THREE.MeshLambertMaterial({ color: 0x2d8e2d }); // Lepsza zieleń
-const asphaltMaterial = new THREE.MeshLambertMaterial({ map: asphaltTexture });
-
-// --- TWORZENIE ULEPSZONEJ MAPY (TORU) ---
-// 1. Ogromne podłoże (Trawa)
-const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
-const ground = new THREE.Mesh(groundGeometry, grassMaterial);
+// --- GENERATOR MIASTA ---
+// Asfalt (Ziemia)
+const groundGeo = new THREE.PlaneGeometry(2000, 2000);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
 scene.add(ground);
 
-// 2. Tor (Asfalt) - Tworzymy kształt toru (owal)
-const trackPath = new THREE.CurvePath();
-const trackCurve = new THREE.EllipseCurve(
-    0, 0,            // x, y centralne
-    150, 80,         // xRadius, yRadius
-    0, 2 * Math.PI,  // startAngle, endAngle
-    false,            // clockwise
-    0                // rotation
-);
-trackPath.add(trackCurve);
+// Budynki
+const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
+// "InstancedMesh" to specjalna technika do rysowania tysięcy obiektów bez zacinania gry
+const citySize = 40; // Ilość budynków w rzędzie/kolumnie (40x40 = 1600 budynków)
+const buildingMesh = new THREE.InstancedMesh(buildingGeo, new THREE.MeshStandardMaterial({ color: 0x888888 }), citySize * citySize);
+buildingMesh.castShadow = true;
+buildingMesh.receiveShadow = true;
 
-// Generujemy geometrię toru wzdłuż ścieżki
-const trackGeometry = new THREE.ExtrudeGeometry(new THREE.Shape([
-    new THREE.Vector2(-10, 0), // Lewa krawędź
-    new THREE.Vector2(10, 0),  // Prawa krawędź
-]), {
-    steps: 100,
-    bevelEnabled: false,
-    extrudePath: trackCurve
-});
+const dummy = new THREE.Object3D();
+let buildingIndex = 0;
 
-const track = new THREE.Mesh(trackGeometry, asphaltMaterial);
-track.rotation.x = -Math.PI / 2;
-track.position.y = 0.01; // Lekko nad trawą, by uniknąć migotania
-scene.add(track);
+for (let x = -citySize / 2; x < citySize / 2; x++) {
+    for (let z = -citySize / 2; z < citySize / 2; z++) {
+        // Zostawiamy miejsce na szerokie drogi (jeśli x lub z jest podzielne przez 4, robimy pustą drogę)
+        if (x % 4 === 0 || z % 4 === 0) continue; 
+        
+        // Wycinamy środek na plac startowy
+        if (Math.abs(x) < 5 && Math.abs(z) < 5) continue;
 
-// --- DEFINICJA SCIEŻKI DLA AI (WAYPOINTS) ---
-// AI będzie jechało wzdłuż tego owalu
-const points = trackCurve.getPoints(50);
-const aiWaypoints = points.map(p => new THREE.Vector3(p.x, 0.5, -p.y)); // Dostosowanie osi
-
-// --- FUNKCJA TWORZENIA ULEPSZONEGO MODELU AUTA ---
-function createComplexCar(color, isPlayer = false) {
-    const carGroup = new THREE.Group();
-
-    // Nadwozie
-    const bodyGeom = new THREE.BoxGeometry(2, 0.6, 4);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: color });
-    const body = new THREE.Mesh(bodyGeom, bodyMat);
-    body.position.y = 0.6;
-    carGroup.add(body);
-
-    // Kabina
-    const cabinGeom = new THREE.BoxGeometry(1.4, 0.5, 2);
-    const cabinMat = new THREE.MeshLambertMaterial({ color: 0x111111 }); // Ciemne szyby
-    const cabin = new THREE.Mesh(cabinGeom, cabinMat);
-    cabin.position.y = 1.15;
-    cabin.position.z = -0.3; // Lekko przesunięta do tyłu
-    carGroup.add(cabin);
-
-    // Koła (Walce)
-    const wheelGeom = new THREE.CylinderGeometry(0.4, 0.4, 0.5, 16);
-    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 }); // Czarne opony
-    
-    const positions = [
-        [-1.1, 0.4, 1.4],  // Przód Lewo
-        [1.1, 0.4, 1.4],   // Przód Prawo
-        [-1.1, 0.4, -1.4], // Tył Lewo
-        [1.1, 0.4, -1.4]   // Tył Prawo
-    ];
-
-    positions.forEach(pos => {
-        const wheel = new THREE.Mesh(wheelGeom, wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(pos[0], pos[1], pos[2]);
-        carGroup.add(wheel);
-    });
-
-    carGroup.castShadow = true;
-    return carGroup;
+        const height = 10 + Math.random() * 40; // Losowa wysokość od 10 do 50
+        dummy.position.set(x * 15, height / 2, z * 15);
+        dummy.scale.set(10, height, 10);
+        dummy.updateMatrix();
+        
+        // Ustawiamy losowy kolor dla budynku
+        const bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.2, 0.4 + Math.random() * 0.4);
+        buildingMesh.setColorAt(buildingIndex, bColor);
+        buildingMesh.setMatrixAt(buildingIndex, dummy.matrix);
+        
+        buildingIndex++;
+    }
 }
+buildingMesh.count = buildingIndex;
+scene.add(buildingMesh);
 
-// --- TWORZENIE GRACZA I AI ---
-// Gracz
-const playerCar = createComplexCar(0xff0000, true);
-playerCar.position.set(0, 0, 150); // Start na krawędzi owalu
-playerCar.rotation.y = Math.PI;    // Skierowany w dobrą stronę
+// --- SAMOCHÓD GRACZA (MODEL GLTF LUB ZASTĘPCZY) ---
+const playerCar = new THREE.Group();
 scene.add(playerCar);
 
-// Klasa Samochodu AI
-class AICar {
-    constructor(color, startingWaypointIndex) {
-        this.mesh = createComplexCar(color);
-        this.waypointIndex = startingWaypointIndex;
-        this.mesh.position.copy(aiWaypoints[this.waypointIndex]);
-        this.speed = 0.2 + Math.random() * 0.1; // Losowa prędkość AI
-        scene.add(this.mesh);
-    }
+// Tworzymy prosty model zastępczy (zniknie, gdy załaduje się prawdziwy model 3D)
+const fallbackGeo = new THREE.BoxGeometry(2, 1, 4);
+const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+const fallbackCar = new THREE.Mesh(fallbackGeo, fallbackMat);
+fallbackCar.position.y = 0.5;
+fallbackCar.castShadow = true;
+playerCar.add(fallbackCar);
 
-    update() {
-        const target = aiWaypoints[this.waypointIndex];
-        const distance = this.mesh.position.distanceTo(target);
-
-        if (distance < 2) {
-            // Dotarliśmy do punktu, celujemy w kolejny
-            this.waypointIndex = (this.waypointIndex + 1) % aiWaypoints.length;
-        } else {
-            // Ruch w kierunku punktu
-            const direction = new THREE.Vector3().subVectors(target, this.mesh.position).normalize();
-            
-            // Płynny obrót w stronę celu
-            const targetRotation = Math.atan2(direction.x, direction.z);
-            this.mesh.rotation.y = targetRotation;
-            
-            // Jazda
-            this.mesh.translateZ(this.speed);
+// Ładowanie PRAWDZIWEGO modelu (wymaga pliku auto.glb na GitHubie)
+const loader = new GLTFLoader();
+loader.load('auto.glb', (gltf) => {
+    // Kiedy model się wczyta, usuwamy czerwony sześcian
+    playerCar.remove(fallbackCar);
+    
+    const realCarModel = gltf.scene;
+    // Skalujemy model, bo często z internetu są gigantyczne
+    realCarModel.scale.set(1.5, 1.5, 1.5); 
+    
+    // Włączamy cienie dla załadowanego modelu
+    realCarModel.traverse((node) => {
+        if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
         }
-    }
-}
+    });
+    
+    playerCar.add(realCarModel);
+    console.log("Realistyczny model załadowany!");
+}, undefined, (error) => {
+    console.log("Brak pliku auto.glb, użyto modelu zastępczego.");
+});
 
-// Spawnowanie kilku aut AI
-const aiCars = [
-    new AICar(0x0000ff, 5),   // Niebieski, start w punkcie 5
-    new AICar(0x00ff00, 15),  // Zielony, start w punkcie 15
-    new AICar(0xffff00, 25),  // Żółty, start w punkcie 25
-    new AICar(0xff00ff, 35)   // Fioletowy, start w punkcie 35
-];
-
-
-// --- STEROWANIE GRACZA (Zostało bez zmian) ---
+// --- STEROWANIE ---
 const keys = { w: false, a: false, s: false, d: false };
 document.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true; });
 document.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false; });
@@ -178,26 +130,44 @@ window.addEventListener('resize', () => {
 });
 
 // --- PĘTLA GRY ---
-const playerSpeed = 0.5;
-const playerTurnSpeed = 0.03;
+let speed = 0;
+const maxSpeed = 1.0;
+const acceleration = 0.02;
+const braking = 0.05;
+const friction = 0.01;
+const turnSpeed = 0.04;
 
 function animate() {
     requestAnimationFrame(animate);
 
-    // Fizyka Gracza
-    if (keys.w) playerCar.translateZ(playerSpeed);
-    if (keys.s) playerCar.translateZ(-playerSpeed);
-    if (keys.a) playerCar.rotation.y += playerTurnSpeed;
-    if (keys.d) playerCar.rotation.y -= playerTurnSpeed;
+    // 1. Fizyka i ruch samochodu (WASD)
+    if (keys.w) { speed += acceleration; }
+    else if (keys.s) { speed -= braking; }
+    else {
+        // Tarcie (auto zwalnia jak puścisz gaz)
+        if (speed > 0) speed -= friction;
+        if (speed < 0) speed += friction;
+        if (Math.abs(speed) < friction) speed = 0;
+    }
+    
+    // Ograniczenie prędkości
+    speed = Math.max(Math.min(speed, maxSpeed), -maxSpeed / 2);
 
-    // Aktualizacja AI
-    aiCars.forEach(car => car.update());
+    // Skręcanie działa tylko, gdy auto się porusza
+    if (speed !== 0) {
+        // Zmiana kierunku skręcania podczas jazdy do tyłu
+        const turnDir = speed > 0 ? 1 : -1;
+        if (keys.a) playerCar.rotation.y += turnSpeed * turnDir;
+        if (keys.d) playerCar.rotation.y -= turnSpeed * turnDir;
+    }
 
-    // Kamera podążająca za graczem
-    const relativeCameraOffset = new THREE.Vector3(0, 5, -12);
-    const cameraOffset = relativeCameraOffset.applyMatrix4(playerCar.matrixWorld);
-    camera.position.lerp(cameraOffset, 0.1);
-    camera.lookAt(playerCar.position);
+    // Ruch do przodu/tyłu
+    playerCar.translateZ(speed);
+
+    // 2. Aktualizacja kamery (Myszka)
+    // Ustawiamy środek obrotu kamery na pozycję naszego samochodu
+    controls.target.copy(playerCar.position);
+    controls.update(); // Wymagane dla płynnego ruchu (damping)
 
     renderer.render(scene, camera);
 }
