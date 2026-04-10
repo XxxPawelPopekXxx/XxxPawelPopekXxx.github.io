@@ -1,9 +1,9 @@
+// BEZPOŚREDNIE IMPORTY - To zadziała w 100% przeglądarek bez dodatków w HTML
 import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
 
 // --- 1. INTERFEJS (PRĘDKOŚCIOMIERZ) ---
-// Generujemy prędkościomierz bezpośrednio w JS, nie musisz zmieniać HTML
 const speedoDiv = document.createElement('div');
 speedoDiv.style.position = 'absolute';
 speedoDiv.style.bottom = '20px';
@@ -21,10 +21,10 @@ document.body.appendChild(speedoDiv);
 // --- 2. SCENA I KAMERA ---
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb); // Błękitne niebo
-scene.fog = new THREE.FogExp2(0x87ceeb, 0.001); // Bardzo daleka mgła
+scene.fog = new THREE.FogExp2(0x87ceeb, 0.001); // Daleka mgła
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-camera.position.set(0, 5, -15); // Startowa pozycja kamery
+camera.position.set(0, 5, -15);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -35,8 +35,8 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2 - 0.02; // Nie pozwalamy wejść pod ziemię
-controls.minDistance = 6;  // Zabezpieczenie przed wpadnięciem do kabiny
+controls.maxPolarAngle = Math.PI / 2 - 0.02; 
+controls.minDistance = 6;  
 controls.maxDistance = 30;
 
 // --- 4. ŚWIATŁA ---
@@ -54,7 +54,6 @@ sun.shadow.camera.far = 3000;
 scene.add(sun);
 
 // --- 5. NAPRAWIONA MAPA I MIASTO ---
-// Ziemia
 const groundGeo = new THREE.PlaneGeometry(4000, 4000);
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -62,12 +61,10 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Siatka (Grid), żebyś WIDZIAŁ, że jedziesz (bez tego na płaskim asfalcie nie widać prędkości)
 const gridHelper = new THREE.GridHelper(4000, 200, 0x000000, 0x555555);
 gridHelper.position.y = 0.01;
 scene.add(gridHelper);
 
-// Generator budynków
 const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
 const buildingMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5 });
 const citySize = 50; 
@@ -79,11 +76,10 @@ const dummy = new THREE.Object3D();
 let bIndex = 0;
 for (let x = -citySize / 2; x < citySize / 2; x++) {
     for (let z = -citySize / 2; z < citySize / 2; z++) {
-        // Szerokie ulice i gigantyczny plac startowy (żeby nie zrespić się w budynku)
         if (x % 5 === 0 || z % 5 === 0) continue; 
         if (Math.abs(x) < 8 && Math.abs(z) < 8) continue; 
 
-        const height = 15 + Math.random() * 60; // Wysokie wieżowce
+        const height = 15 + Math.random() * 60; 
         dummy.position.set(x * 20, height / 2, z * 20);
         dummy.scale.set(12, height, 12);
         dummy.updateMatrix();
@@ -101,7 +97,6 @@ scene.add(buildingMesh);
 const playerCar = new THREE.Group();
 scene.add(playerCar);
 
-// Auto zastępcze, gdyby plik się nie wgrał
 const fallbackGeo = new THREE.BoxGeometry(2, 1, 4);
 const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 const fallbackCar = new THREE.Mesh(fallbackGeo, fallbackMat);
@@ -110,10 +105,9 @@ playerCar.add(fallbackCar);
 
 const loader = new GLTFLoader();
 loader.load('auto.glb', (gltf) => {
-    playerCar.remove(fallbackCar); // Usuwamy czerwony prostokąt
+    playerCar.remove(fallbackCar); 
     const realCarModel = gltf.scene;
     
-    // Auto-skalowanie do równo 4 metrów długości
     const box = new THREE.Box3().setFromObject(realCarModel);
     const size = new THREE.Vector3();
     box.getSize(size);
@@ -121,11 +115,9 @@ loader.load('auto.glb', (gltf) => {
     const scale = 4 / maxDim;
     realCarModel.scale.set(scale, scale, scale);
     
-    // Auto-centrowanie
     const newBox = new THREE.Box3().setFromObject(realCarModel);
     newBox.getCenter(realCarModel.position).multiplyScalar(-1);
     
-    // Naprawa zepsutych, niewidzialnych materiałów
     realCarModel.traverse((node) => {
         if (node.isMesh) {
             node.castShadow = true;
@@ -134,13 +126,12 @@ loader.load('auto.glb', (gltf) => {
                 node.material.side = THREE.DoubleSide;
                 node.material.depthWrite = true;
                 if (node.material.transparent && node.material.opacity > 0.9) {
-                    node.material.transparent = false; // Naprawia "szklaną karoserię"
+                    node.material.transparent = false; 
                 }
             }
         }
     });
     
-    // Podniesienie modelu nad asfalt
     const finalBox = new THREE.Box3().setFromObject(realCarModel);
     realCarModel.position.y -= finalBox.min.y; 
     
@@ -159,43 +150,32 @@ window.addEventListener('resize', () => {
 });
 
 // --- 8. ZAAWANSOWANA FIZYKA JAZDY ---
-const clock = new THREE.Clock(); // Zegar to podstawa realistycznego przyspieszenia
-let speedKmh = 0; // Prędkość w km/h
+const clock = new THREE.Clock(); 
+let speedKmh = 0; 
 
 function animate() {
     requestAnimationFrame(animate);
     
-    const delta = clock.getDelta(); // Czas od ostatniej klatki (sekundy)
-    
-    // Fizyka przyspieszenia zależna od obecnej prędkości
+    const delta = clock.getDelta(); 
     let acceleration = 0;
     
     if (keys.w) {
         if (speedKmh >= 0) {
-            // Przyspieszanie do przodu (zgodnie z Twoimi danymi)
-            if (speedKmh < 100) {
-                acceleration = 100 / 5;       // 0-100 w 5s (20 km/h na sekundę)
-            } else if (speedKmh < 200) {
-                acceleration = 100 / 13;      // 100-200 w 13s (ok. 7.7 km/h na sek.)
-            } else if (speedKmh < 250) {
-                acceleration = 50 / 30;       // 200-250 w 30s (ok. 1.6 km/h na sek.)
-            } else {
-                acceleration = 0;             // V-MAX 250 km/h
-            }
+            if (speedKmh < 100) acceleration = 100 / 5;
+            else if (speedKmh < 200) acceleration = 100 / 13;
+            else if (speedKmh < 250) acceleration = 50 / 30;
+            else acceleration = 0;
         } else {
-            // Hamowanie podczas cofania
             acceleration = 60;
         }
     } else if (keys.s) {
-        // Hamulec / Cofanie
         if (speedKmh > 0) {
-            acceleration = -80; // Mocne hamulce (80 km/h na sekundę w dół)
+            acceleration = -80; 
         } else {
-            acceleration = -15; // Powolne przyspieszanie do tyłu
-            if (speedKmh < -40) acceleration = 0; // Max prędkość cofania: 40 km/h
+            acceleration = -15; 
+            if (speedKmh < -40) acceleration = 0; 
         }
     } else {
-        // Tarcie (auto zwalnia, gdy puścisz gaz)
         if (speedKmh > 0) {
             acceleration = -5;
             if (speedKmh + acceleration * delta < 0) speedKmh = 0;
@@ -205,26 +185,21 @@ function animate() {
         }
     }
 
-    // Aplikujemy przyspieszenie do prędkości
     speedKmh += acceleration * delta;
 
-    // Skręcanie
-    if (Math.abs(speedKmh) > 1) { // Skręcamy tylko, jak jedziemy
-        const turnSpeed = 1.5 * delta; // Prędkość obrotu na sekundę
-        const turnDir = speedKmh > 0 ? 1 : -1; // Odwrotne sterowanie przy cofaniu
+    if (Math.abs(speedKmh) > 1) { 
+        const turnSpeed = 1.5 * delta; 
+        const turnDir = speedKmh > 0 ? 1 : -1; 
         
         if (keys.a) playerCar.rotation.y += turnSpeed * turnDir;
         if (keys.d) playerCar.rotation.y -= turnSpeed * turnDir;
     }
 
-    // Zamiana KM/H na Metry na Sekundę, i przesunięcie auta
     const speedMs = speedKmh / 3.6; 
-    playerCar.translateZ(speedMs * delta); // W Three.js ruch o oś Z do przodu
+    playerCar.translateZ(speedMs * delta); 
 
-    // Aktualizacja prędkościomierza
     speedoDiv.innerHTML = `${Math.abs(Math.round(speedKmh))} <span style="font-size: 20px">KM/H</span>`;
 
-    // Aktualizacja kamery - PODĄŻA ZA POZYCJĄ, ALE NIE ZA OBROTEM!
     controls.target.copy(playerCar.position);
     controls.update();
 
