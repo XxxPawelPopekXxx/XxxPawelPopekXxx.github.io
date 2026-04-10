@@ -102,7 +102,9 @@ loader.load('auto.glb', (gltf) => {
     
     const realCarModel = gltf.scene;
     // Skalujemy model, bo często z internetu są gigantyczne
-    realCarModel.scale.set(0.01, 0.01, 0.01); 
+    realCarModel.scale.set(1.5, 1.5, 1.5);
+    // To wyśrodkuje model idealnie wokół naszego punktu 0
+new THREE.Box3().setFromObject(realCarModel).getCenter(realCarModel.position).multiplyScalar(-1);
     
     // Włączamy cienie dla załadowanego modelu
     realCarModel.traverse((node) => {
