@@ -1,4 +1,3 @@
-// CZYSTE IMPORTY KORZYSTAJĄCE Z IMPORTMAP Z PLIKU HTML
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -20,11 +19,11 @@ document.body.appendChild(speedoDiv);
 
 // --- 2. SCENA I KAMERA ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // Błękitne niebo
+scene.background = new THREE.Color(0x87ceeb); // Niebo
 scene.fog = new THREE.FogExp2(0x87ceeb, 0.001); // Daleka mgła
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-camera.position.set(0, 5, -15);
+camera.position.set(0, 6, -12); // Ustalona pozycja kamery
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -35,9 +34,10 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2 - 0.02; 
-controls.minDistance = 6;  
-controls.maxDistance = 30;
+controls.maxPolarAngle = Math.PI / 2 - 0.02; // Nie pozwalamy wejść pod ziemię
+controls.minDistance = 6;  // Ochrona przed wpadnięciem do kabiny
+controls.maxDistance = 12; // Zablokowanie zbytniego oddalania
+controls.enableZoom = false; // Stały dystans kamery
 
 // --- 4. ŚWIATŁA ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -46,29 +46,56 @@ scene.add(ambientLight);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(500, 1000, 500);
 sun.castShadow = true;
-sun.shadow.camera.left = -500;
-sun.shadow.camera.right = 500;
-sun.shadow.camera.top = 500;
-sun.shadow.camera.bottom = -500;
-sun.shadow.camera.far = 3000;
+sun.shadow.camera.left = -1000;
+sun.shadow.camera.right = 1000;
+sun.shadow.camera.top = 1000;
+sun.shadow.camera.bottom = -1000;
+sun.shadow.camera.far = 4000;
 scene.add(sun);
 
-// --- 5. NAPRAWIONA MAPA I MIASTO ---
-const groundGeo = new THREE.PlaneGeometry(4000, 4000);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
+// --- 5. MAPA (AUTOBAHN) I MIASTO ---
+const groundGeo = new THREE.PlaneGeometry(10000, 10000);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const gridHelper = new THREE.GridHelper(4000, 200, 0x000000, 0x555555);
+const gridHelper = new THREE.GridHelper(10000, 400, 0x000000, 0x444444);
 gridHelper.position.y = 0.01;
 scene.add(gridHelper);
 
+// Pasy autostrady
+function createLanes() {
+    const laneGroup = new THREE.Group();
+    const laneGeo = new THREE.PlaneGeometry(0.3, 2);
+    const laneMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+    
+    for (let i = -1.5; i <= 1.5; i++) {
+        if (i === -1.5 || i === 1.5) {
+            const solidLineGeo = new THREE.PlaneGeometry(0.1, 10000);
+            const solidLine = new THREE.Mesh(solidLineGeo, laneMat);
+            solidLine.rotation.x = -Math.PI / 2;
+            solidLine.position.set(i * 4, 0.02, 0);
+            laneGroup.add(solidLine);
+        } else {
+            for (let z = -5000; z < 5000; z += 10) {
+                const brokenLine = new THREE.Mesh(laneGeo, laneMat);
+                brokenLine.rotation.x = -Math.PI / 2;
+                brokenLine.position.set(i * 4, 0.02, z);
+                laneGroup.add(brokenLine);
+            }
+        }
+    }
+    scene.add(laneGroup);
+}
+createLanes();
+
+// Budynki
 const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
-const buildingMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5 });
-const citySize = 50; 
-const buildingMesh = new THREE.InstancedMesh(buildingGeo, buildingMat, citySize * citySize);
+const buildingMat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.5 });
+const citySize = 70; 
+const buildingMesh = new THREE.InstancedMesh(buildingGeo, buildingMat, citySize * citySize * 2);
 buildingMesh.castShadow = true;
 buildingMesh.receiveShadow = true;
 
@@ -76,15 +103,25 @@ const dummy = new THREE.Object3D();
 let bIndex = 0;
 for (let x = -citySize / 2; x < citySize / 2; x++) {
     for (let z = -citySize / 2; z < citySize / 2; z++) {
+        if (Math.abs(x) < 25 && Math.abs(z) < 15) continue; 
         if (x % 5 === 0 || z % 5 === 0) continue; 
-        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue; 
 
-        const height = 15 + Math.random() * 60; 
-        dummy.position.set(x * 20, height / 2, z * 20);
+        const height = 10 + Math.random() * 80; 
+        
+        // Lewa strona
+        dummy.position.set((x - 25) * 20, height / 2, z * 20);
         dummy.scale.set(12, height, 12);
         dummy.updateMatrix();
-        
-        const bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.1, 0.3 + Math.random() * 0.5);
+        let bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.1, 0.2 + Math.random() * 0.4);
+        buildingMesh.setColorAt(bIndex, bColor);
+        buildingMesh.setMatrixAt(bIndex, dummy.matrix);
+        bIndex++;
+
+        // Prawa strona
+        dummy.position.set((x + 25) * 20, height / 2, z * 20);
+        dummy.scale.set(12, height, 12);
+        dummy.updateMatrix();
+        bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.1, 0.2 + Math.random() * 0.4);
         buildingMesh.setColorAt(bIndex, bColor);
         buildingMesh.setMatrixAt(bIndex, dummy.matrix);
         bIndex++;
@@ -93,7 +130,7 @@ for (let x = -citySize / 2; x < citySize / 2; x++) {
 buildingMesh.count = bIndex;
 scene.add(buildingMesh);
 
-// --- 6. MODEL AUTA (Kuloodporne ładowanie) ---
+// --- 6. MODEL AUTA ---
 const playerCar = new THREE.Group();
 scene.add(playerCar);
 
@@ -188,11 +225,12 @@ function animate() {
     speedKmh += acceleration * delta;
 
     if (Math.abs(speedKmh) > 1) { 
-        const turnSpeed = 1.5 * delta; 
+        const baseTurnSpeed = 1.0;
+        const currentTurnSpeed = baseTurnSpeed / (1 + Math.abs(speedKmh) / 30);
         const turnDir = speedKmh > 0 ? 1 : -1; 
         
-        if (keys.a) playerCar.rotation.y += turnSpeed * turnDir;
-        if (keys.d) playerCar.rotation.y -= turnSpeed * turnDir;
+        if (keys.a) playerCar.rotation.y += currentTurnSpeed * turnDir * delta;
+        if (keys.d) playerCar.rotation.y -= currentTurnSpeed * turnDir * delta;
     }
 
     const speedMs = speedKmh / 3.6; 
