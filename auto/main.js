@@ -102,7 +102,7 @@ loader.load('auto.glb', (gltf) => {
     
     const realCarModel = gltf.scene;
     // Skalujemy model, bo często z internetu są gigantyczne
-    realCarModel.scale.set(1.5, 1.5, 1.5); 
+    realCarModel.scale.set(100, 100, 100); 
     
     // Włączamy cienie dla załadowanego modelu
     realCarModel.traverse((node) => {
