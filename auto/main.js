@@ -19,126 +19,154 @@ document.body.appendChild(speedoDiv);
 
 // --- 2. SCENA I KAMERA ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // Niebo
-scene.fog = new THREE.FogExp2(0x87ceeb, 0.001); // Daleka mgła
+const skyColor = 0x87ceeb;
+scene.background = new THREE.Color(skyColor);
+// Liniowa mgła - ukrywa koniec mapy i daje poczucie głębi
+scene.fog = new THREE.Fog(skyColor, 50, 400); 
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-camera.position.set(0, 6, -12); // Ustalona pozycja kamery
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+// BARDZO BLISKO I NISKO: Kamera tuż za autem
+camera.position.set(0, 2.5, -6); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// --- 3. KAMERA MYSZKĄ (ORBIT CONTROLS) ---
+// --- 3. KAMERA MYSZKĄ ---
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2 - 0.02; // Nie pozwalamy wejść pod ziemię
-controls.minDistance = 6;  // Ochrona przed wpadnięciem do kabiny
-controls.maxDistance = 12; // Zablokowanie zbytniego oddalania
-controls.enableZoom = false; // Stały dystans kamery
+controls.maxPolarAngle = Math.PI / 2 - 0.05; // Blokada przed wejściem w asfalt
+controls.minDistance = 3.5; // Kamera bardzo blisko auta
+controls.maxDistance = 6.0; // Maksymalne oddalenie mocno ograniczone
+controls.enableZoom = false; 
 
 // --- 4. ŚWIATŁA ---
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 scene.add(ambientLight);
 
-const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-sun.position.set(500, 1000, 500);
+const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+sun.position.set(100, 200, 50);
 sun.castShadow = true;
-sun.shadow.camera.left = -1000;
-sun.shadow.camera.right = 1000;
-sun.shadow.camera.top = 1000;
-sun.shadow.camera.bottom = -1000;
-sun.shadow.camera.far = 4000;
+sun.shadow.camera.left = -200;
+sun.shadow.camera.right = 200;
+sun.shadow.camera.top = 200;
+sun.shadow.camera.bottom = -200;
+sun.shadow.camera.far = 1000;
 scene.add(sun);
 
-// --- 5. MAPA (AUTOBAHN) I MIASTO ---
-const groundGeo = new THREE.PlaneGeometry(10000, 10000);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
+// --- 5. PRAWDZIWY AUTOBAHN ---
+const roadLength = 20000; // Ekstremalnie długa trasa
 
-const gridHelper = new THREE.GridHelper(10000, 400, 0x000000, 0x444444);
-gridHelper.position.y = 0.01;
-scene.add(gridHelper);
+// Trawa (Pobocze)
+const grassGeo = new THREE.PlaneGeometry(1000, roadLength);
+const grassMat = new THREE.MeshLambertMaterial({ color: 0x2e5c1e }); // Naturalna zieleń
+const grass = new THREE.Mesh(grassGeo, grassMat);
+grass.rotation.x = -Math.PI / 2;
+grass.receiveShadow = true;
+scene.add(grass);
 
-// Pasy autostrady
-function createLanes() {
-    const laneGroup = new THREE.Group();
-    const laneGeo = new THREE.PlaneGeometry(0.3, 2);
-    const laneMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+// Asfalt
+const roadWidth = 24; // Szeroka autostrada
+const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
+const roadMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); // Ciemny asfalt
+const road = new THREE.Mesh(roadGeo, roadMat);
+road.rotation.x = -Math.PI / 2;
+road.position.y = 0.02; // Lekko nad trawą
+road.receiveShadow = true;
+scene.add(road);
+
+// Bariery energochłonne (Środek i Boki)
+const barrierMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
+const barrierGeo = new THREE.BoxGeometry(0.6, 1.2, roadLength);
+
+// Środkowa bariera
+const midBarrier = new THREE.Mesh(barrierGeo, barrierMat);
+midBarrier.position.set(0, 0.6, 0);
+midBarrier.castShadow = true;
+scene.add(midBarrier);
+
+// Lewa bariera
+const leftBarrier = new THREE.Mesh(barrierGeo, barrierMat);
+leftBarrier.position.set(-roadWidth/2 - 0.5, 0.6, 0);
+leftBarrier.castShadow = true;
+scene.add(leftBarrier);
+
+// Prawa bariera
+const rightBarrier = new THREE.Mesh(barrierGeo, barrierMat);
+rightBarrier.position.set(roadWidth/2 + 0.5, 0.6, 0);
+rightBarrier.castShadow = true;
+scene.add(rightBarrier);
+
+// Pasy ruchu (Linie na asfalcie)
+const laneGroup = new THREE.Group();
+const lineGeo = new THREE.PlaneGeometry(0.2, 3);
+const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+// Rysujemy przerywane linie dla 3 pasów w każdą stronę
+const lanePositions = [-8, -4, 4, 8]; 
+for (let x of lanePositions) {
+    for (let z = -roadLength/2; z < roadLength/2; z += 8) {
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(x, 0.04, z);
+        laneGroup.add(line);
+    }
+}
+scene.add(laneGroup);
+
+// Lasy po bokach (Zamiast klocków)
+const treeCount = 2000;
+const treeGroup = new THREE.Group();
+
+// Geometria drzewa (Prosta sosna)
+const trunkGeo = new THREE.CylinderGeometry(0.2, 0.4, 2);
+const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
+const leavesGeo = new THREE.ConeGeometry(1.5, 4, 8);
+const leavesMat = new THREE.MeshLambertMaterial({ color: 0x1e4d2b });
+
+for (let i = 0; i < treeCount; i++) {
+    const tree = new THREE.Group();
     
-    for (let i = -1.5; i <= 1.5; i++) {
-        if (i === -1.5 || i === 1.5) {
-            const solidLineGeo = new THREE.PlaneGeometry(0.1, 10000);
-            const solidLine = new THREE.Mesh(solidLineGeo, laneMat);
-            solidLine.rotation.x = -Math.PI / 2;
-            solidLine.position.set(i * 4, 0.02, 0);
-            laneGroup.add(solidLine);
-        } else {
-            for (let z = -5000; z < 5000; z += 10) {
-                const brokenLine = new THREE.Mesh(laneGeo, laneMat);
-                brokenLine.rotation.x = -Math.PI / 2;
-                brokenLine.position.set(i * 4, 0.02, z);
-                laneGroup.add(brokenLine);
-            }
-        }
-    }
-    scene.add(laneGroup);
-}
-createLanes();
-
-// Budynki
-const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
-const buildingMat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.5 });
-const citySize = 70; 
-const buildingMesh = new THREE.InstancedMesh(buildingGeo, buildingMat, citySize * citySize * 2);
-buildingMesh.castShadow = true;
-buildingMesh.receiveShadow = true;
-
-const dummy = new THREE.Object3D();
-let bIndex = 0;
-for (let x = -citySize / 2; x < citySize / 2; x++) {
-    for (let z = -citySize / 2; z < citySize / 2; z++) {
-        if (Math.abs(x) < 25 && Math.abs(z) < 15) continue; 
-        if (x % 5 === 0 || z % 5 === 0) continue; 
-
-        const height = 10 + Math.random() * 80; 
-        
-        // Lewa strona
-        dummy.position.set((x - 25) * 20, height / 2, z * 20);
-        dummy.scale.set(12, height, 12);
-        dummy.updateMatrix();
-        let bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.1, 0.2 + Math.random() * 0.4);
-        buildingMesh.setColorAt(bIndex, bColor);
-        buildingMesh.setMatrixAt(bIndex, dummy.matrix);
-        bIndex++;
-
-        // Prawa strona
-        dummy.position.set((x + 25) * 20, height / 2, z * 20);
-        dummy.scale.set(12, height, 12);
-        dummy.updateMatrix();
-        bColor = new THREE.Color().setHSL(Math.random() * 0.1, 0.1, 0.2 + Math.random() * 0.4);
-        buildingMesh.setColorAt(bIndex, bColor);
-        buildingMesh.setMatrixAt(bIndex, dummy.matrix);
-        bIndex++;
+    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    trunk.position.y = 1;
+    trunk.castShadow = true;
+    
+    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+    leaves.position.y = 3;
+    leaves.castShadow = true;
+    
+    tree.add(trunk);
+    tree.add(leaves);
+    
+    // Losowe pozycjonowanie po bokach autostrady (żeby nie rosły na asfalcie)
+    let rx = (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 80);
+    let rz = (Math.random() - 0.5) * roadLength;
+    
+    tree.position.set(rx, 0, rz);
+    
+    // Dodajemy tylko drzewa blisko startu, żeby przeglądarka nie eksplodowała
+    if(Math.abs(rz) < 2000) {
+        treeGroup.add(tree);
     }
 }
-buildingMesh.count = bIndex;
-scene.add(buildingMesh);
+scene.add(treeGroup);
 
 // --- 6. MODEL AUTA ---
 const playerCar = new THREE.Group();
 scene.add(playerCar);
 
-const fallbackGeo = new THREE.BoxGeometry(2, 1, 4);
+// Auto zastępcze (Sportowy, płaski sześcian, żeby lepiej pasował do kamery)
+const fallbackGeo = new THREE.BoxGeometry(1.8, 0.8, 4);
 const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 const fallbackCar = new THREE.Mesh(fallbackGeo, fallbackMat);
-fallbackCar.position.y = 0.5;
+fallbackCar.position.y = 0.4;
+fallbackCar.castShadow = true;
 playerCar.add(fallbackCar);
+
+// Twój startowy pas na autostradzie (żeby nie wjechać w barierki)
+playerCar.position.set(-6, 0, 0); 
 
 const loader = new GLTFLoader();
 loader.load('auto.glb', (gltf) => {
@@ -149,7 +177,7 @@ loader.load('auto.glb', (gltf) => {
     const size = new THREE.Vector3();
     box.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 4 / maxDim;
+    const scale = 4 / maxDim; // Auto długości 4 metrów
     realCarModel.scale.set(scale, scale, scale);
     
     const newBox = new THREE.Box3().setFromObject(realCarModel);
@@ -173,7 +201,7 @@ loader.load('auto.glb', (gltf) => {
     realCarModel.position.y -= finalBox.min.y; 
     
     playerCar.add(realCarModel);
-}, undefined, (err) => console.error("Błąd modelu: ", err));
+}, undefined, (err) => console.log("Czekam na Twój plik auto.glb... Używam auta zastępczego."));
 
 // --- 7. STEROWANIE ---
 const keys = { w: false, a: false, s: false, d: false };
@@ -238,8 +266,14 @@ function animate() {
 
     speedoDiv.innerHTML = `${Math.abs(Math.round(speedKmh))} <span style="font-size: 20px">KM/H</span>`;
 
+    // Aktualizacja kamery - sztywno za autem!
     controls.target.copy(playerCar.position);
     controls.update();
+
+    // Reset trasy w nieskończoność (Iluzja bez końca)
+    if (playerCar.position.z > 5000 || playerCar.position.z < -5000) {
+        playerCar.position.z = 0;
+    }
 
     renderer.render(scene, camera);
 }
