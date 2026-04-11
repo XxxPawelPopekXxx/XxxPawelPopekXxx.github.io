@@ -1,64 +1,183 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Komentarze PopekTok z logowaniem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PopekTok</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 20px; }
-        .panel { background: #f4f4f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        input, textarea { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; margin-right: 5px; }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        #message { margin-top: 10px; font-weight: bold; }
-        .comment { border-bottom: 1px solid #ccc; padding: 10px 0; }
-        .comment-author { font-weight: bold; color: #007bff; }
-        .comment-date { font-size: 0.8em; color: #777; }
+        :root {
+            --bg-black: #010101;
+            --tiktok-red: #ff0050;
+            --text-white: #ffffff;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #0a0a0a; font-family: 'ProximaNova', sans-serif;
+            color: var(--text-white); display: flex; justify-content: center; align-items: center;
+        }
+
+        /* Wygląd aplikacji */
+        #app-wrapper {
+            position: relative; width: 100%; height: 100dvh;
+            background-color: var(--bg-black); overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            #app-wrapper {
+                height: 90vh; max-width: 400px; border-radius: 30px; 
+                border: 8px solid #222; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            }
+        }
+
+        /* Kontener ze scrollowaniem */
+        #video-container {
+            width: 100%; height: 100%; scroll-snap-type: y mandatory;
+            overflow-y: scroll; scrollbar-width: none; 
+            overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
+        }
+        #video-container::-webkit-scrollbar { display: none; } 
+
+        .video-player {
+            width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; 
+            position: relative; display: flex; align-items: center; justify-content: center;
+            background: #000; overflow: hidden;
+        }
+
+        video, .fallback-img {
+            width: 100%; height: 100%; object-fit: contain; cursor: pointer; z-index: 2;
+        }
+
+        /* Animacja Ładowania */
+        .loader {
+            position: absolute; width: 40px; height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%;
+            border-top-color: var(--text-white); animation: spin 1s ease-in-out infinite;
+            z-index: 1; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Ikona Play */
+        .play-indicator {
+            position: absolute; font-size: 80px; color: rgba(255, 255, 255, 0.6);
+            pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 5;
+        }
+        .is-paused .play-indicator { opacity: 1; }
+
+        /* Latające Serce */
+        .floating-heart {
+            position: absolute; color: var(--tiktok-red); font-size: 80px; pointer-events: none;
+            transform: translate(-50%, -50%) scale(0); animation: popHeart 0.8s ease-out forwards;
+            z-index: 15; text-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+        @keyframes popHeart {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
+            40% { transform: translate(-50%, -50%) scale(1) rotate(-5deg); }
+            100% { transform: translate(-50%, -150%) scale(1.5) rotate(0deg); opacity: 0; }
+        }
+
+        /* UI Overlays */
+        .ui-overlay { position: absolute; bottom: 80px; left: 15px; z-index: 10; pointer-events: none; }
+        .side-bar { position: absolute; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 25px; align-items: center; z-index: 10; }
+        .icon-btn { font-size: 32px; cursor: pointer; text-shadow: 0 0 10px rgba(0,0,0,0.8); transition: transform 0.2s; }
+        .icon-btn:active { transform: scale(0.9); }
+        .liked { color: var(--tiktok-red); }
+
+        /* Nawigacja Górna i Dolna */
+        .nav-tabs { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; z-index: 20; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+        .nav-item { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        .active-tab { opacity: 1; border-bottom: 2px solid white; padding-bottom: 3px; }
+        .bottom-menu { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.95)); display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+
+        /* --- Sekcja Komentarzy (Bottom Sheet) --- */
+        .comment-modal {
+            position: absolute; bottom: -100%; left: 0; width: 100%; height: 70%;
+            background-color: #1a1a1a; border-top-left-radius: 15px; border-top-right-radius: 15px;
+            z-index: 30; transition: bottom 0.3s ease-in-out; display: flex; flex-direction: column;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
+        }
+        .comment-modal.active { bottom: 0; }
+        .comment-header { padding: 15px; text-align: center; border-bottom: 1px solid #333; position: relative; }
+        .comment-header h3 { margin: 0; font-size: 16px; }
+        .comment-header .fa-times { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 20px; }
+        .comment-list { flex-grow: 1; overflow-y: auto; padding: 15px; }
+        .comment-item { margin-bottom: 15px; font-size: 14px; background: #222; padding: 10px; border-radius: 10px; }
+        .comment-item strong { color: var(--tiktok-red); font-size: 12px; }
+        .comment-item span.date { color: #888; font-size: 10px; margin-left: 5px; }
+        .comment-item p { margin: 5px 0 0 0; word-break: break-word; }
         
-        /* Klasy do ukrywania elementów */
-        .hidden { display: none; }
+        /* Dodatki do logowania i inputów */
+        .auth-panel { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #111; }
+        .auth-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: none; background: #333; color: white; outline: none; box-sizing: border-box;}
+        .auth-btn { padding: 10px; border-radius: 10px; border: none; background: var(--tiktok-red); color: white; cursor: pointer; font-weight: bold; flex-grow: 1;}
+        
+        .comment-input-area { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 5px; background: #111; }
+        .input-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .input-row input { flex-grow: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
+        .send-btn { color: var(--tiktok-red); cursor: pointer; font-size: 24px; transition: transform 0.2s; }
+        .send-btn:active { transform: scale(0.9); }
+        .user-info-row { display: flex; justify-content: space-between; font-size: 12px; color: #aaa; padding: 0 5px; }
+        .logout-text { color: var(--tiktok-red); cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>System Komentarzy</h2>
-    <div id="message"></div>
+    <div id="app-wrapper">
+        <div class="nav-tabs">
+            <span class="nav-item active-tab" onclick="showFeed()">For You</span>
+            <span class="nav-item" onclick="showLiked()">Liked</span>
+        </div>
 
-    <div id="authPanel" class="panel">
-        <h3>Zaloguj się lub stwórz konto</h3>
-        <input type="text" id="nickInput" placeholder="Twój Nick (tylko przy rejestracji)">
-        <input type="email" id="emailInput" placeholder="Adres E-mail">
-        <input type="password" id="passwordInput" placeholder="Hasło (min. 6 znaków)">
-        
-        <button id="loginBtn">Zaloguj się</button>
-        <button id="registerBtn" class="btn-secondary">Zarejestruj się</button>
+        <div id="video-container"></div>
+
+        <div class="bottom-menu">
+            <i class="fas fa-home icon-btn" onclick="showFeed()" style="font-size: 24px;"></i>
+            <i class="fas fa-heart icon-btn" onclick="showLiked()" style="font-size: 24px;"></i>
+        </div>
+
+        <div id="comment-modal" class="comment-modal">
+            <div class="comment-header">
+                <h3>Komentarze <span id="comment-count">(0)</span></h3>
+                <i class="fas fa-times" onclick="closeComments()"></i>
+            </div>
+            
+            <div id="comment-list" class="comment-list"></div>
+
+            <div id="auth-panel" class="auth-panel">
+                <div id="auth-msg" style="text-align: center; font-size: 13px; color: #ff4d4d;">Zaloguj się, aby komentować</div>
+                <input type="text" id="auth-nick" class="auth-input" placeholder="Twój Nick (tylko do rejestracji)">
+                <input type="email" id="auth-email" class="auth-input" placeholder="Adres E-mail">
+                <input type="password" id="auth-pass" class="auth-input" placeholder="Hasło (min. 6 znaków)">
+                <div style="display: flex; gap: 10px;">
+                    <button class="auth-btn" onclick="loginUser()">Zaloguj</button>
+                    <button class="auth-btn" style="background: #444;" onclick="registerUser()">Zarejestruj</button>
+                </div>
+            </div>
+
+            <div id="comment-input-area" class="comment-input-area" style="display: none;">
+                <div class="user-info-row">
+                    <span>Piszesz jako: <strong id="logged-user-nick" style="color:white;"></strong></span>
+                    <span class="logout-text" onclick="logoutUser()">Wyloguj</span>
+                </div>
+                <div class="input-row">
+                    <input type="text" id="comment-input" placeholder="Dodaj komentarz (cooldown 1min)..." onkeypress="handleEnter(event)">
+                    <i class="fas fa-arrow-circle-up send-btn" onclick="addComment()"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="userPanel" class="panel hidden">
-        Zalogowano jako: <strong id="currentUserDisplay"></strong>
-        <button id="logoutBtn" class="btn-danger" style="float: right; padding: 5px 10px;">Wyloguj</button>
-        <div style="clear: both;"></div>
-    </div>
-
-    <div id="commentPanel" class="panel hidden">
-        <textarea id="commentInput" placeholder="Napisz coś..."></textarea>
-        <button id="submitBtn">Wyślij komentarz</button>
-    </div>
-
-    <div id="commentsList" class="panel">
-        <h3>Komentarze:</h3>
-        <div id="commentsContainer">Ładowanie komentarzy...</div>
-    </div>
-
-    <script type="module">
-        // Importy Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-        // Konfiguracja
+    <script>
+        // ==========================================
+        // 1. KONFIGURACJA FIREBASE
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyBnxvLaH6HF6gWqlJO9pCVaKvEC5eCrMzA",
             authDomain: "popektok.firebaseapp.com",
@@ -68,160 +187,354 @@
             appId: "1:805938481983:web:755947062531b57e24618a"
         };
 
-        // Inicjalizacja
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        let db;
+        let auth; // Zmienna dla autoryzacji
 
-        // Elementy interfejsu
-        const authPanel = document.getElementById('authPanel');
-        const userPanel = document.getElementById('userPanel');
-        const commentPanel = document.getElementById('commentPanel');
-        const currentUserDisplay = document.getElementById('currentUserDisplay');
-        const commentsContainer = document.getElementById('commentsContainer');
-        const messageDiv = document.getElementById('message');
-
-        const COOLDOWN_TIME = 60 * 1000; // 1 minuta
-
-        // --- SYSTEM KOMUNIKATÓW ---
-        function showMessage(text, color) {
-            messageDiv.textContent = text;
-            messageDiv.style.color = color;
-            setTimeout(() => { messageDiv.textContent = ''; }, 5000);
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth(); // Inicjalizacja kont
+        } catch(e) {
+            console.error("Firebase nie zostało skonfigurowane poprawnie.");
         }
 
-        // --- NASŁUCHIWANIE STANU ZALOGOWANIA ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Użytkownik zalogowany - pokaż panele
-                authPanel.classList.add('hidden');
-                userPanel.classList.remove('hidden');
-                commentPanel.classList.remove('hidden');
-                currentUserDisplay.textContent = user.displayName || "Anonim";
-            } else {
-                // Użytkownik wylogowany - ukryj panele
-                authPanel.classList.remove('hidden');
-                userPanel.classList.add('hidden');
-                commentPanel.classList.add('hidden');
-            }
-        });
+        // ==========================================
+        // 1.5 LOGIKA KONT (AUTH)
+        // ==========================================
+        const authPanel = document.getElementById('auth-panel');
+        const commentInputArea = document.getElementById('comment-input-area');
+        const loggedUserNick = document.getElementById('logged-user-nick');
+        const authMsg = document.getElementById('auth-msg');
 
-        // --- REJESTRACJA ---
-        document.getElementById('registerBtn').addEventListener('click', async () => {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const nick = document.getElementById('nickInput').value;
-
-            if (!nick) return showMessage("Podaj Nick do rejestracji!", "red");
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                // Zaktualizuj profil o podany nick
-                await updateProfile(userCredential.user, { displayName: nick });
-                showMessage("Konto utworzone pomyślnie!", "green");
-                // Odśwież widok nicku
-                currentUserDisplay.textContent = nick;
-            } catch (error) {
-                showMessage("Błąd rejestracji: " + error.message, "red");
-            }
-        });
-
-        // --- LOGOWANIE ---
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showMessage("Zalogowano pomyślnie!", "green");
-            } catch (error) {
-                showMessage("Błąd logowania: zły e-mail lub hasło.", "red");
-            }
-        });
-
-        // --- WYLOGOWANIE ---
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                showMessage("Wylogowano.", "green");
+        // Nasłuchuj zmian logowania
+        if(auth) {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    authPanel.style.display = 'none';
+                    commentInputArea.style.display = 'flex';
+                    loggedUserNick.innerText = user.displayName || "Anonim";
+                } else {
+                    authPanel.style.display = 'flex';
+                    commentInputArea.style.display = 'none';
+                }
             });
-        });
-
-        // --- COOLDOWN (Sprawdzanie) ---
-        function checkCooldown() {
-            const lastCommentTime = localStorage.getItem('lastCommentTime');
-            if (!lastCommentTime) return true;
-
-            const timePassed = Date.now() - parseInt(lastCommentTime);
-            if (timePassed >= COOLDOWN_TIME) {
-                return true;
-            } else {
-                const timeLeft = Math.ceil((COOLDOWN_TIME - timePassed) / 1000);
-                showMessage(`Poczekaj jeszcze ${timeLeft} sekund.`, 'red');
-                return false;
-            }
         }
 
-        // --- DODAWANIE KOMENTARZA ---
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.addEventListener('click', async () => {
-            const text = document.getElementById('commentInput').value.trim();
-            const user = auth.currentUser; // Pobierz aktualnie zalogowanego użytkownika
+        function registerUser() {
+            const nick = document.getElementById('auth-nick').value.trim();
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value;
 
-            if (!user) return showMessage("Musisz być zalogowany!", "red");
-            if (text === "") return showMessage("Komentarz nie może być pusty!", "red");
-            if (!checkCooldown()) return;
+            if (!nick) { authMsg.innerText = "Podaj swój Nick przed rejestracją!"; return; }
 
-            try {
-                submitBtn.disabled = true;
-                
-                // Zapisujemy komentarz z danymi autora
-                await addDoc(collection(db, "comments"), {
-                    text: text,
-                    authorName: user.displayName || "Anonim",
-                    authorUid: user.uid,
-                    createdAt: serverTimestamp()
-                });
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // Aktualizuj profil o podany nick
+                    return userCredential.user.updateProfile({ displayName: nick });
+                })
+                .then(() => {
+                    document.getElementById('auth-email').value = "";
+                    document.getElementById('auth-pass').value = "";
+                    document.getElementById('auth-nick').value = "";
+                })
+                .catch((error) => { authMsg.innerText = "Błąd: " + error.message; });
+        }
 
-                localStorage.setItem('lastCommentTime', Date.now().toString());
-                document.getElementById('commentInput').value = "";
-                showMessage("Komentarz dodany!", "green");
-
-            } catch (error) {
-                showMessage("Błąd: " + error.message, "red");
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
-
-        // --- POBIERANIE I WYŚWIETLANIE KOMENTARZY (Na żywo) ---
-        const q = query(collection(db, "comments"), orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, (snapshot) => {
-            commentsContainer.innerHTML = ""; // Wyczyść kontener
+        function loginUser() {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value;
             
-            if (snapshot.empty) {
-                commentsContainer.innerHTML = "<p>Brak komentarzy. Bądź pierwszy!</p>";
-                return;
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    document.getElementById('auth-email').value = "";
+                    document.getElementById('auth-pass').value = "";
+                })
+                .catch((error) => { authMsg.innerText = "Błąd logowania. Złe dane."; });
+        }
+
+        function logoutUser() {
+            auth.signOut();
+        }
+
+        // ==========================================
+        // 2. GŁÓWNA LOGIKA APLIKACJI (WIDEO, LAJKI)
+        // ==========================================
+        const container = document.getElementById('video-container');
+        const TOTAL_VIDEOS = 300;
+        let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || [];
+        let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
+        let isShowingLiked = false;
+        let currentCommentVideoId = null;
+
+        const loadObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const wrapper = entry.target;
+                    if (wrapper.classList.contains('empty')) {
+                        renderVideoHTML(wrapper);
+                    }
+                }
+            });
+        }, { rootMargin: "100% 0px 100% 0px" });
+
+        const playObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const wrapper = entry.target;
+                const video = wrapper.querySelector('video');
+                const index = parseInt(wrapper.dataset.index);
+
+                if (entry.isIntersecting) {
+                    if (video) {
+                        video.play().catch(() => {});
+                        wrapper.classList.remove('is-paused');
+                    }
+                    if (!isShowingLiked) {
+                        localStorage.setItem('lastWatched', index);
+                    }
+                } else {
+                    if (video) {
+                        video.pause();
+                        video.currentTime = 0; 
+                        wrapper.classList.add('is-paused');
+                    }
+                }
+            });
+        }, { threshold: 0.6 });
+
+        function initFeed() {
+            isShowingLiked = false;
+            container.innerHTML = '';
+            for (let i = 1; i <= TOTAL_VIDEOS; i++) {
+                createEmptyWrapper(i);
             }
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const div = document.createElement("div");
-                div.className = "comment";
+            setTimeout(() => {
+                const target = document.getElementById(`wrapper-${lastWatched}`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'instant', block: 'start' });
+                }
+            }, 50);
+        }
+
+        function createEmptyWrapper(index) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'video-player empty';
+            wrapper.id = `wrapper-${index}`;
+            wrapper.dataset.index = index;
+            container.appendChild(wrapper);
+            
+            loadObserver.observe(wrapper);
+            playObserver.observe(wrapper);
+        }
+
+        function renderVideoHTML(wrapper) {
+            const index = parseInt(wrapper.dataset.index);
+            const isLiked = likedVideos.includes(index) ? 'liked' : '';
+            
+            wrapper.classList.remove('empty');
+            wrapper.innerHTML = `
+                <div class="loader"></div>
+                <i class="fas fa-play play-indicator"></i>
+                <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})" src="video${index}.mp4"></video>
+                <div class="side-bar">
+                    <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
+                    <i class="fas fa-comment-dots icon-btn" onclick="openComments(${index})"></i>
+                </div>
+                <div class="ui-overlay">
+                    <h4 style="margin:0 0 5px 0;">@Popek</h4>
+                    <p style="margin:0; font-size: 14px;">PopekTok #${index}</p>
+                </div>
+            `;
+            const videoElement = wrapper.querySelector('video');
+            videoElement.onerror = function() {
+                wrapper.innerHTML = `
+                    <img src="image2.png" class="fallback-img" onclick="handleTap(event, this, ${index})">
+                    <div class="side-bar">
+                        <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
+                        <i class="fas fa-comment-dots icon-btn" onclick="openComments(${index})"></i>
+                    </div>
+                    <div class="ui-overlay">
+                        <h4 style="margin:0 0 5px 0;">@Popek</h4>
+                        <p style="margin:0;">PopekTok #${index} (Niedostępne)</p>
+                    </div>
+                `;
+            };
+        }
+
+        // ==========================================
+        // 3. OBSŁUGA KOMENTARZY (Z AUTOREM I COOLDOWNEM)
+        // ==========================================
+        const COOLDOWN_TIME = 60000; // 1 minuta w milisekundach
+
+        function openComments(index) {
+            if (!db) { alert("Brak połączenia z bazą!"); return; }
+            currentCommentVideoId = index;
+            document.getElementById('comment-modal').classList.add('active');
+            loadComments(index);
+        }
+
+        function closeComments() {
+            document.getElementById('comment-modal').classList.remove('active');
+            currentCommentVideoId = null;
+        }
+
+        function loadComments(index) {
+            const list = document.getElementById('comment-list');
+            list.innerHTML = '<div class="loader" style="position:relative; margin: 20px auto;"></div>';
+
+            db.collection("comments").where("videoId", "==", index).onSnapshot((querySnapshot) => {
+                list.innerHTML = '';
+                document.getElementById('comment-count').innerText = `(${querySnapshot.size})`;
                 
-                // Formatowanie daty, jeśli istnieje
-                let dateString = "Wysyłanie...";
-                if (data.createdAt) {
-                    const date = data.createdAt.toDate();
-                    dateString = date.toLocaleDateString() + " " + date.toLocaleTimeString();
+                if (querySnapshot.empty) {
+                    list.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Brak komentarzy. Bądź pierwszy!</p>';
+                    return;
                 }
 
-                div.innerHTML = `
-                    <div class="comment-author">${data.authorName} <span class="comment-date">(${dateString})</span></div>
-                    <div class="comment-text">${data.text}</div>
-                `;
-                commentsContainer.appendChild(div);
+                let commentsArr = [];
+                querySnapshot.forEach((doc) => commentsArr.push(doc.data()));
+                
+                commentsArr.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
+                    const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                    return timeA - timeB; 
+                });
+
+                commentsArr.forEach((data) => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let dateStr = "";
+                    if (data.timestamp) {
+                        const d = data.timestamp.toDate();
+                        dateStr = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0');
+                    }
+
+                    div.innerHTML = `
+                        <strong>${data.authorName || 'Anonim'}</strong> <span class="date">${dateStr}</span>
+                        <p>${data.text}</p>
+                    `;
+                    list.appendChild(div);
+                });
+
+                setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+            }, (error) => {
+                list.innerHTML = '<p style="color:red; text-align:center;">Błąd pobierania komentarzy.</p>';
             });
-        });
+        }
+
+        function addComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            const user = auth.currentUser;
+            
+            if (!user) { alert("Musisz być zalogowany!"); return; }
+            if (text === '' || currentCommentVideoId === null) return;
+            
+            // Logika Cooldown
+            const lastTime = localStorage.getItem('lastCommentTime');
+            if (lastTime) {
+                const timePassed = Date.now() - parseInt(lastTime);
+                if (timePassed < COOLDOWN_TIME) {
+                    const timeLeft = Math.ceil((COOLDOWN_TIME - timePassed) / 1000);
+                    alert(`Zbyt szybko! Poczekaj jeszcze ${timeLeft} sekund.`);
+                    return;
+                }
+            }
+
+            input.value = ''; // Wyczyść pole tekstowe po wysłaniu
+            
+            db.collection("comments").add({
+                videoId: currentCommentVideoId,
+                text: text,
+                authorName: user.displayName || "Anonim", // Zapisz Nick
+                authorUid: user.uid, // Zapisz ID Konta
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                // Zapisz czas dodania, aby odpalić cooldown
+                localStorage.setItem('lastCommentTime', Date.now().toString());
+            }).catch(error => {
+                console.error("Błąd zapisu:", error);
+                alert("Brak uprawnień. Sprawdź Firestore Rules.");
+            });
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                addComment();
+            }
+        }
+
+        // ==========================================
+        // 4. INTERAKCJE UI (Tapnięcia i Lajki)
+        // ==========================================
+        let clickTimer = null;
+        function handleTap(e, element, index) {
+            const wrapper = element.closest('.video-player');
+            if (clickTimer == null) {
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    if (element.tagName === 'VIDEO') {
+                        if (element.paused) { element.play(); wrapper.classList.remove('is-paused'); } 
+                        else { element.pause(); wrapper.classList.add('is-paused'); }
+                    }
+                }, 250);
+            } else {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                if (element.tagName === 'VIDEO' && element.paused) {
+                    element.play();
+                    wrapper.classList.remove('is-paused');
+                }
+                if (!likedVideos.includes(index)) { toggleLike(index); }
+                spawnHeart(e, wrapper);
+            }
+        }
+
+        function spawnHeart(e, wrapper) {
+            const heart = document.createElement('i');
+            heart.className = 'fas fa-heart floating-heart';
+            const rect = wrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            wrapper.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, 800);
+        }
+
+        function toggleLike(index) {
+            const heartIcons = document.querySelectorAll(`.like-btn-${index}`);
+            if (likedVideos.includes(index)) {
+                likedVideos = likedVideos.filter(id => id !== index);
+                heartIcons.forEach(icon => icon.classList.remove('liked'));
+            } else {
+                likedVideos.push(index);
+                heartIcons.forEach(icon => icon.classList.add('liked'));
+            }
+            localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
+        }
+
+        function showLiked() {
+            isShowingLiked = true;
+            container.innerHTML = '';
+            document.querySelectorAll('.nav-item')[1].classList.add('active-tab');
+            document.querySelectorAll('.nav-item')[0].classList.remove('active-tab');
+            
+            if (likedVideos.length === 0) {
+                container.innerHTML = '<div class="video-player"><h2>Brak polubionych filmów</h2></div>';
+                return;
+            }
+            likedVideos.forEach(id => { createEmptyWrapper(id); });
+        }
+
+        function showFeed() {
+            document.querySelectorAll('.nav-item')[0].classList.add('active-tab');
+            document.querySelectorAll('.nav-item')[1].classList.remove('active-tab');
+            initFeed();
+        }
+
+        window.onload = initFeed;
     </script>
 </body>
 </html>
