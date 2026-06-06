@@ -169,7 +169,7 @@
                     <div class="panel-title">Historia</div>
                     <div id="move-history"></div>
                 </div>
-                <button onclick="surrender()" style="background: #c0392b;">Poddaj partię</button>
+                <button id="btn-action" onclick="handleActionButton()" style="background: #d35400;">Anuluj szukanie</button>
             </div>
         </div>
     </div>
@@ -179,7 +179,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyD7DlhKM5AwCavHvaHTP3fclbadPM7bAJY",
             authDomain: "ocet-chess.firebaseapp.com",
-            databaseURL: "https://ocet-chess-default-rtdb.europe-west1.firebasedatabase.app/",
+            databaseURL: "https://ocet-chess-default-rtdb.firebaseio.com",
             projectId: "ocet-chess",
             storageBucket: "ocet-chess.firebasestorage.app",
             messagingSenderId: "947677134465",
@@ -192,6 +192,7 @@
         // --- 2. ZMIENNE GLOBALNE ---
         let user = { uid: null, displayName: "", elo: 400, isGuest: true };
         let isRegistering = false;
+        let isInQueue = false; // Czy gracz jest obecnie zapisany do kolejki
         
         let roomId = null, myColor = null, currentTurn = "white", gameBoard = [], validMoves = [];
         let selectedSquare = null, lastMove = null, historyLog = [], isGameOver = false, promotionPending = null;
@@ -213,20 +214,19 @@
         // --- 3. LOGOWANIE I WERYFIKACJA KONT ---
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
-                // Sprawdzamy, czy użytkownik użył logowania tradycyjnego i czy ma zweryfikowany email
                 const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
                 if (isPasswordLogin && !firebaseUser.emailVerified) {
                     auth.signOut();
-                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź pocztę (również folder SPAM) i kliknij w link aktywacyjny.");
+                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź pocztę i kliknij w link aktywacyjny.");
                     showAuth();
                     return;
                 }
 
-                database.ref('users/' + firebaseUser.uid).once('value', snapshot => {
+                database.ref('users/' + firebaseUser.uid).on('value', snapshot => {
                     const data = snapshot.val() || { displayName: firebaseUser.displayName || "Gracz", elo: 400 };
                     user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
                     showMenu();
-                }).catch(e => console.error("Błąd pobierania danych z bazy: ", e));
+                });
             } else {
                 if(!user.isGuest) showAuth();
             }
@@ -249,13 +249,10 @@
             if (isRegistering) {
                 if(!nick) return alert("Podaj swój nick do gry!");
                 auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-                    // Tworzymy wpis w bazie danych dla nowego gracza (Startowe ELO: 400)
                     database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 }).then(() => {
-                        // Wysyłamy weryfikacyjny E-mail
                         cred.user.sendEmailVerification().then(() => {
-                            alert("SUKCES! Konto zostało utworzone. Wysłaliśmy Ci e-mail weryfikacyjny. Odbierz pocztę i kliknij w link, aby móc się zalogować.");
-                            auth.signOut(); 
-                            toggleRegister(); // Wracamy do widoku logowania
+                            alert("SUKCES! Konto utworzone. Potwierdź link na swojej poczcie e-mail, aby móc się zalogować.");
+                            auth.signOut(); toggleRegister();
                         });
                     });
                 }).catch(e => alert("Błąd rejestracji: " + e.message));
@@ -267,13 +264,9 @@
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                // Jeśli logujemy się pierwszy raz przez Google, tworzymy bazę ELO
                 database.ref('users/' + cred.user.uid).once('value', snap => {
                     if (!snap.exists()) {
-                        database.ref('users/' + cred.user.uid).set({
-                            displayName: cred.user.displayName || "Gracz Google",
-                            elo: 400
-                        });
+                        database.ref('users/' + cred.user.uid).set({ displayName: cred.user.displayName || "Gracz Google", elo: 400 });
                     }
                 });
             }).catch(e => alert("Błąd Google: " + e.message));
@@ -286,36 +279,29 @@
         }
 
         function logout() { user.isGuest = true; auth.signOut(); showAuth(); }
-
         function showAuth() { document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('menu-screen').style.display = 'none'; document.getElementById('game-screen').style.display = 'none'; }
-
         function showMenu() {
             document.getElementById('auth-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('game-screen').style.display = 'none';
             document.getElementById('menu-player-name').innerText = user.displayName + (user.isGuest ? " (GOŚĆ)" : "");
             document.getElementById('menu-player-elo').innerText = "ELO: " + user.elo;
             
             const btnMatch = document.getElementById('btn-matchmaking');
-            if(user.isGuest) {
-                btnMatch.disabled = true; btnMatch.innerText = "Matchmaking tylko po zalogowaniu";
-            } else {
-                btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika";
-            }
+            if(user.isGuest) { btnMatch.disabled = true; btnMatch.innerText = "Matchmaking zablokowany dla gości"; } 
+            else { btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika"; }
+            document.getElementById('matchmaking-status').innerText = "";
         }
 
         // --- 4. MATCHMAKING I POKOJE ---
-        function generateRandomCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; let code = ""; 
-            for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length)); return code;
-        }
-
         function createPrivateGame() {
             const timeControl = parseInt(document.getElementById('time-control').value);
+            isInQueue = false;
             initRoom(generateRandomCode(), timeControl, false);
         }
 
         function joinPrivateGame() {
             const code = document.getElementById('join-code-input').value.trim().toUpperCase();
             if(code.length !== 6) return alert("Kod musi mieć 6 znaków.");
+            isInQueue = false;
             attemptJoinRoom(code);
         }
 
@@ -331,46 +317,42 @@
 
                 if(foundRoom) {
                     queueRef.child(foundRoom).remove();
+                    isInQueue = false;
                     attemptJoinRoom(foundRoom);
                 } else {
                     const newCode = generateRandomCode();
+                    isInQueue = true;
                     initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
                 }
-            }).catch(e => alert("Błąd łączenia z kolejką: " + e.message));
+            }).catch(e => alert("Błąd kolejki: " + e.message));
         }
 
         function initRoom(code, timeControlSeconds, isRanked) {
-            roomId = code;
-            myColor = Math.random() < 0.5 ? "white" : "black"; 
+            roomId = code; myColor = Math.random() < 0.5 ? "white" : "black"; 
             
             database.ref('rooms/' + roomId).set({
-                board: initialBoard, turn: 'white', isGameOver: false,
-                isRanked: isRanked && !user.isGuest,
-                timeControl: timeControlSeconds, whiteTime: timeControlSeconds * 1000, blackTime: timeControlSeconds * 1000,
+                board: initialBoard, turn: 'white', isGameOver: false, isRanked: isRanked, timeControl: timeControlSeconds,
+                whiteTime: timeControlSeconds * 1000, blackTime: timeControlSeconds * 1000,
                 lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
                 players: { [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo } },
                 historyLog: [], castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
-            }).then(() => {
-                listenToRoom();
-            }).catch(e => {
-                alert("Błąd tworzenia pokoju! Upewnij się, że reguły bazy Firebase (.read, .write) są na 'true'. \nSzczegóły: " + e.message);
-            });
+            }).then(() => listenToRoom()).catch(e => alert("Błąd bazy: " + e.message));
         }
 
         function attemptJoinRoom(code) {
             roomId = code;
             database.ref('rooms/' + roomId).once('value', snapshot => {
                 const data = snapshot.val();
-                if(!data) return alert("Błąd: Pokój nie istnieje!");
-                if(data.players && data.players.white && data.players.black) return alert("Pokój jest już pełny!");
+                if(!data) return alert("Pokój nie istnieje!");
+                if(data.players && data.players.white && data.players.black) return alert("Pokój jest pełny!");
                 
                 myColor = data.players.white ? 'black' : 'white';
                 database.ref(`rooms/${roomId}/players/${myColor}`).set({ uid: user.uid, name: user.displayName, elo: user.elo }).then(() => {
                     database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
                     listenToRoom();
-                }).catch(e => alert("Błąd dołączania do pokoju: " + e.message));
-            }).catch(e => alert("Błąd bazy danych: " + e.message));
+                });
+            });
         }
 
         function listenToRoom() {
@@ -383,17 +365,37 @@
                 if (data) {
                     gameData = data; gameBoard = data.board; currentTurn = data.turn;
                     lastMove = data.lastMove || null; isGameOver = data.isGameOver || false;
-                    historyLog = data.historyLog || [];
-                    castlingRights = data.castlingRights || { w_short: true, w_long: true, b_short: true, b_long: true };
+                    historyLog = data.historyLog || []; castlingRights = data.castlingRights || { w_short: true, w_long: true, b_short: true, b_long: true };
                     whiteTimeLeft = data.whiteTime; blackTimeLeft = data.blackTime; lastMoveTimestamp = data.lastMoveTimestamp;
-
                     updateUI();
-                    
-                    if(!isGameOver && data.players && data.players.white && data.players.black) {
-                        startLocalTimer();
-                    }
+                    if(!isGameOver && data.players && data.players.white && data.players.black) startLocalTimer();
                 }
             });
+        }
+
+        // --- INTERAKCJA PRZYCISKU (ANULUJ / PODDAJ) ---
+        function handleActionButton() {
+            const hasOpponent = gameData.players && gameData.players.white && gameData.players.black;
+            
+            if (!hasOpponent) {
+                // ANULOWANIE SZUKANIA / POKOJU
+                clearInterval(timerInterval);
+                database.ref('rooms/' + roomId).off();
+                
+                // Jeśli byliśmy w kolejce ranked, usuń wpis stamtąd
+                if (isInQueue) {
+                    database.ref('matchmaking/queue_' + gameData.timeControl).child(roomId).remove();
+                }
+                // Skasuj pokój całkowicie z bazy danych
+                database.ref('rooms/' + roomId).remove();
+                
+                roomId = null; myColor = null; gameData = {}; isInQueue = false;
+                showMenu();
+            } else {
+                // PODDANIE SIĘ (Tylko w trakcie gry)
+                if(isGameOver) return;
+                triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white');
+            }
         }
 
         // --- 5. LOGIKA ZEGARÓW ---
@@ -434,11 +436,9 @@
                 }
                 [-1, 1].forEach(dc => {
                     const c = col + dc;
-                    if (c >= 0 && c < 8 && row + dir >= 0 && row + dir < 8 && boardToUse[row + dir][c] && boardToUse[row + dir][c].startsWith(enemyPrefix)) 
-                        moves.push({ row: row + dir, col: c, type: 'normal' });
+                    if (c >= 0 && c < 8 && row + dir >= 0 && row + dir < 8 && boardToUse[row + dir][c] && boardToUse[row + dir][c].startsWith(enemyPrefix)) moves.push({ row: row + dir, col: c, type: 'normal' });
                 });
-                if (lastMove && lastMove.piece.endsWith('photo1') && Math.abs(lastMove.from.row - lastMove.to.row) === 2 && row === lastMove.to.row && Math.abs(lastMove.to.col - col) === 1) 
-                    moves.push({ row: lastMove.to.row + dir, col: lastMove.to.col, type: 'enPassant' });
+                if (lastMove && lastMove.piece.endsWith('photo1') && Math.abs(lastMove.from.row - lastMove.to.row) === 2 && row === lastMove.to.row && Math.abs(lastMove.to.col - col) === 1) moves.push({ row: lastMove.to.row + dir, col: lastMove.to.col, type: 'enPassant' });
             } 
             if (piece.endsWith('photo2') || piece.endsWith('photo5')) {
                 [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
@@ -510,7 +510,7 @@
             });
         }
 
-        // --- 7. OBSŁUGA GRY ---
+        // --- 7. OBSŁUGA Ruchów ---
         function handleSquareClick(row, col) {
             if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
             const isHint = validMoves.find(m => m.row === row && m.col === col);
@@ -568,10 +568,8 @@
             if (!hasAnyMoves) {
                 if (isKingInCheck(nextTurn, gameBoard)) triggerGameOver("SZACH MAT!", currentTurn, updates);
                 else triggerGameOver("PAT (Remis)!", null, updates);
-            } else { database.ref('rooms/' + roomId).update(updates).catch(e=>alert("Błąd wysyłania ruchu: "+e.message)); }
+            } else { database.ref('rooms/' + roomId).update(updates); }
         }
-
-        function surrender() { if(isGameOver || !gameData.players) return; triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
 
         // --- 8. SYSTEM ELO I KONIEC GRY ---
         function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
@@ -590,15 +588,13 @@
                 
                 database.ref('users/' + winnerUid + '/elo').set(winElo + eloChange);
                 database.ref('users/' + loserUid + '/elo').set(losElo - eloChange);
-                if (user.uid === winnerUid) user.elo += eloChange;
-                if (user.uid === loserUid) user.elo -= eloChange;
             }
-            database.ref('rooms/' + roomId).update(updates).catch(e=>alert("Błąd końca gry: "+e.message));
+            database.ref('rooms/' + roomId).update(updates);
         }
 
         function backToMenu() {
             if(roomId) database.ref('rooms/' + roomId).off();
-            clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; showMenu();
+            clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu();
         }
 
         // --- 9. RENDEROWANIE UI ---
@@ -609,6 +605,17 @@
                 document.getElementById('game-over-screen').style.display = 'flex';
             } else { document.getElementById('game-over-screen').style.display = 'none'; }
 
+            const hasOpponent = gameData.players && gameData.players.white && gameData.players.black;
+            const btnAction = document.getElementById('btn-action');
+            
+            if (!hasOpponent) {
+                btnAction.innerText = "Anuluj szukanie";
+                btnAction.style.background = "#d35400";
+            } else {
+                btnAction.innerText = "Poddaj partię";
+                btnAction.style.background = "#c0392b";
+            }
+
             if(gameData.players) {
                 const oppColor = myColor === 'white' ? 'black' : 'white';
                 const me = gameData.players[myColor], opp = gameData.players[oppColor];
@@ -617,7 +624,7 @@
             }
 
             const statusDiv = document.getElementById('status-panel');
-            if(!gameData.players || !gameData.players.white || !gameData.players.black) { statusDiv.innerText = "Oczekiwanie na przeciwnika..."; } 
+            if(!hasOpponent) { statusDiv.innerText = "Oczekiwanie na przeciwnika..."; } 
             else { statusDiv.innerText = currentTurn === myColor ? `TWÓJ RUCH` : `RUCH PRZECIWNIKA`; statusDiv.style.color = currentTurn === myColor ? "#81b64c" : "#aaa"; }
 
             document.getElementById('move-history').innerHTML = historyLog.map(l => `<div>${l}</div>`).join('');
