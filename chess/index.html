@@ -1,22 +1,9 @@
-Rzeczywiście, uproszczenie logiki w poprzednim kodzie mogło spowodować błędy w interpretacji pełnych reguł szachowych (takich jak blokowanie linii przez własne figury czy poprawne bicie skoczkiem). Naprawiłem to, implementując pełny, klasyczny silnik ruchów szachowych dla każdej figury.
-
-Dodałem również funkcję wyświetlania tekstu (np. "Biały" lub "Czarny") bezpośrednio nad grafiką każdej figury oraz **trzy nowe, przydatne funkcje**:
-
-1. **Historia ruchów (Notacja szachowa):** Po prawej stronie planszy pojawia się lista pokazująca, kto i jak się ruszył.
-2. **Cofanie ruchów:** Przycisk umożliwiający cofnięcie ostatniego ruchu (za zgodą obu graczy).
-3. **Licznik zbitych figur:** Wyświetla grafiki figur, które zostały wyeliminowane z gry.
-
-### Pełny, poprawiony kod (`index.html`)
-
-Podmień całą zawartość swojego pliku na poniższy kod:
-
-```html
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Szachy Pro - Pełne Zasady</title>
+    <title>PopekSzachy</title>
     <style>
         :root {
             --light-square: #eeeed2;
