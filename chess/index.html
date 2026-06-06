@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PopekChess</title>
+    <title>Szachy Pro - Ranked Arena</title>
     <style>
         :root {
             --light-square: #eeeed2; --dark-square: #769656;
@@ -12,43 +12,25 @@
             --bg-color: #161513; --panel-bg: #262421; --accent: #81b64c;
         }
         
-        body { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-color: var(--bg-color); color: #f1f1f1; font-family: 'Segoe UI', system-ui, sans-serif; 
-            margin: 0; min-height: 100vh;
-        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--bg-color); color: #f1f1f1; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh; }
         
-        .screen {
-            background: var(--panel-bg); padding: 30px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 90%;
-            display: none; flex-direction: column; gap: 15px;
-        }
-
+        .screen { background: var(--panel-bg); padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 90%; display: none; flex-direction: column; gap: 15px; }
         #game-screen { display: none; flex-direction: column; align-items: center; background: none; box-shadow: none; max-width: 100%; padding: 0; }
         
-        #status-panel { 
-            font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; text-align: center;
-            color: #fff; background: var(--panel-bg); padding: 10px 24px; border-radius: 24px;
-        }
+        #status-panel { font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; text-align: center; color: #fff; background: var(--panel-bg); padding: 10px 24px; border-radius: 24px; }
         
         #game-container { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; }
-        
-        .player-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1a1917; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; font-weight: bold;
-        }
+        .player-header { display: flex; justify-content: space-between; align-items: center; background: #1a1917; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; font-weight: bold; }
         .timer { font-family: monospace; font-size: 1.5rem; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; }
         .timer.low { color: #e74c3c; animation: pulse-time 1s infinite; }
-        
         @keyframes pulse-time { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         #board { display: grid; grid-template-columns: repeat(8, 72px); grid-template-rows: repeat(8, 72px); border: 6px solid var(--panel-bg); border-radius: 6px; }
-        .square { width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; position: relative; user-select: none; }
+        .square { width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; position: relative; user-select: none; cursor: pointer; }
         .white-square { background-color: var(--light-square); } .black-square { background-color: var(--dark-square); }
         .selected { background-color: var(--selected-square) !important; }
         .last-move { background-color: var(--last-move-square) !important; }
         .in-check { background-color: var(--check-square) !important; animation: pulse-check 1.5s infinite; }
-
         @keyframes pulse-check { 0% { opacity: 1; } 50% { background-color: #c0392b; } 100% { opacity: 1; } }
         
         .piece-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; z-index: 1; transition: all 0.15s ease-in-out; }
@@ -63,12 +45,14 @@
         .panel-title { font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; }
         #move-history { height: 120px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #ccc; line-height: 1.4; }
         
-        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 10px; }
         button:hover { background: #a3d16c; }
         button:active { transform: scale(0.97); }
         button:disabled { background: #555; cursor: not-allowed; }
         .btn-secondary { background: #383531; border: 1px solid #555; }
         .btn-secondary:hover { background: #444; }
+        .btn-google { background: #4285F4; border: 1px solid #4285F4; }
+        .btn-google:hover { background: #5a95f5; }
         
         input, select { background: #1a1917; border: 2px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; text-align: center; }
         
@@ -96,6 +80,11 @@
         <h2 style="margin:0; color:#81b64c;">Logowanie</h2>
         
         <div class="auth-form" id="login-form">
+            <button onclick="loginWithGoogle()" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px; background: white; border-radius: 50%; padding: 2px;">
+                Zaloguj przez Google
+            </button>
+            <div class="separator">LUB E-MAIL</div>
             <input type="email" id="auth-email" placeholder="E-mail">
             <input type="password" id="auth-pass" placeholder="Hasło">
             <input type="text" id="auth-nick" placeholder="Twój Nick (Tylko przy rejestracji)" style="display:none;">
@@ -132,8 +121,8 @@
 
         <div class="separator">PRYWATNE LOBBY</div>
         <button onclick="createPrivateGame()" class="btn-secondary">Załóż pokój prywatny</button>
-        <input type="text" id="join-code-input" placeholder="Kod pokoju">
-        <button onclick="joinPrivateGame()" class="btn-secondary">Dołącz</button>
+        <input type="text" id="join-code-input" placeholder="Wpisz kod pokoju">
+        <button onclick="joinPrivateGame()" class="btn-secondary">Dołącz do pokoju</button>
         
         <button onclick="logout()" style="background: #c0392b; margin-top: 20px;">Wyloguj</button>
     </div>
@@ -201,28 +190,14 @@
         const auth = firebase.auth();
 
         // --- 2. ZMIENNE GLOBALNE ---
-        // Zmiana startowego ELO z 1200 na 400
         let user = { uid: null, displayName: "", elo: 400, isGuest: true };
         let isRegistering = false;
         
-        let roomId = null;
-        let myColor = null; 
-        let currentTurn = "white";
-        let gameBoard = [];
-        let validMoves = [];
-        let selectedSquare = null;
-        let lastMove = null;
+        let roomId = null, myColor = null, currentTurn = "white", gameBoard = [], validMoves = [];
+        let selectedSquare = null, lastMove = null, historyLog = [], isGameOver = false, promotionPending = null;
         let castlingRights = { w_short: true, w_long: true, b_short: true, b_long: true };
-        let historyLog = [];
-        let isGameOver = false;
-        let promotionPending = null;
-        
         let gameData = {};
-
-        let timerInterval = null;
-        let whiteTimeLeft = 0;
-        let blackTimeLeft = 0;
-        let lastMoveTimestamp = 0;
+        let timerInterval = null, whiteTimeLeft = 0, blackTimeLeft = 0, lastMoveTimestamp = 0;
 
         const initialBoard = [
             ['b_photo2', 'b_photo3', 'b_photo4', 'b_photo5', 'b_photo6', 'b_photo4', 'b_photo3', 'b_photo2'],
@@ -235,15 +210,23 @@
             ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
         ];
 
-        // --- 3. LOGOWANIE I SYSTEM KONT ---
+        // --- 3. LOGOWANIE I WERYFIKACJA KONT ---
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
+                // Sprawdzamy, czy użytkownik użył logowania tradycyjnego i czy ma zweryfikowany email
+                const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
+                if (isPasswordLogin && !firebaseUser.emailVerified) {
+                    auth.signOut();
+                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź pocztę (również folder SPAM) i kliknij w link aktywacyjny.");
+                    showAuth();
+                    return;
+                }
+
                 database.ref('users/' + firebaseUser.uid).once('value', snapshot => {
-                    // Startowe ELO przy pobieraniu z bazy również zmienione na 400
-                    const data = snapshot.val() || { displayName: "Gracz", elo: 400 };
+                    const data = snapshot.val() || { displayName: firebaseUser.displayName || "Gracz", elo: 400 };
                     user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
                     showMenu();
-                });
+                }).catch(e => console.error("Błąd pobierania danych z bazy: ", e));
             } else {
                 if(!user.isGuest) showAuth();
             }
@@ -253,23 +236,47 @@
             isRegistering = !isRegistering;
             document.getElementById('auth-nick').style.display = isRegistering ? 'block' : 'none';
             document.getElementById('btn-toggle-reg').innerText = isRegistering ? 'Mam już konto (Zaloguj)' : 'Chcę założyć konto';
-            document.querySelector('#login-form button').innerText = isRegistering ? 'Zarejestruj się' : 'Zaloguj się';
+            document.querySelector('#login-form button:nth-of-type(2)').innerText = isRegistering ? 'Zarejestruj się' : 'Zaloguj się';
         }
 
         function login() {
-            const email = document.getElementById('auth-email').value;
+            const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
-            const nick = document.getElementById('auth-nick').value;
+            const nick = document.getElementById('auth-nick').value.trim();
+
+            if (!email || !pass) return alert("Podaj e-mail i hasło!");
 
             if (isRegistering) {
-                if(!nick) return alert("Podaj nick!");
+                if(!nick) return alert("Podaj swój nick do gry!");
                 auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-                    // Zakładanie konta w bazie z nowym ELO startowym 400
-                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 });
-                }).catch(e => alert(e.message));
+                    // Tworzymy wpis w bazie danych dla nowego gracza (Startowe ELO: 400)
+                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 }).then(() => {
+                        // Wysyłamy weryfikacyjny E-mail
+                        cred.user.sendEmailVerification().then(() => {
+                            alert("SUKCES! Konto zostało utworzone. Wysłaliśmy Ci e-mail weryfikacyjny. Odbierz pocztę i kliknij w link, aby móc się zalogować.");
+                            auth.signOut(); 
+                            toggleRegister(); // Wracamy do widoku logowania
+                        });
+                    });
+                }).catch(e => alert("Błąd rejestracji: " + e.message));
             } else {
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Błąd logowania: " + e.message));
             }
+        }
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then(cred => {
+                // Jeśli logujemy się pierwszy raz przez Google, tworzymy bazę ELO
+                database.ref('users/' + cred.user.uid).once('value', snap => {
+                    if (!snap.exists()) {
+                        database.ref('users/' + cred.user.uid).set({
+                            displayName: cred.user.displayName || "Gracz Google",
+                            elo: 400
+                        });
+                    }
+                });
+            }).catch(e => alert("Błąd Google: " + e.message));
         }
 
         function playAsGuest() {
@@ -280,35 +287,25 @@
 
         function logout() { user.isGuest = true; auth.signOut(); showAuth(); }
 
-        function showAuth() {
-            document.getElementById('auth-screen').style.display = 'flex';
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'none';
-        }
+        function showAuth() { document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('menu-screen').style.display = 'none'; document.getElementById('game-screen').style.display = 'none'; }
 
         function showMenu() {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('menu-screen').style.display = 'flex';
-            document.getElementById('game-screen').style.display = 'none';
-            
+            document.getElementById('auth-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('game-screen').style.display = 'none';
             document.getElementById('menu-player-name').innerText = user.displayName + (user.isGuest ? " (GOŚĆ)" : "");
             document.getElementById('menu-player-elo').innerText = "ELO: " + user.elo;
             
             const btnMatch = document.getElementById('btn-matchmaking');
             if(user.isGuest) {
-                btnMatch.disabled = true;
-                btnMatch.innerText = "Matchmaking tylko dla zalogowanych";
+                btnMatch.disabled = true; btnMatch.innerText = "Matchmaking tylko po zalogowaniu";
             } else {
-                btnMatch.disabled = false;
-                btnMatch.innerText = "Szukaj przeciwnika";
+                btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika";
             }
         }
 
         // --- 4. MATCHMAKING I POKOJE ---
         function generateRandomCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let code = ""; for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-            return code;
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; let code = ""; 
+            for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length)); return code;
         }
 
         function createPrivateGame() {
@@ -318,23 +315,19 @@
 
         function joinPrivateGame() {
             const code = document.getElementById('join-code-input').value.trim().toUpperCase();
-            if(code.length !== 6) return alert("Kod ma 6 znaków.");
+            if(code.length !== 6) return alert("Kod musi mieć 6 znaków.");
             attemptJoinRoom(code);
         }
 
         function startMatchmaking() {
             const timeControl = parseInt(document.getElementById('time-control').value);
             const queueRef = database.ref('matchmaking/queue_' + timeControl);
-            
-            document.getElementById('matchmaking-status').innerText = "Szukanie...";
+            document.getElementById('matchmaking-status').innerText = "Szukanie przeciwnika...";
             
             queueRef.once('value', snapshot => {
                 const waitingRooms = snapshot.val();
                 let foundRoom = null;
-                
-                if(waitingRooms) {
-                    for(let rId in waitingRooms) { foundRoom = rId; break; }
-                }
+                if(waitingRooms) { for(let rId in waitingRooms) { foundRoom = rId; break; } }
 
                 if(foundRoom) {
                     queueRef.child(foundRoom).remove();
@@ -344,7 +337,7 @@
                     initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
                 }
-            });
+            }).catch(e => alert("Błąd łączenia z kolejką: " + e.message));
         }
 
         function initRoom(code, timeControlSeconds, isRanked) {
@@ -352,38 +345,32 @@
             myColor = Math.random() < 0.5 ? "white" : "black"; 
             
             database.ref('rooms/' + roomId).set({
-                board: initialBoard,
-                turn: 'white',
-                isGameOver: false,
+                board: initialBoard, turn: 'white', isGameOver: false,
                 isRanked: isRanked && !user.isGuest,
-                timeControl: timeControlSeconds,
-                whiteTime: timeControlSeconds * 1000,
-                blackTime: timeControlSeconds * 1000,
+                timeControl: timeControlSeconds, whiteTime: timeControlSeconds * 1000, blackTime: timeControlSeconds * 1000,
                 lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
-                players: {
-                    [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo }
-                },
-                historyLog: [],
-                castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
-            }).then(() => listenToRoom());
+                players: { [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo } },
+                historyLog: [], castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
+            }).then(() => {
+                listenToRoom();
+            }).catch(e => {
+                alert("Błąd tworzenia pokoju! Upewnij się, że reguły bazy Firebase (.read, .write) są na 'true'. \nSzczegóły: " + e.message);
+            });
         }
 
         function attemptJoinRoom(code) {
             roomId = code;
             database.ref('rooms/' + roomId).once('value', snapshot => {
                 const data = snapshot.val();
-                if(!data) return alert("Pokój nie istnieje!");
-                if(data.players && data.players.white && data.players.black) return alert("Pokój jest pełny!");
+                if(!data) return alert("Błąd: Pokój nie istnieje!");
+                if(data.players && data.players.white && data.players.black) return alert("Pokój jest już pełny!");
                 
                 myColor = data.players.white ? 'black' : 'white';
-                database.ref(`rooms/${roomId}/players/${myColor}`).set({
-                    uid: user.uid, name: user.displayName, elo: user.elo
-                });
-                
-                database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
-                
-                listenToRoom();
-            });
+                database.ref(`rooms/${roomId}/players/${myColor}`).set({ uid: user.uid, name: user.displayName, elo: user.elo }).then(() => {
+                    database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
+                    listenToRoom();
+                }).catch(e => alert("Błąd dołączania do pokoju: " + e.message));
+            }).catch(e => alert("Błąd bazy danych: " + e.message));
         }
 
         function listenToRoom() {
@@ -394,17 +381,11 @@
             database.ref('rooms/' + roomId).on('value', snapshot => {
                 const data = snapshot.val();
                 if (data) {
-                    gameData = data;
-                    gameBoard = data.board;
-                    currentTurn = data.turn;
-                    lastMove = data.lastMove || null;
-                    isGameOver = data.isGameOver || false;
+                    gameData = data; gameBoard = data.board; currentTurn = data.turn;
+                    lastMove = data.lastMove || null; isGameOver = data.isGameOver || false;
                     historyLog = data.historyLog || [];
                     castlingRights = data.castlingRights || { w_short: true, w_long: true, b_short: true, b_long: true };
-                    
-                    whiteTimeLeft = data.whiteTime;
-                    blackTimeLeft = data.blackTime;
-                    lastMoveTimestamp = data.lastMoveTimestamp;
+                    whiteTimeLeft = data.whiteTime; blackTimeLeft = data.blackTime; lastMoveTimestamp = data.lastMoveTimestamp;
 
                     updateUI();
                     
@@ -420,55 +401,31 @@
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if(isGameOver) return clearInterval(timerInterval);
-                
-                const now = Date.now();
-                const elapsed = Math.max(0, now - lastMoveTimestamp); 
-                
-                let wTime = whiteTimeLeft;
-                let bTime = blackTimeLeft;
-                
-                if (currentTurn === 'white') wTime -= elapsed;
-                else bTime -= elapsed;
-
+                const elapsed = Math.max(0, Date.now() - lastMoveTimestamp); 
+                let wTime = whiteTimeLeft; let bTime = blackTimeLeft;
+                if (currentTurn === 'white') wTime -= elapsed; else bTime -= elapsed;
                 updateTimerDisplays(wTime, bTime);
 
-                if (currentTurn === myColor) {
-                    if ((myColor === 'white' && wTime <= 0) || (myColor === 'black' && bTime <= 0)) {
-                        clearInterval(timerInterval);
-                        triggerGameOver("Czas minął!", myColor === 'white' ? 'black' : 'white');
-                    }
+                if (currentTurn === myColor && ((myColor === 'white' && wTime <= 0) || (myColor === 'black' && bTime <= 0))) {
+                    clearInterval(timerInterval); triggerGameOver("Czas minął!", myColor === 'white' ? 'black' : 'white');
                 }
             }, 100);
         }
 
         function updateTimerDisplays(wMs, bMs) {
             const oppColor = myColor === 'white' ? 'black' : 'white';
-            
-            const format = (ms) => {
-                if(ms < 0) ms = 0;
-                let s = Math.floor(ms / 1000);
-                let m = Math.floor(s / 60);
-                s = s % 60;
-                return `${m}:${s.toString().padStart(2, '0')}`;
-            };
-
-            const myTimerEl = document.getElementById('my-timer');
-            const oppTimerEl = document.getElementById('opp-timer');
-
+            const format = (ms) => { if(ms < 0) ms = 0; let s = Math.floor(ms / 1000); let m = Math.floor(s / 60); s = s % 60; return `${m}:${s.toString().padStart(2, '0')}`; };
+            const myTimerEl = document.getElementById('my-timer'), oppTimerEl = document.getElementById('opp-timer');
             myTimerEl.innerText = format(myColor === 'white' ? wMs : bMs);
             oppTimerEl.innerText = format(oppColor === 'white' ? wMs : bMs);
-            
             if((myColor==='white'?wMs:bMs) < 10000) myTimerEl.classList.add('low'); else myTimerEl.classList.remove('low');
             if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
 
-        // --- 6. SILNIK SZACHOWY (SKRÓCONY) ---
+        // --- 6. SILNIK SZACHOWY ---
         function getPseudoLegalMoves(row, col, boardToUse = gameBoard) {
             const moves = []; const piece = boardToUse[row][col]; if (!piece) return moves;
-            const color = piece.startsWith('w_') ? 'white' : 'black';
-            const enemyPrefix = color === 'white' ? 'b_' : 'w_';
-            const myPrefix = color === 'white' ? 'w_' : 'b_';
-
+            const color = piece.startsWith('w_') ? 'white' : 'black', enemyPrefix = color === 'white' ? 'b_' : 'w_', myPrefix = color === 'white' ? 'w_' : 'b_';
             if (piece.endsWith('photo1')) {
                 const dir = color === 'white' ? -1 : 1; const startRow = color === 'white' ? 6 : 1;
                 if (row + dir >= 0 && row + dir < 8 && boardToUse[row + dir][col] === '') {
@@ -556,16 +513,14 @@
         // --- 7. OBSŁUGA GRY ---
         function handleSquareClick(row, col) {
             if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
-
             const isHint = validMoves.find(m => m.row === row && m.col === col);
             if (isHint) {
                 executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type);
                 selectedSquare = null; validMoves = [];
             } else {
                 const clickedPiece = gameBoard[row][col];
-                if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) {
-                    selectedSquare = { row, col }; validMoves = getValidMoves(row, col); updateUI();
-                } else { selectedSquare = null; validMoves = []; updateUI(); }
+                if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) { selectedSquare = { row, col }; validMoves = getValidMoves(row, col); updateUI(); } 
+                else { selectedSquare = null; validMoves = []; updateUI(); }
             }
         }
 
@@ -574,7 +529,6 @@
             if (type === 'enPassant') gameBoard[lastMove.to.row][lastMove.to.col] = '';
             if (type === 'castle_short') { gameBoard[toRow][5] = gameBoard[toRow][7]; gameBoard[toRow][7] = ''; }
             if (type === 'castle_long') { gameBoard[toRow][3] = gameBoard[toRow][0]; gameBoard[toRow][0] = ''; }
-
             if (piece === 'w_photo6') { castlingRights.w_short = false; castlingRights.w_long = false; }
             if (piece === 'b_photo6') { castlingRights.b_short = false; castlingRights.b_long = false; }
 
@@ -582,15 +536,11 @@
             historyLog.push(`${currentTurn==='white'?'B':'C'}: ${piece.split('_')[1]} ${cols[fromCol]}${8-fromRow}→${cols[toCol]}${8-toRow}`);
 
             gameBoard[toRow][toCol] = piece; gameBoard[fromRow][fromCol] = '';
-
             const moveData = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol }, piece: piece };
 
             if (piece.endsWith('photo1') && (toRow === 0 || toRow === 7)) {
-                promotionPending = moveData;
-                document.getElementById('promotion-modal').style.display = 'flex';
-                return;
+                promotionPending = moveData; document.getElementById('promotion-modal').style.display = 'flex'; return;
             }
-
             finalizeTurn(moveData);
         }
 
@@ -598,46 +548,30 @@
             if (!promotionPending) return;
             gameBoard[promotionPending.to.row][promotionPending.to.col] = (myColor === 'white' ? 'w_' : 'b_') + chosenPhoto;
             document.getElementById('promotion-modal').style.display = 'none';
-            const m = promotionPending; promotionPending = null;
-            finalizeTurn(m);
+            const m = promotionPending; promotionPending = null; finalizeTurn(m);
         }
 
         function finalizeTurn(moveData) {
-            const nextTurn = currentTurn === 'white' ? 'black' : 'white';
-            const now = Date.now();
-            const elapsed = Math.max(0, now - lastMoveTimestamp);
-            
-            let wTime = whiteTimeLeft; let bTime = blackTimeLeft;
+            const nextTurn = currentTurn === 'white' ? 'black' : 'white', elapsed = Math.max(0, Date.now() - lastMoveTimestamp);
+            let wTime = whiteTimeLeft, bTime = blackTimeLeft;
             if (currentTurn === 'white') wTime -= elapsed; else bTime -= elapsed;
 
             let hasAnyMoves = false;
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
-                    if (gameBoard[r][c] && gameBoard[r][c].startsWith(nextTurn.charAt(0)) && getValidMoves(r, c).length > 0) {
-                        hasAnyMoves = true; break;
-                    }
+                    if (gameBoard[r][c] && gameBoard[r][c].startsWith(nextTurn.charAt(0)) && getValidMoves(r, c).length > 0) { hasAnyMoves = true; break; }
                 }
                 if (hasAnyMoves) break;
             }
 
-            let updates = {
-                board: gameBoard, turn: nextTurn, lastMove: moveData, historyLog: historyLog,
-                castlingRights: castlingRights, whiteTime: wTime, blackTime: bTime,
-                lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-
+            let updates = { board: gameBoard, turn: nextTurn, lastMove: moveData, historyLog: historyLog, castlingRights: castlingRights, whiteTime: wTime, blackTime: bTime, lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP };
             if (!hasAnyMoves) {
                 if (isKingInCheck(nextTurn, gameBoard)) triggerGameOver("SZACH MAT!", currentTurn, updates);
                 else triggerGameOver("PAT (Remis)!", null, updates);
-            } else {
-                database.ref('rooms/' + roomId).update(updates);
-            }
+            } else { database.ref('rooms/' + roomId).update(updates).catch(e=>alert("Błąd wysyłania ruchu: "+e.message)); }
         }
 
-        function surrender() {
-            if(isGameOver || !gameData.players) return;
-            triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white');
-        }
+        function surrender() { if(isGameOver || !gameData.players) return; triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
 
         // --- 8. SYSTEM ELO I KONIEC GRY ---
         function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
@@ -645,12 +579,8 @@
             let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
             
             if (gameData.isRanked && winnerColor && !gameData.eloProcessed) {
-                let winnerUid = gameData.players[winnerColor].uid;
-                let loserColor = winnerColor === 'white' ? 'black' : 'white';
-                let loserUid = gameData.players[loserColor].uid;
-                
-                let winElo = gameData.players[winnerColor].elo;
-                let losElo = gameData.players[loserColor].elo;
+                let winnerUid = gameData.players[winnerColor].uid, loserColor = winnerColor === 'white' ? 'black' : 'white', loserUid = gameData.players[loserColor].uid;
+                let winElo = gameData.players[winnerColor].elo, losElo = gameData.players[loserColor].elo;
                 
                 let expectedWin = 1 / (1 + Math.pow(10, (losElo - winElo) / 400));
                 let eloChange = Math.round(32 * (1 - expectedWin));
@@ -660,19 +590,15 @@
                 
                 database.ref('users/' + winnerUid + '/elo').set(winElo + eloChange);
                 database.ref('users/' + loserUid + '/elo').set(losElo - eloChange);
-                
                 if (user.uid === winnerUid) user.elo += eloChange;
                 if (user.uid === loserUid) user.elo -= eloChange;
             }
-
-            database.ref('rooms/' + roomId).update(updates);
+            database.ref('rooms/' + roomId).update(updates).catch(e=>alert("Błąd końca gry: "+e.message));
         }
 
         function backToMenu() {
             if(roomId) database.ref('rooms/' + roomId).off();
-            clearInterval(timerInterval);
-            roomId = null; myColor = null; gameData = {};
-            showMenu();
+            clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; showMenu();
         }
 
         // --- 9. RENDEROWANIE UI ---
@@ -685,34 +611,23 @@
 
             if(gameData.players) {
                 const oppColor = myColor === 'white' ? 'black' : 'white';
-                const me = gameData.players[myColor];
-                const opp = gameData.players[oppColor];
-                
+                const me = gameData.players[myColor], opp = gameData.players[oppColor];
                 document.getElementById('my-name').innerText = me ? `${me.name} (${me.elo})` : "Ja";
                 document.getElementById('opp-name').innerText = opp ? `${opp.name} (${opp.elo})` : "Oczekiwanie na gracza...";
             }
 
             const statusDiv = document.getElementById('status-panel');
-            if(!gameData.players || !gameData.players.white || !gameData.players.black) {
-                statusDiv.innerText = "Oczekiwanie na przeciwnika...";
-            } else {
-                statusDiv.innerText = currentTurn === myColor ? `TWÓJ RUCH` : `RUCH PRZECIWNIKA`;
-                statusDiv.style.color = currentTurn === myColor ? "#81b64c" : "#aaa";
-            }
+            if(!gameData.players || !gameData.players.white || !gameData.players.black) { statusDiv.innerText = "Oczekiwanie na przeciwnika..."; } 
+            else { statusDiv.innerText = currentTurn === myColor ? `TWÓJ RUCH` : `RUCH PRZECIWNIKA`; statusDiv.style.color = currentTurn === myColor ? "#81b64c" : "#aaa"; }
 
             document.getElementById('move-history').innerHTML = historyLog.map(l => `<div>${l}</div>`).join('');
             document.getElementById('move-history').scrollTop = 9999;
 
-            const boardDiv = document.getElementById('board');
-            boardDiv.innerHTML = '';
-            const isBlackPerspective = (myColor === 'black');
-            const wCheck = isKingInCheck('white', gameBoard);
-            const bCheck = isKingInCheck('black', gameBoard);
+            const boardDiv = document.getElementById('board'); boardDiv.innerHTML = '';
+            const isBlackPerspective = (myColor === 'black'), wCheck = isKingInCheck('white', gameBoard), bCheck = isKingInCheck('black', gameBoard);
 
             for (let i = 0; i < 64; i++) {
-                const r = isBlackPerspective ? Math.floor((63 - i) / 8) : Math.floor(i / 8);
-                const c = isBlackPerspective ? (63 - i) % 8 : i % 8;
-
+                const r = isBlackPerspective ? Math.floor((63 - i) / 8) : Math.floor(i / 8), c = isBlackPerspective ? (63 - i) % 8 : i % 8;
                 const square = document.createElement('div');
                 square.classList.add('square', (r + c) % 2 === 0 ? 'white-square' : 'black-square');
                 
@@ -725,21 +640,15 @@
 
                 if (pieceStr) {
                     const container = document.createElement('div'); container.className = 'piece-container';
-                    const img = document.createElement('img');
-                    img.src = pieceStr.substring(2) + '.png';
-                    img.classList.add('piece');
+                    const img = document.createElement('img'); img.src = pieceStr.substring(2) + '.png'; img.classList.add('piece');
                     if (pieceStr.startsWith('b_')) img.classList.add('piece-black');
                     container.appendChild(img); square.appendChild(container);
                 }
 
                 if (validMoves.find(m => m.row === r && m.col === c)) {
-                    const hintDiv = document.createElement('div');
-                    hintDiv.className = pieceStr ? 'hint-capture' : 'hint';
-                    square.appendChild(hintDiv);
+                    const hintDiv = document.createElement('div'); hintDiv.className = pieceStr ? 'hint-capture' : 'hint'; square.appendChild(hintDiv);
                 }
-
-                square.onclick = () => handleSquareClick(r, c);
-                boardDiv.appendChild(square);
+                square.onclick = () => handleSquareClick(r, c); boardDiv.appendChild(square);
             }
         }
     </script>
