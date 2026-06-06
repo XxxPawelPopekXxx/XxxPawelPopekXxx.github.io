@@ -209,6 +209,14 @@
             ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
         ];
 
+        // --- GLOBALNY GENERATOR KODÓW (PRZENIESIONY NA GÓRĘ) ---
+        function generateRandomCode() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let code = "";
+            for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        }
+
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
                 const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
@@ -281,7 +289,7 @@
             document.getElementById('matchmaking-status').innerText = "";
         }
 
-        // --- POPRAWIONY TRYB TWORZENIA / DOŁĄCZANIA POKOJU ---
+        // --- MATChMAKING I PRYWATNE LOBBY ---
         function createPrivateGame() {
             const timeControl = parseInt(document.getElementById('time-control').value);
             isInQueue = false; initRoom(generateRandomCode(), timeControl, false);
@@ -314,7 +322,7 @@
                     const newCode = generateRandomCode(); isInQueue = true; initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
                 }
-            }).catch(e => alert("Błąd bazy (Sprawdź reguły Rules w Firebase!): " + e.message));
+            }).catch(e => alert("Błąd bazy: " + e.message));
         }
 
         function initRoom(code, timeControlSeconds, isRanked) {
@@ -348,7 +356,6 @@
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('room-display-code').innerText = `KOD: ${roomId}`;
 
-            // Rozłączamy stare nasłuchiwanie jeśli istniało
             database.ref('rooms/' + roomId).off();
             database.ref('rooms/' + roomId).on('value', snapshot => {
                 const data = snapshot.val();
@@ -403,7 +410,7 @@
             if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
 
-        // --- ZASADY RUCHU FIGUR ---
+        // --- SILNIK SZACHOWY ---
         function getPseudoLegalMoves(row, col, boardToUse = gameBoard) {
             const moves = []; const piece = boardToUse[row][col]; if (!piece) return moves;
             const color = piece.startsWith('w_') ? 'white' : 'black', enemyPrefix = color === 'white' ? 'b_' : 'w_', myPrefix = color === 'white' ? 'w_' : 'b_';
@@ -489,7 +496,6 @@
             });
         }
 
-        // --- OBSŁUGA KLIKNIĘĆ ---
         function handleSquareClick(row, col) {
             if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
             const isHint = validMoves.find(m => m.row === row && m.col === col);
@@ -552,7 +558,6 @@
 
         function surrender() { if(isGameOver || !gameData.players) return; triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
 
-        // --- OBSŁUGA ELO ---
         function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
             clearInterval(timerInterval);
             let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
@@ -578,7 +583,6 @@
             clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu();
         }
 
-        // --- ODŚWIEŻANIE PLANSZY ---
         function updateUI() {
             if (isGameOver) {
                 document.getElementById('game-over-text').innerText = gameData.endMessage || "Koniec!";
