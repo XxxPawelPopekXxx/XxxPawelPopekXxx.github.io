@@ -209,17 +209,12 @@
             ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
         ];
 
-        // --- LOGOWANIE I REJESTRACJA GOOGLE/EMAIL ---
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
                 const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
                 if (isPasswordLogin && !firebaseUser.emailVerified) {
-                    auth.signOut();
-                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź skrzynkę odbiorczą.");
-                    showAuth();
-                    return;
+                    auth.signOut(); alert("Musisz najpierw zweryfikować swój adres e-mail!"); showAuth(); return;
                 }
-
                 database.ref('users/' + firebaseUser.uid).on('value', snapshot => {
                     const data = snapshot.val();
                     if (data) {
@@ -227,9 +222,7 @@
                         showMenu();
                     }
                 });
-            } else {
-                if(!user.isGuest) showAuth();
-            }
+            } else { if(!user.isGuest) showAuth(); }
         });
 
         function toggleRegister() {
@@ -243,43 +236,31 @@
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
             const nick = document.getElementById('auth-nick').value.trim();
-
             if (!email || !pass) return alert("Podaj e-mail i hasło!");
-
             if (isRegistering) {
-                if(!nick) return alert("Podaj swój nick do gry!");
+                if(!nick) return alert("Podaj swój nick!");
                 auth.createUserWithEmailAndPassword(email, pass).then(cred => {
                     database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 }).then(() => {
-                        cred.user.sendEmailVerification().then(() => {
-                            alert("Konto utworzone. Potwierdź link na swojej poczcie e-mail, aby móc się zalogować.");
-                            auth.signOut(); toggleRegister();
-                        });
+                        cred.user.sendEmailVerification().then(() => { alert("Potwierdź link na e-mailu."); auth.signOut(); toggleRegister(); });
                     });
-                }).catch(e => alert("Błąd rejestracji: " + e.message));
-            } else {
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Błąd logowania: " + e.message));
-            }
+                }).catch(e => alert(e.message));
+            } else { auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message)); }
         }
 
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                const userRef = database.ref('users/' + cred.user.uid);
-                userRef.once('value', snap => {
+                database.ref('users/' + cred.user.uid).once('value', snap => {
                     if (!snap.exists()) {
-                        // ŻĄDANIE PODANIA NICKU PODCZAS PIERWSZEJ REJESTRACJI GOOGLE
                         let chosenNick = "";
                         while(!chosenNick || chosenNick.trim() === "") {
-                            chosenNick = prompt("Witamy! Podaj swój unikalny nick do gry szachowej:");
-                            if(chosenNick === null) {
-                                auth.signOut();
-                                return;
-                            }
+                            chosenNick = prompt("Podaj swój nick do gry:");
+                            if(chosenNick === null) { auth.signOut(); return; }
                         }
-                        userRef.set({ displayName: chosenNick.trim(), elo: 400 });
+                        database.ref('users/' + cred.user.uid).set({ displayName: chosenNick.trim(), elo: 400 });
                     }
                 });
-            }).catch(e => alert("Błąd Google: " + e.message));
+            }).catch(e => alert(e.message));
         }
 
         function playAsGuest() {
@@ -294,14 +275,13 @@
             document.getElementById('auth-screen').style.display = 'none'; document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('game-screen').style.display = 'none';
             document.getElementById('menu-player-name').innerText = user.displayName + (user.isGuest ? " (GOŚĆ)" : "");
             document.getElementById('menu-player-elo').innerText = "ELO: " + user.elo;
-            
             const btnMatch = document.getElementById('btn-matchmaking');
             if(user.isGuest) { btnMatch.disabled = true; btnMatch.innerText = "Matchmaking zablokowany dla gości"; } 
             else { btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika"; }
             document.getElementById('matchmaking-status').innerText = "";
         }
 
-        // --- MATCHMAKING I POKOJE ---
+        // --- POPRAWIONY TRYB TWORZENIA / DOŁĄCZANIA POKOJU ---
         function createPrivateGame() {
             const timeControl = parseInt(document.getElementById('time-control').value);
             isInQueue = false; initRoom(generateRandomCode(), timeControl, false);
@@ -321,7 +301,12 @@
             queueRef.once('value', snapshot => {
                 const waitingRooms = snapshot.val();
                 let foundRoom = null;
-                if(waitingRooms) { for(let rId in waitingRooms) { foundRoom = rId; break; } }
+                
+                if(waitingRooms) {
+                    for(let rId in waitingRooms) {
+                        if(waitingRooms[rId] === true) { foundRoom = rId; break; }
+                    }
+                }
 
                 if(foundRoom) {
                     queueRef.child(foundRoom).remove(); isInQueue = false; attemptJoinRoom(foundRoom);
@@ -329,7 +314,7 @@
                     const newCode = generateRandomCode(); isInQueue = true; initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
                 }
-            }).catch(e => alert("Błąd kolejki: " + e.message));
+            }).catch(e => alert("Błąd bazy (Sprawdź reguły Rules w Firebase!): " + e.message));
         }
 
         function initRoom(code, timeControlSeconds, isRanked) {
@@ -340,14 +325,14 @@
                 lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
                 players: { [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo } },
                 historyLog: [], castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
-            }).then(() => listenToRoom()).catch(e => alert("Błąd bazy: " + e.message));
+            }).then(() => listenToRoom()).catch(e => alert("Błąd zapisu pokoju: " + e.message));
         }
 
         function attemptJoinRoom(code) {
             roomId = code;
             database.ref('rooms/' + roomId).once('value', snapshot => {
                 const data = snapshot.val();
-                if(!data) return alert("Pokój nie istnieje!");
+                if(!data) return alert("Pokój nie istnieje lub wygasł!");
                 if(data.players && data.players.white && data.players.black) return alert("Pokój jest pełny!");
                 
                 myColor = data.players.white ? 'black' : 'white';
@@ -363,6 +348,8 @@
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('room-display-code').innerText = `KOD: ${roomId}`;
 
+            // Rozłączamy stare nasłuchiwanie jeśli istniało
+            database.ref('rooms/' + roomId).off();
             database.ref('rooms/' + roomId).on('value', snapshot => {
                 const data = snapshot.val();
                 if (data) {
@@ -390,7 +377,7 @@
             }
         }
 
-        // --- ZEGARY ---
+        // --- TIMERY ---
         function startLocalTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -416,7 +403,7 @@
             if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
 
-        // --- SILNIK SZACHOWY ---
+        // --- ZASADY RUCHU FIGUR ---
         function getPseudoLegalMoves(row, col, boardToUse = gameBoard) {
             const moves = []; const piece = boardToUse[row][col]; if (!piece) return moves;
             const color = piece.startsWith('w_') ? 'white' : 'black', enemyPrefix = color === 'white' ? 'b_' : 'w_', myPrefix = color === 'white' ? 'w_' : 'b_';
@@ -502,7 +489,7 @@
             });
         }
 
-        // --- INTERAKCJA RUCHÓW ---
+        // --- OBSŁUGA KLIKNIĘĆ ---
         function handleSquareClick(row, col) {
             if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
             const isHint = validMoves.find(m => m.row === row && m.col === col);
@@ -565,7 +552,7 @@
 
         function surrender() { if(isGameOver || !gameData.players) return; triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
 
-        // --- SYSTEM ELO ---
+        // --- OBSŁUGA ELO ---
         function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
             clearInterval(timerInterval);
             let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
@@ -591,7 +578,7 @@
             clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu();
         }
 
-        // --- RENDEROWANIE RYSUNKU UI ---
+        // --- ODŚWIEŻANIE PLANSZY ---
         function updateUI() {
             if (isGameOver) {
                 document.getElementById('game-over-text').innerText = gameData.endMessage || "Koniec!";
