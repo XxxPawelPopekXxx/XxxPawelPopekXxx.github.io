@@ -3,202 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PopekChess</title>
+    <title>Szachy Pro - Ranked Arena</title>
     <style>
         :root {
-            --light-square: #eeeed2;
-            --dark-square: #769656;
-            --selected-square: #baca44;
-            --last-move-square: rgba(247, 247, 105, 0.6);
-            --check-square: #e74c3c;
-            --hint-color: rgba(0, 0, 0, 0.15);
-            --hint-capture: rgba(0, 0, 0, 0.1);
+            --light-square: #eeeed2; --dark-square: #769656;
+            --selected-square: #baca44; --last-move-square: rgba(247, 247, 105, 0.6);
+            --check-square: #e74c3c; --hint-color: rgba(0, 0, 0, 0.15); --hint-capture: rgba(0, 0, 0, 0.1);
+            --bg-color: #161513; --panel-bg: #262421; --accent: #81b64c;
         }
         
         body { 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-color: #161513; color: #f1f1f1; font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg-color); color: #f1f1f1; font-family: 'Segoe UI', system-ui, sans-serif; 
             margin: 0; min-height: 100vh;
         }
         
-        #menu-screen {
-            background: #262421; padding: 30px; border-radius: 12px;
+        .screen {
+            background: var(--panel-bg); padding: 30px; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 90%;
+            display: none; flex-direction: column; gap: 15px;
         }
 
-        #game-screen { display: none; flex-direction: column; align-items: center; }
+        #game-screen { display: none; flex-direction: column; align-items: center; background: none; box-shadow: none; max-width: 100%; padding: 0; }
         
         #status-panel { 
-            font-size: 1.1rem; margin-bottom: 15px; font-weight: 600; text-align: center;
-            color: #fff; background: #262421; padding: 10px 24px; border-radius: 24px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; text-align: center;
+            color: #fff; background: var(--panel-bg); padding: 10px 24px; border-radius: 24px;
         }
         
         #game-container { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; }
-        #board-container { position: relative; }
+        
+        .player-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1a1917; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; font-weight: bold;
+        }
+        .timer { font-family: monospace; font-size: 1.5rem; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; }
+        .timer.low { color: #e74c3c; animation: pulse-time 1s infinite; }
+        
+        @keyframes pulse-time { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #board { 
-            display: grid; grid-template-columns: repeat(8, 72px); grid-template-rows: repeat(8, 72px); 
-            border: 6px solid #262421; border-radius: 6px; box-shadow: 0 15px 35px rgba(0,0,0,0.7);
-        }
-        
-        .square { 
-            width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; 
-            position: relative; user-select: none;
-        }
-        .white-square { background-color: var(--light-square); }
-        .black-square { background-color: var(--dark-square); }
-        
+        #board { display: grid; grid-template-columns: repeat(8, 72px); grid-template-rows: repeat(8, 72px); border: 6px solid var(--panel-bg); border-radius: 6px; }
+        .square { width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; position: relative; user-select: none; }
+        .white-square { background-color: var(--light-square); } .black-square { background-color: var(--dark-square); }
         .selected { background-color: var(--selected-square) !important; }
         .last-move { background-color: var(--last-move-square) !important; }
         .in-check { background-color: var(--check-square) !important; animation: pulse-check 1.5s infinite; }
 
-        @keyframes pulse-check {
-            0% { opacity: 1; } 50% { background-color: #c0392b; } 100% { opacity: 1; }
-        }
+        @keyframes pulse-check { 0% { opacity: 1; } 50% { background-color: #c0392b; } 100% { opacity: 1; } }
         
-        /* Kontener figury i pełny podpis */
-        .piece-container {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; width: 100%; height: 100%; z-index: 1;
-            /* Płynna animacja ruchu przy przestawianiu */
-            transition: all 0.25s ease-in-out; 
-        }
-        .piece-owner {
-            position: absolute; top: 1px; font-size: 8px; font-weight: bold;
-            padding: 1px 4px; border-radius: 4px; text-transform: uppercase;
-            pointer-events: none; letter-spacing: 0.3px; line-height: 1; white-space: nowrap;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .owner-white { background: #ffffff; color: #000; border: 1px solid #ccc; }
-        .owner-black { background: #262421; color: #fff; border: 1px solid #444; }
-
+        .piece-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; z-index: 1; transition: all 0.15s ease-in-out; }
         .piece { width: 54px; height: 54px; margin-top: 10px; }
         .piece-black { filter: brightness(0.25) contrast(1.2) drop-shadow(0px 2px 3px rgba(0,0,0,0.5)); } 
 
-        /* Podpowiedzi */
         .hint { width: 22px; height: 22px; background-color: var(--hint-color); border-radius: 50%; position: absolute; z-index: 2; pointer-events: none; }
         .hint-capture { width: 58px; height: 58px; border: 6px solid var(--hint-capture); border-radius: 50%; position: absolute; z-index: 2; pointer-events: none; }
         
-        /* Panel boczny */
-        #side-panel {
-            width: 240px; background: #262421; padding: 20px; border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;
-        }
+        #side-panel { width: 260px; background: var(--panel-bg); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 15px; }
         .panel-section { background: #1a1917; padding: 12px; border-radius: 6px; border: 1px solid #333; }
-        .panel-title { font-size: 0.85rem; font-weight: bold; color: #81b64c; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        #move-history { height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #ccc; line-height: 1.4; }
-        #captured-pieces { display: flex; flex-wrap: wrap; gap: 5px; min-height: 40px; }
-        .captured-img { width: 24px; height: 24px; }
-
-        /* UI Przycisków */
-        button {
-            background: #81b64c; border: none; color: white; padding: 12px 20px;
-            font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer;
-            transition: background 0.2s, transform 0.1s; margin: 5px;
-        }
+        .panel-title { font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; }
+        #move-history { height: 120px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #ccc; line-height: 1.4; }
+        
+        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
         button:hover { background: #a3d16c; }
         button:active { transform: scale(0.97); }
+        button:disabled { background: #555; cursor: not-allowed; }
         .btn-secondary { background: #383531; border: 1px solid #555; }
         .btn-secondary:hover { background: #444; }
         
-        input[type="text"] {
-            background: #1a1917; border: 2px solid #444; color: white; padding: 12px;
-            border-radius: 6px; font-size: 1.1rem; width: 80%; text-align: center; margin: 15px 0;
-            text-transform: uppercase; letter-spacing: 2px;
-        }
-
-        #promotion-modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #262421; padding: 25px; border-radius: 12px; z-index: 10;
-            text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.8); border: 2px solid #81b64c;
-        }
-        .promo-choice { width: 65px; height: 65px; margin: 10px; cursor: pointer; background: #383531; border-radius: 8px; border: 2px solid transparent; }
-        .promo-choice:hover { border-color: #81b64c; }
+        input, select { background: #1a1917; border: 2px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; text-align: center; }
         
-        #game-over-screen {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 5; flex-direction: column; justify-content: center; align-items: center;
-        }
-        #game-over-text { font-size: 2rem; font-weight: bold; color: #81b64c; margin-bottom: 20px; text-align: center; }
+        .profile-badge { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--accent); }
+
+        #promotion-modal, #game-over-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; align-items: center; justify-content: center; }
+        #game-over-screen { background: rgba(0,0,0,0.85); flex-direction: column; }
+        #game-over-text { font-size: 2rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; text-align: center; }
+        .elo-change { font-size: 1.2rem; margin-bottom: 20px; color: #ccc; }
+        
+        #promotion-content { background: var(--panel-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; }
+        .promo-choice { width: 60px; height: 60px; margin: 5px; cursor: pointer; background: #383531; border-radius: 8px; }
+        
+        /* Dodatkowe ukrywanie sekcji auth w zależności od stanu */
+        .auth-form { display: flex; flex-direction: column; gap: 10px; }
+        .separator { margin: 10px 0; color: #777; font-weight: bold; font-size: 0.9rem; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-    <div id="menu-screen">
-        <h2 style="margin-top:0; color:#81b64c;">PopekChess</h2>
-        <p style="color:#aaa; font-size:0.9rem;">Graj ze znajomymi za darmo w PopekChess!</p>
-        <hr style="border-color:#444; margin: 20px 0;">
-        <button onclick="createNewGame()" style="width: 100%;">Stwórz nową partię</button>
-        <div style="margin: 15px 0; color: #777; font-weight: bold;">LUB</div>
-        <input type="text" id="join-code-input" placeholder="Wpisz kod partii (6 znaków)">
-        <button onclick="joinExistingGame()" class="btn-secondary" style="width: 100%;">Dołącz do partii</button>
+    <div id="auth-screen" class="screen" style="display: flex;">
+        <h2 style="margin:0; color:#81b64c;">Logowanie</h2>
+        
+        <div class="auth-form" id="login-form">
+            <input type="email" id="auth-email" placeholder="E-mail">
+            <input type="password" id="auth-pass" placeholder="Hasło">
+            <input type="text" id="auth-nick" placeholder="Twój Nick (Tylko przy rejestracji)" style="display:none;">
+            <button onclick="login()">Zaloguj się</button>
+            <button onclick="toggleRegister()" class="btn-secondary" id="btn-toggle-reg">Chcę założyć konto</button>
+        </div>
+
+        <div class="separator">LUB ZAGRAJ JAKO GOŚĆ</div>
+        
+        <div class="auth-form">
+            <input type="text" id="guest-nick" placeholder="Nick Gościa">
+            <button onclick="playAsGuest()" class="btn-secondary">Graj jako Gość (Brak Rankingu)</button>
+        </div>
+    </div>
+
+    <div id="menu-screen" class="screen">
+        <div class="profile-badge">
+            <div id="menu-player-name" style="font-size: 1.2rem; font-weight: bold;">Gracz</div>
+            <div id="menu-player-elo" style="color: #aaa;">ELO: ---</div>
+        </div>
+
+        <div style="background: #1a1917; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+            <h3 style="margin-top:0; font-size: 1rem;">Graj Online (Ranked)</h3>
+            <select id="time-control" style="margin-bottom: 10px;">
+                <option value="30">30 Sekund (Bullet)</option>
+                <option value="60">1 Minuta (Bullet)</option>
+                <option value="300" selected>5 Minut (Blitz)</option>
+                <option value="600">10 Minut (Rapid)</option>
+                <option value="1800">30 Minut (Klasyczne)</option>
+            </select>
+            <button id="btn-matchmaking" onclick="startMatchmaking()" style="width: 100%;">Szukaj przeciwnika</button>
+            <div id="matchmaking-status" style="color:#aaa; font-size:0.8rem; margin-top:5px;"></div>
+        </div>
+
+        <div class="separator">PRYWATNE LOBBY</div>
+        <button onclick="createPrivateGame()" class="btn-secondary">Załóż pokój prywatny</button>
+        <input type="text" id="join-code-input" placeholder="Kod pokoju">
+        <button onclick="joinPrivateGame()" class="btn-secondary">Dołącz</button>
+        
+        <button onclick="logout()" style="background: #c0392b; margin-top: 20px;">Wyloguj</button>
     </div>
 
     <div id="game-screen">
-        <div id="status-panel">Łączenie...</div>
+        <div id="status-panel">Trwa łączenie...</div>
         
         <div id="game-container">
             <div id="board-container">
+                <div class="player-header" id="header-opponent">
+                    <span id="opp-name">Przeciwnik</span>
+                    <span class="timer" id="opp-timer">00:00</span>
+                </div>
+                
                 <div id="board"></div>
+                
+                <div class="player-header" id="header-me">
+                    <span id="my-name">Ja</span>
+                    <span class="timer" id="my-timer">00:00</span>
+                </div>
+
                 <div id="game-over-screen">
                     <div id="game-over-text">Koniec Gry!</div>
+                    <div class="elo-change" id="elo-change-text"></div>
                     <button onclick="backToMenu();">Powrót do menu</button>
+                </div>
+                
+                <div id="promotion-modal">
+                    <div id="promotion-content">
+                        <h3 style="margin-top:0;">Awans pionka:</h3>
+                        <img src="photo5.png" class="promo-choice" onclick="choosePromotion('photo5')">
+                        <img src="photo2.png" class="promo-choice" onclick="choosePromotion('photo2')">
+                        <img src="photo4.png" class="promo-choice" onclick="choosePromotion('photo4')">
+                        <img src="photo3.png" class="promo-choice" onclick="choosePromotion('photo3')">
+                    </div>
                 </div>
             </div>
 
             <div id="side-panel">
                 <div class="panel-section">
-                    <div class="panel-title" id="room-display-code">Kod: ------</div>
+                    <div class="panel-title" id="room-display-code">KOD: POUFNY</div>
                 </div>
                 <div class="panel-section">
-                    <div class="panel-title">Wyeliminowane figury</div>
-                    <div id="captured-pieces"></div>
-                </div>
-                <div class="panel-section">
-                    <div class="panel-title">Przebieg partii</div>
+                    <div class="panel-title">Historia</div>
                     <div id="move-history"></div>
                 </div>
-                <button onclick="backToMenu()" class="btn-secondary" style="width: 100%; margin:0;">Wyjdź z gry</button>
+                <button onclick="surrender()" style="background: #c0392b;">Poddaj partię</button>
             </div>
         </div>
     </div>
 
-    <div id="promotion-modal">
-        <h3 style="margin-top:0;">Awans pionka na:</h3>
-        <img src="photo5.png" id="promo-q" class="promo-choice" onclick="choosePromotion('photo5')">
-        <img src="photo2.png" id="promo-r" class="promo-choice" onclick="choosePromotion('photo2')">
-        <img src="photo4.png" id="promo-b" class="promo-choice" onclick="choosePromotion('photo4')">
-        <img src="photo3.png" id="promo-n" class="promo-choice" onclick="choosePromotion('photo3')">
-    </div>
-
     <script>
+        // --- 1. KONFIGURACJA FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyD7DlhKM5AwCavHvaHTP3fclbadPM7bAJY",
             authDomain: "ocet-chess.firebaseapp.com",
-            databaseURL: "https://ocet-chess-default-rtdb.europe-west1.firebasedatabase.app/",
+            databaseURL: "https://ocet-chess-default-rtdb.firebaseio.com",
             projectId: "ocet-chess",
             storageBucket: "ocet-chess.firebasestorage.app",
             messagingSenderId: "947677134465",
             appId: "1:947677134465:web:1c0afd899ceb77f0e9d780"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
 
+        // --- 2. ZMIENNE GLOBALNE ---
+        let user = { uid: null, displayName: "", elo: 1200, isGuest: true };
+        let isRegistering = false;
+        
         let roomId = null;
         let myColor = null; 
         let currentTurn = "white";
-        let selectedSquare = null;
+        let gameBoard = [];
         let validMoves = [];
-        let lastMove = null; 
-        let promotionPending = null;
-        let isGameOver = false;
-        let historyLog = [];
+        let selectedSquare = null;
+        let lastMove = null;
         let castlingRights = { w_short: true, w_long: true, b_short: true, b_long: true };
+        let historyLog = [];
+        let isGameOver = false;
+        let promotionPending = null;
+        
+        let gameData = {}; // Kopia danych z bazy
+
+        // Zegary
+        let timerInterval = null;
+        let whiteTimeLeft = 0;
+        let blackTimeLeft = 0;
+        let lastMoveTimestamp = 0;
 
         const initialBoard = [
             ['b_photo2', 'b_photo3', 'b_photo4', 'b_photo5', 'b_photo6', 'b_photo4', 'b_photo3', 'b_photo2'],
@@ -210,46 +235,156 @@
             ['w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1'],
             ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
         ];
-        let gameBoard = JSON.parse(JSON.stringify(initialBoard));
 
-        // --- GENEROWANIE I OBSŁUGA POKOI ---
+        // --- 3. LOGOWANIE I SYSTEM KONT ---
+        auth.onAuthStateChanged(firebaseUser => {
+            if (firebaseUser) {
+                database.ref('users/' + firebaseUser.uid).once('value', snapshot => {
+                    const data = snapshot.val() || { displayName: "Gracz", elo: 1200 };
+                    user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
+                    showMenu();
+                });
+            } else {
+                if(!user.isGuest) showAuth();
+            }
+        });
+
+        function toggleRegister() {
+            isRegistering = !isRegistering;
+            document.getElementById('auth-nick').style.display = isRegistering ? 'block' : 'none';
+            document.getElementById('btn-toggle-reg').innerText = isRegistering ? 'Mam już konto (Zaloguj)' : 'Chcę założyć konto';
+            document.querySelector('#login-form button').innerText = isRegistering ? 'Zarejestruj się' : 'Zaloguj się';
+        }
+
+        function login() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            const nick = document.getElementById('auth-nick').value;
+
+            if (isRegistering) {
+                if(!nick) return alert("Podaj nick!");
+                auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 1200 });
+                }).catch(e => alert(e.message));
+            } else {
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+            }
+        }
+
+        function playAsGuest() {
+            const nick = document.getElementById('guest-nick').value.trim() || "Gość_" + Math.floor(Math.random()*1000);
+            user = { uid: "guest_" + Date.now(), displayName: nick, elo: "Brak", isGuest: true };
+            showMenu();
+        }
+
+        function logout() { user.isGuest = true; auth.signOut(); showAuth(); }
+
+        function showAuth() {
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+
+        function showMenu() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
+            
+            document.getElementById('menu-player-name').innerText = user.displayName + (user.isGuest ? " (GOŚĆ)" : "");
+            document.getElementById('menu-player-elo').innerText = "ELO: " + user.elo;
+            
+            const btnMatch = document.getElementById('btn-matchmaking');
+            if(user.isGuest) {
+                btnMatch.disabled = true;
+                btnMatch.innerText = "Matchmaking tylko dla zalogowanych";
+            } else {
+                btnMatch.disabled = false;
+                btnMatch.innerText = "Szukaj przeciwnika";
+            }
+        }
+
+        // --- 4. MATCHMAKING I POKOJE ---
         function generateRandomCode() {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            let code = "";
-            for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            let code = ""; for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
             return code;
         }
 
-        function createNewGame() {
-            roomId = generateRandomCode();
-            myColor = Math.random() < 0.5 ? "white" : "black"; // Randomowy wybór strony
+        function createPrivateGame() {
+            const timeControl = parseInt(document.getElementById('time-control').value);
+            initRoom(generateRandomCode(), timeControl, false);
+        }
+
+        function joinPrivateGame() {
+            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            if(code.length !== 6) return alert("Kod ma 6 znaków.");
+            attemptJoinRoom(code);
+        }
+
+        function startMatchmaking() {
+            const timeControl = parseInt(document.getElementById('time-control').value);
+            const queueRef = database.ref('matchmaking/queue_' + timeControl);
+            
+            document.getElementById('matchmaking-status').innerText = "Szukanie...";
+            
+            queueRef.once('value', snapshot => {
+                const waitingRooms = snapshot.val();
+                let foundRoom = null;
+                
+                if(waitingRooms) {
+                    // Znajdź pierwszy dostępny pokój
+                    for(let rId in waitingRooms) { foundRoom = rId; break; }
+                }
+
+                if(foundRoom) {
+                    // Dołącz i usuń z kolejki
+                    queueRef.child(foundRoom).remove();
+                    attemptJoinRoom(foundRoom);
+                } else {
+                    // Załóż nowy i czekaj w kolejce
+                    const newCode = generateRandomCode();
+                    initRoom(newCode, timeControl, true);
+                    queueRef.child(newCode).set(true);
+                }
+            });
+        }
+
+        function initRoom(code, timeControlSeconds, isRanked) {
+            roomId = code;
+            myColor = Math.random() < 0.5 ? "white" : "black"; 
             
             database.ref('rooms/' + roomId).set({
                 board: initialBoard,
                 turn: 'white',
-                lastMove: null,
                 isGameOver: false,
+                isRanked: isRanked && !user.isGuest,
+                timeControl: timeControlSeconds,
+                whiteTime: timeControlSeconds * 1000,
+                blackTime: timeControlSeconds * 1000,
+                lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
+                players: {
+                    [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo }
+                },
                 historyLog: [],
-                castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true },
-                creatorColor: myColor,
-                joined: false
-            }).then(() => {
-                listenToRoom();
-            });
+                castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
+            }).then(() => listenToRoom());
         }
 
-        function joinExistingGame() {
-            const inputCode = document.getElementById('join-code-input').value.trim().toUpperCase();
-            if(inputCode.length !== 6) { alert("Kod musi mieć dokładnie 6 znaków!"); return; }
-            
-            roomId = inputCode;
-            database.ref('rooms/' + roomId).once('value', (snapshot) => {
+        function attemptJoinRoom(code) {
+            roomId = code;
+            database.ref('rooms/' + roomId).once('value', snapshot => {
                 const data = snapshot.val();
-                if(!data) { alert("Taki pokój nie istnieje!"); return; }
+                if(!data) return alert("Pokój nie istnieje!");
+                if(data.players && data.players.white && data.players.black) return alert("Pokój jest pełny!");
                 
-                // Przydziel stronę przeciwną do założyciela
-                myColor = data.creatorColor === 'white' ? 'black' : 'white';
-                database.ref('rooms/' + roomId + '/joined').set(true);
+                myColor = data.players.white ? 'black' : 'white';
+                database.ref(`rooms/${roomId}/players/${myColor}`).set({
+                    uid: user.uid, name: user.displayName, elo: user.elo
+                });
+                
+                // Jeśli dołączyliśmy, odśwież timestamp żeby zegary ruszyły sprawiedliwie
+                database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
+                
                 listenToRoom();
             });
         }
@@ -259,121 +394,132 @@
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('room-display-code').innerText = `KOD: ${roomId}`;
 
-            database.ref('rooms/' + roomId).on('value', (snapshot) => {
+            database.ref('rooms/' + roomId).on('value', snapshot => {
                 const data = snapshot.val();
                 if (data) {
+                    gameData = data;
                     gameBoard = data.board;
                     currentTurn = data.turn;
                     lastMove = data.lastMove || null;
                     isGameOver = data.isGameOver || false;
                     historyLog = data.historyLog || [];
                     castlingRights = data.castlingRights || { w_short: true, w_long: true, b_short: true, b_long: true };
+                    
+                    whiteTimeLeft = data.whiteTime;
+                    blackTimeLeft = data.blackTime;
+                    lastMoveTimestamp = data.lastMoveTimestamp;
+
                     updateUI();
+                    
+                    if(!isGameOver && data.players && data.players.white && data.players.black) {
+                        startLocalTimer();
+                    }
                 }
             });
         }
 
-        function backToMenu() {
-            if(roomId) database.ref('rooms/' + roomId).off();
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('menu-screen').style.display = 'block';
-            roomId = null; myColor = null;
+        // --- 5. LOGIKA ZEGARÓW ---
+        function startLocalTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if(isGameOver) return clearInterval(timerInterval);
+                
+                const now = Date.now();
+                // Korygujemy czas ze względu na różnice między serwerem a lokalnym (proste podejście)
+                const elapsed = Math.max(0, now - lastMoveTimestamp); 
+                
+                let wTime = whiteTimeLeft;
+                let bTime = blackTimeLeft;
+                
+                if (currentTurn === 'white') wTime -= elapsed;
+                else bTime -= elapsed;
+
+                updateTimerDisplays(wTime, bTime);
+
+                // Sprawdzenie timeoutu tylko przez aktywnego gracza
+                if (currentTurn === myColor) {
+                    if ((myColor === 'white' && wTime <= 0) || (myColor === 'black' && bTime <= 0)) {
+                        clearInterval(timerInterval);
+                        triggerGameOver("Czas minął!", myColor === 'white' ? 'black' : 'white');
+                    }
+                }
+            }, 100);
         }
 
-        // Tłumacz nazw i kolorów figur do pełnych podpisów
-        function getFullPieceDescription(pieceStr) {
-            if (!pieceStr) return "";
-            const color = pieceStr.startsWith('w_') ? "Biały" : "Czarny";
-            let type = "";
-            if (pieceStr.endsWith('photo1')) type = "Pion";
-            if (pieceStr.endsWith('photo2')) type = "Wieża";
-            if (pieceStr.endsWith('photo3')) type = "Skoczek";
-            if (pieceStr.endsWith('photo4')) type = "Goniec";
-            if (pieceStr.endsWith('photo5')) type = "Hetman";
-            if (pieceStr.endsWith('photo6')) type = "Król";
-            return `${color} ${type}`;
+        function updateTimerDisplays(wMs, bMs) {
+            const oppColor = myColor === 'white' ? 'black' : 'white';
+            
+            const format = (ms) => {
+                if(ms < 0) ms = 0;
+                let s = Math.floor(ms / 1000);
+                let m = Math.floor(s / 60);
+                s = s % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+
+            const myTimerEl = document.getElementById('my-timer');
+            const oppTimerEl = document.getElementById('opp-timer');
+
+            myTimerEl.innerText = format(myColor === 'white' ? wMs : bMs);
+            oppTimerEl.innerText = format(oppColor === 'white' ? wMs : bMs);
+            
+            // Kolorowanie gdy mało czasu (< 10 sekund)
+            if((myColor==='white'?wMs:bMs) < 10000) myTimerEl.classList.add('low'); else myTimerEl.classList.remove('low');
+            if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
 
-        // --- SILNIK SZACHOWY Z OBSŁUGĄ SZACHU I ROSZADY ---
+        // --- 6. SILNIK SZACHOWY (SKRÓCONY) ---
         function getPseudoLegalMoves(row, col, boardToUse = gameBoard) {
-            const moves = [];
-            const piece = boardToUse[row][col];
-            if (!piece) return moves;
-
+            const moves = []; const piece = boardToUse[row][col]; if (!piece) return moves;
             const color = piece.startsWith('w_') ? 'white' : 'black';
             const enemyPrefix = color === 'white' ? 'b_' : 'w_';
             const myPrefix = color === 'white' ? 'w_' : 'b_';
 
             if (piece.endsWith('photo1')) {
-                const dir = color === 'white' ? -1 : 1;
-                const startRow = color === 'white' ? 6 : 1;
+                const dir = color === 'white' ? -1 : 1; const startRow = color === 'white' ? 6 : 1;
                 if (row + dir >= 0 && row + dir < 8 && boardToUse[row + dir][col] === '') {
                     moves.push({ row: row + dir, col: col, type: 'normal' });
-                    if (row === startRow && boardToUse[row + 2 * dir][col] === '') {
-                        moves.push({ row: row + 2 * dir, col: col, type: 'normal' });
-                    }
+                    if (row === startRow && boardToUse[row + 2 * dir][col] === '') moves.push({ row: row + 2 * dir, col: col, type: 'normal' });
                 }
                 [-1, 1].forEach(dc => {
                     const c = col + dc;
-                    if (c >= 0 && c < 8 && row + dir >= 0 && row + dir < 8) {
-                        if (boardToUse[row + dir][c] && boardToUse[row + dir][c].startsWith(enemyPrefix)) {
-                            moves.push({ row: row + dir, col: c, type: 'normal' });
-                        }
-                    }
+                    if (c >= 0 && c < 8 && row + dir >= 0 && row + dir < 8 && boardToUse[row + dir][c] && boardToUse[row + dir][c].startsWith(enemyPrefix)) 
+                        moves.push({ row: row + dir, col: c, type: 'normal' });
                 });
-                if (lastMove && lastMove.piece.endsWith('photo1') && Math.abs(lastMove.from.row - lastMove.to.row) === 2) {
-                    if (row === lastMove.to.row && Math.abs(lastMove.to.col - col) === 1) {
-                        moves.push({ row: lastMove.to.row + dir, col: lastMove.to.col, type: 'enPassant' });
-                    }
-                }
+                if (lastMove && lastMove.piece.endsWith('photo1') && Math.abs(lastMove.from.row - lastMove.to.row) === 2 && row === lastMove.to.row && Math.abs(lastMove.to.col - col) === 1) 
+                    moves.push({ row: lastMove.to.row + dir, col: lastMove.to.col, type: 'enPassant' });
             } 
-            
             if (piece.endsWith('photo2') || piece.endsWith('photo5')) {
                 [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dr, dc]) => {
                     let r = row + dr, c = col + dc;
                     while (r >= 0 && r < 8 && c >= 0 && c < 8) {
                         if (boardToUse[r][c] === '') moves.push({ row: r, col: c, type: 'normal' });
-                        else {
-                            if (boardToUse[r][c].startsWith(enemyPrefix)) moves.push({ row: r, col: c, type: 'normal' });
-                            break;
-                        }
+                        else { if (boardToUse[r][c].startsWith(enemyPrefix)) moves.push({ row: r, col: c, type: 'normal' }); break; }
                         r += dr; c += dc;
                     }
                 });
             }
-
             if (piece.endsWith('photo4') || piece.endsWith('photo5')) {
                 [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([dr, dc]) => {
                     let r = row + dr, c = col + dc;
                     while (r >= 0 && r < 8 && c >= 0 && c < 8) {
                         if (boardToUse[r][c] === '') moves.push({ row: r, col: c, type: 'normal' });
-                        else {
-                            if (boardToUse[r][c].startsWith(enemyPrefix)) moves.push({ row: r, col: c, type: 'normal' });
-                            break;
-                        }
+                        else { if (boardToUse[r][c].startsWith(enemyPrefix)) moves.push({ row: r, col: c, type: 'normal' }); break; }
                         r += dr; c += dc;
                     }
                 });
             }
-
             if (piece.endsWith('photo3')) {
                 [[-2,-1], [-2,1], [-1,-2], [-1,2], [1,-2], [1,2], [2,-1], [2,1]].forEach(([dr, dc]) => {
                     const r = row + dr, c = col + dc;
-                    if (r >= 0 && r < 8 && c >= 0 && c < 8 && !boardToUse[r][c].startsWith(myPrefix)) {
-                        moves.push({ row: r, col: c, type: 'normal' });
-                    }
+                    if (r >= 0 && r < 8 && c >= 0 && c < 8 && !boardToUse[r][c].startsWith(myPrefix)) moves.push({ row: r, col: c, type: 'normal' });
                 });
             }
-
             if (piece.endsWith('photo6')) {
                 [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr, dc]) => {
                     const r = row + dr, c = col + dc;
-                    if (r >= 0 && r < 8 && c >= 0 && c < 8 && !boardToUse[r][c].startsWith(myPrefix)) {
-                        moves.push({ row: r, col: c, type: 'normal' });
-                    }
+                    if (r >= 0 && r < 8 && c >= 0 && c < 8 && !boardToUse[r][c].startsWith(myPrefix)) moves.push({ row: r, col: c, type: 'normal' });
                 });
-
-                // ROSZADA (Tylko jeśli król nie jest aktualnie szachowany)
                 if (!isKingInCheck(color, boardToUse)) {
                     if (color === 'white' && row === 7 && col === 4) {
                         if (castlingRights.w_short && boardToUse[7][5]==='' && boardToUse[7][6]==='') moves.push({ row: 7, col: 6, type: 'castle_short' });
@@ -385,189 +531,195 @@
                     }
                 }
             }
-
             return moves;
         }
 
         function isKingInCheck(color, boardToUse) {
-            let kingRow = -1, kingCol = -1;
-            const targetKing = color === 'white' ? 'w_photo6' : 'b_photo6';
-            
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    if (boardToUse[r][c] === targetKing) { kingRow = r; kingCol = c; break; }
-                }
-            }
+            let kingRow = -1, kingCol = -1; const targetKing = color === 'white' ? 'w_photo6' : 'b_photo6';
+            for (let r = 0; r < 8; r++) { for (let c = 0; c < 8; c++) { if (boardToUse[r][c] === targetKing) { kingRow = r; kingCol = c; break; } } }
             if (kingRow === -1) return false;
-
             const enemyColor = color === 'white' ? 'black' : 'white';
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
-                    if (boardToUse[r][c] && boardToUse[r][c].startsWith(enemyColor === 'white' ? 'w_' : 'b_')) {
-                        // Nie używamy rekurencji dla roszad w sprawdzeniu zagrożeń
-                        if (!boardToUse[r][c].endsWith('photo6')) {
-                            const enemyMoves = getPseudoLegalMoves(r, c, boardToUse);
-                            if (enemyMoves.find(m => m.row === kingRow && m.col === kingCol)) return true;
-                        }
+                    if (boardToUse[r][c] && boardToUse[r][c].startsWith(enemyColor === 'white' ? 'w_' : 'b_') && !boardToUse[r][c].endsWith('photo6')) {
+                        if (getPseudoLegalMoves(r, c, boardToUse).find(m => m.row === kingRow && m.col === kingCol)) return true;
                     }
                 }
             }
             return false;
         }
 
-        // Filtruje ruchy tak, aby zostawić TYLKO te, które chronią lub uciekają przed szachem
         function getValidMoves(row, col) {
-            const pseudoMoves = getPseudoLegalMoves(row, col);
-            const piece = gameBoard[row][col];
-            const color = piece.startsWith('w_') ? 'white' : 'black';
-            const cleanMoves = [];
-
-            pseudoMoves.forEach(move => {
-                // Symulacja ruchu na wirtualnej planszy
+            const color = gameBoard[row][col].startsWith('w_') ? 'white' : 'black';
+            return getPseudoLegalMoves(row, col).filter(move => {
                 const virtualBoard = JSON.parse(JSON.stringify(gameBoard));
-                virtualBoard[move.row][move.col] = virtualBoard[row][col];
-                virtualBoard[row][col] = '';
-                
+                virtualBoard[move.row][move.col] = virtualBoard[row][col]; virtualBoard[row][col] = '';
                 if (move.type === 'enPassant' && lastMove) virtualBoard[lastMove.to.row][lastMove.to.col] = '';
-
-                // Jeśli po wykonaniu ruchu król NIE jest w szachu, to ruch jest w pełni legalny
-                if (!isKingInCheck(color, virtualBoard)) {
-                    cleanMoves.push(move);
-                }
+                return !isKingInCheck(color, virtualBoard);
             });
-
-            return cleanMoves;
         }
 
+        // --- 7. OBSŁUGA GRY ---
         function handleSquareClick(row, col) {
-            if (!myColor || isGameOver || currentTurn !== myColor) return;
+            if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
 
             const isHint = validMoves.find(m => m.row === row && m.col === col);
-            
             if (isHint) {
                 executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type);
                 selectedSquare = null; validMoves = [];
             } else {
                 const clickedPiece = gameBoard[row][col];
                 if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) {
-                    selectedSquare = { row, col };
-                    validMoves = getValidMoves(row, col);
-                    updateUI();
-                } else {
-                    selectedSquare = null; validMoves = []; updateUI();
-                }
+                    selectedSquare = { row, col }; validMoves = getValidMoves(row, col); updateUI();
+                } else { selectedSquare = null; validMoves = []; updateUI(); }
             }
         }
 
         function executeMove(fromRow, fromCol, toRow, toCol, type) {
             let piece = gameBoard[fromRow][fromCol];
-            let targetPiece = gameBoard[toRow][toCol];
-            let gameOverTriggered = false;
-            
-            if (type === 'enPassant') {
-                targetPiece = gameBoard[lastMove.to.row][lastMove.to.col];
-                gameBoard[lastMove.to.row][lastMove.to.col] = '';
-            }
+            if (type === 'enPassant') gameBoard[lastMove.to.row][lastMove.to.col] = '';
+            if (type === 'castle_short') { gameBoard[toRow][5] = gameBoard[toRow][7]; gameBoard[toRow][7] = ''; }
+            if (type === 'castle_long') { gameBoard[toRow][3] = gameBoard[toRow][0]; gameBoard[toRow][0] = ''; }
 
-            // ROSZADY - Przestawienie towarzyszącej wieży
-            if (type === 'castle_short') {
-                gameBoard[toRow][5] = gameBoard[toRow][7];
-                gameBoard[toRow][7] = '';
-            }
-            if (type === 'castle_long') {
-                gameBoard[toRow][3] = gameBoard[toRow][0];
-                gameBoard[toRow][0] = '';
-            }
-
-            // Aktualizacja praw roszady
             if (piece === 'w_photo6') { castlingRights.w_short = false; castlingRights.w_long = false; }
             if (piece === 'b_photo6') { castlingRights.b_short = false; castlingRights.b_long = false; }
-            if (fromRow === 7 && fromCol === 7) castlingRights.w_short = false;
-            if (fromRow === 7 && fromCol === 0) castlingRights.w_long = false;
-            if (fromRow === 0 && fromCol === 7) castlingRights.b_short = false;
-            if (fromRow === 0 && fromCol === 0) castlingRights.b_long = false;
-
-            if (targetPiece && targetPiece.endsWith('photo6')) gameOverTriggered = true;
 
             const cols = ['a','b','c','d','e','f','g','h'];
-            let moveText = `${currentTurn==='white'?'B':'C'}: ${getFullPieceDescription(piece).split(' ')[1]} ${cols[fromCol]}${8-fromRow}→${cols[toCol]}${8-toRow}`;
-            if(type.startsWith('castle')) moveText = `${currentTurn==='white'?'B':'C'}: Roszada`;
-            historyLog.push(moveText);
+            historyLog.push(`${currentTurn==='white'?'B':'C'}: ${piece.split('_')[1]} ${cols[fromCol]}${8-fromRow}→${cols[toCol]}${8-toRow}`);
 
-            gameBoard[toRow][toCol] = piece;
-            gameBoard[fromRow][fromCol] = '';
+            gameBoard[toRow][toCol] = piece; gameBoard[fromRow][fromCol] = '';
 
             const moveData = { from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol }, piece: piece };
 
             if (piece.endsWith('photo1') && (toRow === 0 || toRow === 7)) {
-                promotionPending = { toRow, toCol, moveData, gameOverTriggered };
-                document.getElementById('promotion-modal').style.display = 'block';
+                promotionPending = moveData;
+                document.getElementById('promotion-modal').style.display = 'flex';
                 return;
             }
 
-            finalizeTurn(moveData, gameOverTriggered);
+            finalizeTurn(moveData);
         }
 
         function choosePromotion(chosenPhoto) {
             if (!promotionPending) return;
-            const { toRow, toCol, moveData, gameOverTriggered } = promotionPending;
-            const prefix = myColor === 'white' ? 'w_' : 'b_';
-            gameBoard[toRow][toCol] = prefix + chosenPhoto;
+            gameBoard[promotionPending.to.row][promotionPending.to.col] = (myColor === 'white' ? 'w_' : 'b_') + chosenPhoto;
             document.getElementById('promotion-modal').style.display = 'none';
-            promotionPending = null;
-            finalizeTurn(moveData, gameOverTriggered);
+            const m = promotionPending; promotionPending = null;
+            finalizeTurn(m);
         }
 
-        function finalizeTurn(moveData, gameOverTriggered) {
+        function finalizeTurn(moveData) {
             const nextTurn = currentTurn === 'white' ? 'black' : 'white';
-            database.ref('rooms/' + roomId).set({
-                board: gameBoard,
-                turn: nextTurn,
-                lastMove: moveData,
-                isGameOver: gameOverTriggered ? true : isGameOver,
-                historyLog: historyLog,
-                castlingRights: castlingRights,
-                creatorColor: myColor // zachowujemy przypisanie stron
-            });
+            const now = Date.now();
+            const elapsed = Math.max(0, now - lastMoveTimestamp);
+            
+            let wTime = whiteTimeLeft; let bTime = blackTimeLeft;
+            if (currentTurn === 'white') wTime -= elapsed; else bTime -= elapsed;
+
+            // Sprawdź czy koniec z braku ruchów
+            let hasAnyMoves = false;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (gameBoard[r][c] && gameBoard[r][c].startsWith(nextTurn.charAt(0)) && getValidMoves(r, c).length > 0) {
+                        hasAnyMoves = true; break;
+                    }
+                }
+                if (hasAnyMoves) break;
+            }
+
+            let updates = {
+                board: gameBoard, turn: nextTurn, lastMove: moveData, historyLog: historyLog,
+                castlingRights: castlingRights, whiteTime: wTime, blackTime: bTime,
+                lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            if (!hasAnyMoves) {
+                if (isKingInCheck(nextTurn, gameBoard)) triggerGameOver("SZACH MAT!", currentTurn, updates);
+                else triggerGameOver("PAT (Remis)!", null, updates);
+            } else {
+                database.ref('rooms/' + roomId).update(updates);
+            }
         }
 
+        function surrender() {
+            if(isGameOver || !gameData.players) return;
+            triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white');
+        }
+
+        // --- 8. SYSTEM ELO I KONIEC GRY ---
+        function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
+            clearInterval(timerInterval);
+            let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
+            
+            if (gameData.isRanked && winnerColor && !gameData.eloProcessed) {
+                // Oblicz ELO
+                let winnerUid = gameData.players[winnerColor].uid;
+                let loserColor = winnerColor === 'white' ? 'black' : 'white';
+                let loserUid = gameData.players[loserColor].uid;
+                
+                let winElo = gameData.players[winnerColor].elo;
+                let losElo = gameData.players[loserColor].elo;
+                
+                // Formuła ELO (K=32)
+                let expectedWin = 1 / (1 + Math.pow(10, (losElo - winElo) / 400));
+                let eloChange = Math.round(32 * (1 - expectedWin));
+                
+                updates.eloProcessed = true;
+                updates.eloChangeMsg = `${gameData.players[winnerColor].name} +${eloChange} | ${gameData.players[loserColor].name} -${eloChange}`;
+                
+                // Zapisz do bazy użytkowników
+                database.ref('users/' + winnerUid + '/elo').set(winElo + eloChange);
+                database.ref('users/' + loserUid + '/elo').set(losElo - eloChange);
+                
+                // Aktualizuj lokalnie jeśli to ja
+                if (user.uid === winnerUid) user.elo += eloChange;
+                if (user.uid === loserUid) user.elo -= eloChange;
+            }
+
+            database.ref('rooms/' + roomId).update(updates);
+        }
+
+        function backToMenu() {
+            if(roomId) database.ref('rooms/' + roomId).off();
+            clearInterval(timerInterval);
+            roomId = null; myColor = null; gameData = {};
+            showMenu();
+        }
+
+        // --- 9. RENDEROWANIE UI ---
         function updateUI() {
-            const gameOverScreen = document.getElementById('game-over-screen');
             if (isGameOver) {
-                document.getElementById('game-over-text').innerText = `Koniec Gry!\nKról został przechwycony!`;
-                gameOverScreen.style.display = 'flex';
-            } else { gameOverScreen.style.display = 'none'; }
+                document.getElementById('game-over-text').innerText = gameData.endMessage || "Koniec!";
+                document.getElementById('elo-change-text').innerText = gameData.eloChangeMsg || "";
+                document.getElementById('game-over-screen').style.display = 'flex';
+            } else { document.getElementById('game-over-screen').style.display = 'none'; }
+
+            // Aktualizacja nazw graczy w nagłówkach
+            if(gameData.players) {
+                const oppColor = myColor === 'white' ? 'black' : 'white';
+                const me = gameData.players[myColor];
+                const opp = gameData.players[oppColor];
+                
+                document.getElementById('my-name').innerText = me ? `${me.name} (${me.elo})` : "Ja";
+                document.getElementById('opp-name').innerText = opp ? `${opp.name} (${opp.elo})` : "Oczekiwanie na gracza...";
+            }
 
             const statusDiv = document.getElementById('status-panel');
-            const turnText = currentTurn === 'white' ? "Białych" : "Czarnych";
-            statusDiv.innerText = currentTurn === myColor ? `Twój ruch (${turnText})` : `Ruch przeciwnika (${turnText})`;
-
-            const historyDiv = document.getElementById('move-history');
-            historyDiv.innerHTML = historyLog.map(line => `<div>${line}</div>`).join('');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
-
-            // Renderowanie zestrzelonych figur
-            const currentCounts = { 'w_photo1':0,'w_photo2':0,'w_photo3':0,'w_photo4':0,'w_photo5':0,'w_photo6':0,'b_photo1':0,'b_photo2':0,'b_photo3':0,'b_photo4':0,'b_photo5':0,'b_photo6':0 };
-            for(let r=0; r<8; r++) { for(let c=0; c<8; c++) { if(gameBoard[r][c]) currentCounts[gameBoard[r][c]]++; } }
-            const baseCounts = { 'w_photo1':8,'w_photo2':2,'w_photo3':2,'w_photo4':2,'w_photo5':1,'b_photo1':8,'b_photo2':2,'b_photo3':2,'b_photo4':2,'b_photo5':1 };
-            const capturedDiv = document.getElementById('captured-pieces');
-            capturedDiv.innerHTML = '';
-            for (let key in baseCounts) {
-                let missing = baseCounts[key] - currentCounts[key];
-                for(let i=0; i<missing; i++) {
-                    let img = document.createElement('img'); img.src = key.substring(2) + '.png';
-                    img.className = 'captured-img' + (key.startsWith('b_') ? ' piece-black' : '');
-                    capturedDiv.appendChild(img);
-                }
+            if(!gameData.players || !gameData.players.white || !gameData.players.black) {
+                statusDiv.innerText = "Oczekiwanie na przeciwnika...";
+            } else {
+                statusDiv.innerText = currentTurn === myColor ? `TWÓJ RUCH` : `RUCH PRZECIWNIKA`;
+                statusDiv.style.color = currentTurn === myColor ? "#81b64c" : "#aaa";
             }
+
+            document.getElementById('move-history').innerHTML = historyLog.map(l => `<div>${l}</div>`).join('');
+            document.getElementById('move-history').scrollTop = 9999;
 
             const boardDiv = document.getElementById('board');
             boardDiv.innerHTML = '';
             const isBlackPerspective = (myColor === 'black');
-
-            // Czy któryś z królów ma teraz szacha?
-            const whiteKingInCheck = isKingInCheck('white', gameBoard);
-            const blackKingInCheck = isKingInCheck('black', gameBoard);
+            const wCheck = isKingInCheck('white', gameBoard);
+            const bCheck = isKingInCheck('black', gameBoard);
 
             for (let i = 0; i < 64; i++) {
                 const r = isBlackPerspective ? Math.floor((63 - i) / 8) : Math.floor(i / 8);
@@ -576,39 +728,25 @@
                 const square = document.createElement('div');
                 square.classList.add('square', (r + c) % 2 === 0 ? 'white-square' : 'black-square');
                 
-                // Wizualne podświetlenia pól (zaznaczenie, ostatni ruch)
                 if (selectedSquare && selectedSquare.row === r && selectedSquare.col === c) square.classList.add('selected');
-                if (lastMove && ((lastMove.from.row === r && lastMove.from.col === c) || (lastMove.to.row === r && lastMove.to.col === c))) {
-                    square.classList.add('last-move');
-                }
+                if (lastMove && ((lastMove.from.row === r && lastMove.from.col === c) || (lastMove.to.row === r && lastMove.to.col === c))) square.classList.add('last-move');
 
                 const pieceStr = gameBoard[r][c];
-
-                // PODŚWIETLENIE SZACHU NA CZERWONO
-                if (pieceStr === 'w_photo6' && whiteKingInCheck) square.classList.add('in-check');
-                if (pieceStr === 'b_photo6' && blackKingInCheck) square.classList.add('in-check');
+                if (pieceStr === 'w_photo6' && wCheck) square.classList.add('in-check');
+                if (pieceStr === 'b_photo6' && bCheck) square.classList.add('in-check');
 
                 if (pieceStr) {
-                    const container = document.createElement('div');
-                    container.className = 'piece-container';
-
-                    const ownerLabel = document.createElement('div');
-                    ownerLabel.className = 'piece-owner ' + (pieceStr.startsWith('w_') ? 'owner-white' : 'owner-black');
-                    ownerLabel.innerText = getFullPieceDescription(pieceStr);
-                    
+                    const container = document.createElement('div'); container.className = 'piece-container';
                     const img = document.createElement('img');
                     img.src = pieceStr.substring(2) + '.png';
                     img.classList.add('piece');
                     if (pieceStr.startsWith('b_')) img.classList.add('piece-black');
-
-                    container.appendChild(ownerLabel); container.appendChild(img);
-                    square.appendChild(container);
+                    container.appendChild(img); square.appendChild(container);
                 }
 
-                const hasHint = validMoves.find(m => m.row === r && m.col === c);
-                if (hasHint) {
+                if (validMoves.find(m => m.row === r && m.col === c)) {
                     const hintDiv = document.createElement('div');
-                    hintDiv.className = gameBoard[r][c] !== '' ? 'hint-capture' : 'hint';
+                    hintDiv.className = pieceStr ? 'hint-capture' : 'hint';
                     square.appendChild(hintDiv);
                 }
 
