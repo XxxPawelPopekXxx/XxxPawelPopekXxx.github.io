@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szachy Multiplayer - Firebase</title>
+    <style>
+        body { 
+            display: flex; flex-direction: column; align-items: center; 
+            background-color: #2c3e50; color: white; font-family: sans-serif; 
+        }
+        #setup { margin-bottom: 15px; text-align: center; }
+        #status { font-size: 1.2rem; margin: 10px 0; font-weight: bold; }
+        
+        #board { 
+            display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); 
+            border: 4px solid #34495e; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative;
+        }
+        .square { 
+            width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; 
+            position: relative; cursor: pointer;
+        }
+        .white-square { background-color: #ecf0f1; }
+        .black-square { background-color: #95a5a6; }
+        
+        .selected { background-color: #f1c40f !important; }
+        
+        /* Kropka podpowiedzi ruchu */
+        .hint {
+            width: 15px; height: 15px; background-color: rgba(46, 204, 113, 0.7); 
+            border-radius: 50%; position: absolute; z-index: 2; pointer-events: none;
+        }
+        
+        .piece { width: 50px; height: 50px; z-index: 1; transition: transform 0.2s; }
+        .piece-black { filter: invert(1); } /* Odwrócenie kolorów dla czarnych */
+
+        /* Okno wyboru promocji pionka */
+        #promotion-modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #34495e; padding: 20px; border: 3px solid #f1c40f; border-radius: 10px; z-index: 10;
+            text-align: center; box-shadow: 0 0 20px black;
+        }
+        .promo-choice {
+            width: 60px; height: 60px; margin: 10px; cursor: pointer; background: #ecf0f1; border-radius: 5px;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <h1>Szachy Online (Firebase)</h1>
+    
+    <div id="setup">
+        <label>ID Pokoju: </label>
+        <input type="text" id="room-id" value="pokoj1">
+        <button onclick="joinRoom()">Połącz z pokojem</button>
+        <br><br>
+        <button onclick="selectColor('white')">Graj jako Białe</button>
+        <button onclick="selectColor('black')">Graj jako Czarne</button>
+    </div>
+
+    <div id="status">Wybierz pokój i kolor, aby rozpocząć.</div>
+    <div id="board"></div>
+
+    <div id="promotion-modal">
+        <h3>Wybierz figurę dla promocji:</h3>
+        <img src="photo5.png" class="promo-choice" onclick="choosePromotion('photo5')">
+        <img src="photo2.png" class="promo-choice" onclick="choosePromotion('photo2')">
+        <img src="photo3.png" class="promo-choice" onclick="choosePromotion('photo3')">
+        <img src="photo4.png" class="promo-choice" onclick="choosePromotion('photo4')">
+    </div>
+
+    <script>
+        // --- KONFIGURACJA FIREBASE ---
+        const firebaseConfig = {
+         const firebaseConfig = {
+  apiKey: "AIzaSyD7DlhKM5AwCavHvaHTP3fclbadPM7bAJY",
+  authDomain: "ocet-chess.firebaseapp.com",
+  projectId: "ocet-chess",
+  storageBucket: "ocet-chess.firebasestorage.app",
+  messagingSenderId: "947677134465",
+  appId: "1:947677134465:web:1c0afd899ceb77f0e9d780"
+        };
+        
+        // Inicjalizacja Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- STAN GRY ---
+        let roomId = "pokoj1";
+        let myColor = null; // 'white' lub 'black'
+        let currentTurn = "white";
+        let selectedSquare = null;
+        let validMoves = [];
+        let lastMove = null; // Przechowuje ostatni ruch do En Passant
+        let promotionPending = null; // Przechowuje dane o oczekującej promocji
+
+        // Budowa początkowej szachownicy w pamięci kodu: w_=białe, b_=czarne
+        // photo1=pion, photo2=wieża, photo3=skoczek, photo4=goniec, photo5=hetman, photo6=król
+        const initialBoard = [
+            ['b_photo2', 'b_photo3', 'b_photo4', 'b_photo5', 'b_photo6', 'b_photo4', 'b_photo3', 'b_photo2'],
+            ['b_photo1', 'b_photo1', 'b_photo1', 'b_photo1', 'b_photo1', 'b_photo1', 'b_photo1', 'b_photo1'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1', 'w_photo1'],
+            ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
+        ];
+        let gameBoard = JSON.parse(JSON.stringify(initialBoard));
+
+        // --- POŁĄCZENIE Z BAZĄ ---
+        function joinRoom() {
+            roomId = document.getElementById('room-id').value;
+            // Nasłuchiwanie zmian w bazie Firebase dla danego pokoju
+            database.ref('rooms/' + roomId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    gameBoard = data.board;
+                    currentTurn = data.turn;
+                    lastMove = data.lastMove || null;
+                    updateUI();
+                } else {
+                    // Jeśli pokój nie istnieje, resetujemy go i wysyłamy bazowy stan
+                    resetRoom();
+                }
+            });
+        }
+
+        function resetRoom() {
+            database.ref('rooms/' + roomId).set({
+                board: initialBoard,
+                turn: 'white',
+                lastMove: null
+            });
+        }
+
+        function selectColor(color) {
+            myColor = color;
+            updateUI();
+        }
+
+        // --- LOGIKA RUCHÓW I PODPOWIEDZI (CHESS.COM STYLE) ---
+        function getValidMoves(row, col) {
+            const moves = [];
+            const piece = gameBoard[row][col];
+            if (!piece) return moves;
+
+            const color = piece.startsWith('w_') ? 'white' : 'black';
+            const dir = color === 'white' ? -1 : 1;
+            const startRow = color === 'white' ? 6 : 1;
+
+            // --- ZASADY DLA PIONKA (photo1) ---
+            if (piece.endsWith('photo1')) {
+                // Ruch o 1 pole w przód
+                if (row + dir >= 0 && row + dir < 8 && gameBoard[row + dir][col] === '') {
+                    moves.push({ row: row + dir, col: col, type: 'normal' });
+                    // Ruch o 2 pola w przód (tylko ze startowej pozycji)
+                    if (row === startRow && gameBoard[row + 2 * dir][col] === '') {
+                        moves.push({ row: row + 2 * dir, col: col, type: 'normal' });
+                    }
+                }
+                // Standardowe bicie po skosie
+                const attackCols = [col - 1, col + 1];
+                attackCols.forEach(c => {
+                    if (c >= 0 && c < 8 && row + dir >= 0 && row + dir < 8) {
+                        const targetPiece = gameBoard[row + dir][c];
+                        if (targetPiece && !targetPiece.startsWith(color.charAt(0))) {
+                            moves.push({ row: row + dir, col: c, type: 'normal' });
+                        }
+                    }
+                });
+
+                // --- EN PASSANT (BICIE W PRZELOCIE) ---
+                if (lastMove && lastMove.piece.endsWith('photo1')) {
+                    // Warunek: Ostatni ruch przeciwnika musiał być skokiem o 2 pola
+                    if (Math.abs(lastMove.from.row - lastMove.to.row) === 2) {
+                        // Nasz pionek musi być w tym samym rzędzie co pionek przeciwnika i kolumnę obok
+                        if (row === lastMove.to.row && Math.abs(lastMove.to.col - col) === 1) {
+                            // Pole za pionkiem przeciwnika staje się celem
+                            moves.push({ row: lastMove.to.row + dir, col: lastMove.to.col, type: 'enPassant' });
+                        }
+                    }
+                }
+            } 
+            else {
+                // Pozostałe figury: zachowujemy zasadę wolnego ruchu (mogą iść wszędzie gdzie nie ma swojego pionka)
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const target = gameBoard[r][c];
+                        if (!target || !target.startsWith(color.charAt(0))) {
+                            moves.push({ row: r, col: c, type: 'normal' });
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        // --- OBSŁUGA KLIKNIĘĆ ---
+        function handleSquareClick(row, col) {
+            if (!myColor) { alert("Wybierz najpierw swój kolor!"); return; }
+            if (currentTurn !== myColor) { return; } // Blokada ruchu poza swoją turą
+
+            const clickedPiece = gameBoard[row][col];
+            
+            // Sprawdzenie czy kliknięto na zieloną kropkę podpowiedzi (wykonanie ruchu)
+            const isHint = validMoves.find(m => m.row === row && m.col === col);
+            
+            if (isHint) {
+                executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type);
+                selectedSquare = null;
+                validMoves = [];
+            } else if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) {
+                // Zaznaczenie własnej figury i wygenerowanie kropek
+                selectedSquare = { row, col };
+                validMoves = getValidMoves(row, col);
+                updateUI();
+            } else {
+                // Kliknięcie w puste pole bez kropki kasuje zaznaczenie
+                selectedSquare = null;
+                validMoves = [];
+                updateUI();
+            }
+        }
+
+        function executeMove(fromRow, fromCol, toRow, toCol, type) {
+            let piece = gameBoard[fromRow][fromCol];
+            
+            // Obsługa En Passant (usunięcie zbitego pionka stojącego obok)
+            if (type === 'enPassant') {
+                gameBoard[lastMove.to.row][lastMove.to.col] = '';
+            }
+
+            // Przemieszczenie figury
+            gameBoard[toRow][toCol] = piece;
+            gameBoard[fromRow][fromCol] = '';
+
+            // Dane o wykonanym ruchu (potrzebne do En Passant w kolejnej turze)
+            const moveData = {
+                from: { row: fromRow, col: fromCol },
+                to: { row: toRow, col: toCol },
+                piece: piece
+            };
+
+            // --- PROMOCJA PIONKA ---
+            const isPawn = piece.endsWith('photo1');
+            if (isPawn && (toRow === 0 || toRow === 7)) {
+                // Zatrzymujemy wysyłanie ruchu do bazy i otwieramy okno promocji
+                promotionPending = { toRow, toCol, moveData };
+                document.getElementById('promotion-modal').style.display = 'block';
+                return;
+            }
+
+            // Jeśli nie ma promocji, standardowo kończymy turę i wysyłamy stan do Firebase
+            finalizeTurn(moveData);
+        }
+
+        function choosePromotion(chosenPhoto) {
+            if (!promotionPending) return;
+            const { toRow, toCol, moveData } = promotionPending;
+            
+            // Zamiana pionka na wybraną figurę (zachowując kolor)
+            const prefix = myColor === 'white' ? 'w_' : 'b_';
+            gameBoard[toRow][toCol] = prefix + chosenPhoto;
+            
+            document.getElementById('promotion-modal').style.display = 'none';
+            promotionPending = null;
+            
+            // Finalizacja tury po dokonaniu wyboru
+            finalizeTurn(moveData);
+        }
+
+        function finalizeTurn(moveData) {
+            const nextTurn = currentTurn === 'white' ? 'black' : 'white';
+            
+            // Zapis danych do bazy Firebase - natychmiast zaktualizuje to ekran drugiego gracza!
+            database.ref('rooms/' + roomId).set({
+                board: gameBoard,
+                turn: nextTurn,
+                lastMove: moveData
+            });
+        }
+
+        // --- RENDEROWANIE SZACHOWNICY ---
+        function updateUI() {
+            // Aktualizacja statusu tekstowego
+            const statusDiv = document.getElementById('status');
+            if (!myColor) {
+                statusDiv.innerText = "Wybierz kolor (Białe / Czarne), aby zacząć grę.";
+            } else {
+                const turnText = currentTurn === 'white' ? "Ruch Białych" : "Ruch Czarnych";
+                const colorText = myColor === 'white' ? "Grasz jako Białe" : "Grasz jako Czarne";
+                statusDiv.innerText = `${colorText} | Obecnie: ${turnText}` + (currentTurn === myColor ? " (TWÓJ RUCH!)" : "");
+            }
+
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+
+            // Rysowanie pól
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.classList.add((r + c) % 2 === 0 ? 'white-square' : 'black-square');
+                    
+                    // Zaznaczenie aktywnego pola żółtym kolorem
+                    if (selectedSquare && selectedSquare.row === r && selectedSquare.col === c) {
+                        square.classList.add('selected');
+                    }
+
+                    // Renderowanie figury
+                    const pieceStr = gameBoard[r][c];
+                    if (pieceStr) {
+                        const img = document.createElement('img');
+                        // Obcinamy przedrostek w_ lub b_ aby pobrać plik photoX.png
+                        img.src = pieceStr.substring(2) + '.png';
+                        img.classList.add('piece');
+                        if (pieceStr.startsWith('b_')) {
+                            img.classList.add('piece-black');
+                        }
+                        square.appendChild(img);
+                    }
+
+                    // Renderowanie zielonej kropki podpowiedzi (chess.com style)
+                    const hasHint = validMoves.find(m => m.row === r && m.col === c);
+                    if (hasHint) {
+                        const hintDot = document.createElement('div');
+                        hintDot.classList.add('hint');
+                        square.appendChild(hintDot);
+                    }
+
+                    // Przypisanie akcji kliknięcia
+                    square.onclick = () => handleSquareClick(r, c);
+                    boardDiv.appendChild(square);
+                }
+            }
+        }
+
+        // Automatyczne załadowanie domyślnego pokoju przy starcie strony
+        joinRoom();
+    </script>
+</body>
+</html>
