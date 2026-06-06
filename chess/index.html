@@ -45,7 +45,7 @@
         .panel-title { font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; }
         #move-history { height: 120px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #ccc; line-height: 1.4; }
         
-        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s, transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; }
         button:hover { background: #a3d16c; }
         button:active { transform: scale(0.97); }
         button:disabled { background: #555; cursor: not-allowed; }
@@ -106,17 +106,17 @@
             <div id="menu-player-elo" style="color: #aaa;">ELO: ---</div>
         </div>
 
-        <div style="background: #1a1917; padding: 15px; border-radius: 8px; border: 1px solid #333;">
-            <h3 style="margin-top:0; font-size: 1rem;">Graj Online (Ranked)</h3>
-            <select id="time-control" style="margin-bottom: 10px;">
+        <div style="background: #1a1917; padding: 15px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="margin:0; font-size: 1rem; text-align: center;">Graj Online (Ranked)</h3>
+            <select id="time-control">
                 <option value="30">30 Sekund (Bullet)</option>
                 <option value="60">1 Minuta (Bullet)</option>
                 <option value="300" selected>5 Minut (Blitz)</option>
                 <option value="600">10 Minut (Rapid)</option>
                 <option value="1800">30 Minut (Klasyczne)</option>
             </select>
-            <button id="btn-matchmaking" onclick="startMatchmaking()" style="width: 100%;">Szukaj przeciwnika</button>
-            <div id="matchmaking-status" style="color:#aaa; font-size:0.8rem; margin-top:5px;"></div>
+            <button id="btn-matchmaking" onclick="startMatchmaking()">Szukaj przeciwnika</button>
+            <div id="matchmaking-status" style="color:#aaa; font-size:0.8rem; margin-top:5px; text-align: center;"></div>
         </div>
 
         <div class="separator">PRYWATNE LOBBY</div>
@@ -175,11 +175,10 @@
     </div>
 
     <script>
-        // --- 1. KONFIGURACJA FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyD7DlhKM5AwCavHvaHTP3fclbadPM7bAJY",
             authDomain: "ocet-chess.firebaseapp.com",
-            databaseURL: "https://ocet-chess-default-rtdb.firebaseio.com",
+            databaseURL: "https://ocet-chess-default-rtdb.europe-west1.firebasedatabase.app/",
             projectId: "ocet-chess",
             storageBucket: "ocet-chess.firebasestorage.app",
             messagingSenderId: "947677134465",
@@ -189,10 +188,9 @@
         const database = firebase.database();
         const auth = firebase.auth();
 
-        // --- 2. ZMIENNE GLOBALNE ---
         let user = { uid: null, displayName: "", elo: 400, isGuest: true };
         let isRegistering = false;
-        let isInQueue = false; // Czy gracz jest obecnie zapisany do kolejki
+        let isInQueue = false;
         
         let roomId = null, myColor = null, currentTurn = "white", gameBoard = [], validMoves = [];
         let selectedSquare = null, lastMove = null, historyLog = [], isGameOver = false, promotionPending = null;
@@ -211,21 +209,23 @@
             ['w_photo2', 'w_photo3', 'w_photo4', 'w_photo5', 'w_photo6', 'w_photo4', 'w_photo3', 'w_photo2']
         ];
 
-        // --- 3. LOGOWANIE I WERYFIKACJA KONT ---
+        // --- LOGOWANIE I REJESTRACJA GOOGLE/EMAIL ---
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
                 const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
                 if (isPasswordLogin && !firebaseUser.emailVerified) {
                     auth.signOut();
-                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź pocztę i kliknij w link aktywacyjny.");
+                    alert("Musisz najpierw zweryfikować swój adres e-mail! Sprawdź skrzynkę odbiorczą.");
                     showAuth();
                     return;
                 }
 
                 database.ref('users/' + firebaseUser.uid).on('value', snapshot => {
-                    const data = snapshot.val() || { displayName: firebaseUser.displayName || "Gracz", elo: 400 };
-                    user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
-                    showMenu();
+                    const data = snapshot.val();
+                    if (data) {
+                        user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
+                        showMenu();
+                    }
                 });
             } else {
                 if(!user.isGuest) showAuth();
@@ -236,7 +236,7 @@
             isRegistering = !isRegistering;
             document.getElementById('auth-nick').style.display = isRegistering ? 'block' : 'none';
             document.getElementById('btn-toggle-reg').innerText = isRegistering ? 'Mam już konto (Zaloguj)' : 'Chcę założyć konto';
-            document.querySelector('#login-form button:nth-of-type(2)').innerText = isRegistering ? 'Zarejestruj się' : 'Zaloguj się';
+            document.querySelector('#login-form button:nth-of-type(3)').innerText = isRegistering ? 'Zarejestruj się' : 'Zaloguj się';
         }
 
         function login() {
@@ -251,7 +251,7 @@
                 auth.createUserWithEmailAndPassword(email, pass).then(cred => {
                     database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 }).then(() => {
                         cred.user.sendEmailVerification().then(() => {
-                            alert("SUKCES! Konto utworzone. Potwierdź link na swojej poczcie e-mail, aby móc się zalogować.");
+                            alert("Konto utworzone. Potwierdź link na swojej poczcie e-mail, aby móc się zalogować.");
                             auth.signOut(); toggleRegister();
                         });
                     });
@@ -264,9 +264,19 @@
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                database.ref('users/' + cred.user.uid).once('value', snap => {
+                const userRef = database.ref('users/' + cred.user.uid);
+                userRef.once('value', snap => {
                     if (!snap.exists()) {
-                        database.ref('users/' + cred.user.uid).set({ displayName: cred.user.displayName || "Gracz Google", elo: 400 });
+                        // ŻĄDANIE PODANIA NICKU PODCZAS PIERWSZEJ REJESTRACJI GOOGLE
+                        let chosenNick = "";
+                        while(!chosenNick || chosenNick.trim() === "") {
+                            chosenNick = prompt("Witamy! Podaj swój unikalny nick do gry szachowej:");
+                            if(chosenNick === null) {
+                                auth.signOut();
+                                return;
+                            }
+                        }
+                        userRef.set({ displayName: chosenNick.trim(), elo: 400 });
                     }
                 });
             }).catch(e => alert("Błąd Google: " + e.message));
@@ -291,18 +301,16 @@
             document.getElementById('matchmaking-status').innerText = "";
         }
 
-        // --- 4. MATCHMAKING I POKOJE ---
+        // --- MATCHMAKING I POKOJE ---
         function createPrivateGame() {
             const timeControl = parseInt(document.getElementById('time-control').value);
-            isInQueue = false;
-            initRoom(generateRandomCode(), timeControl, false);
+            isInQueue = false; initRoom(generateRandomCode(), timeControl, false);
         }
 
         function joinPrivateGame() {
             const code = document.getElementById('join-code-input').value.trim().toUpperCase();
             if(code.length !== 6) return alert("Kod musi mieć 6 znaków.");
-            isInQueue = false;
-            attemptJoinRoom(code);
+            isInQueue = false; attemptJoinRoom(code);
         }
 
         function startMatchmaking() {
@@ -316,13 +324,9 @@
                 if(waitingRooms) { for(let rId in waitingRooms) { foundRoom = rId; break; } }
 
                 if(foundRoom) {
-                    queueRef.child(foundRoom).remove();
-                    isInQueue = false;
-                    attemptJoinRoom(foundRoom);
+                    queueRef.child(foundRoom).remove(); isInQueue = false; attemptJoinRoom(foundRoom);
                 } else {
-                    const newCode = generateRandomCode();
-                    isInQueue = true;
-                    initRoom(newCode, timeControl, true);
+                    const newCode = generateRandomCode(); isInQueue = true; initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
                 }
             }).catch(e => alert("Błąd kolejki: " + e.message));
@@ -330,7 +334,6 @@
 
         function initRoom(code, timeControlSeconds, isRanked) {
             roomId = code; myColor = Math.random() < 0.5 ? "white" : "black"; 
-            
             database.ref('rooms/' + roomId).set({
                 board: initialBoard, turn: 'white', isGameOver: false, isRanked: isRanked, timeControl: timeControlSeconds,
                 whiteTime: timeControlSeconds * 1000, blackTime: timeControlSeconds * 1000,
@@ -373,32 +376,21 @@
             });
         }
 
-        // --- INTERAKCJA PRZYCISKU (ANULUJ / PODDAJ) ---
         function handleActionButton() {
             const hasOpponent = gameData.players && gameData.players.white && gameData.players.black;
-            
             if (!hasOpponent) {
-                // ANULOWANIE SZUKANIA / POKOJU
                 clearInterval(timerInterval);
                 database.ref('rooms/' + roomId).off();
-                
-                // Jeśli byliśmy w kolejce ranked, usuń wpis stamtąd
-                if (isInQueue) {
-                    database.ref('matchmaking/queue_' + gameData.timeControl).child(roomId).remove();
-                }
-                // Skasuj pokój całkowicie z bazy danych
+                if (isInQueue) database.ref('matchmaking/queue_' + gameData.timeControl).child(roomId).remove();
                 database.ref('rooms/' + roomId).remove();
-                
-                roomId = null; myColor = null; gameData = {}; isInQueue = false;
-                showMenu();
+                roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu();
             } else {
-                // PODDANIE SIĘ (Tylko w trakcie gry)
                 if(isGameOver) return;
                 triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white');
             }
         }
 
-        // --- 5. LOGIKA ZEGARÓW ---
+        // --- ZEGARY ---
         function startLocalTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -424,7 +416,7 @@
             if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
 
-        // --- 6. SILNIK SZACHOWY ---
+        // --- SILNIK SZACHOWY ---
         function getPseudoLegalMoves(row, col, boardToUse = gameBoard) {
             const moves = []; const piece = boardToUse[row][col]; if (!piece) return moves;
             const color = piece.startsWith('w_') ? 'white' : 'black', enemyPrefix = color === 'white' ? 'b_' : 'w_', myPrefix = color === 'white' ? 'w_' : 'b_';
@@ -510,7 +502,7 @@
             });
         }
 
-        // --- 7. OBSŁUGA Ruchów ---
+        // --- INTERAKCJA RUCHÓW ---
         function handleSquareClick(row, col) {
             if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
             const isHint = validMoves.find(m => m.row === row && m.col === col);
@@ -571,7 +563,9 @@
             } else { database.ref('rooms/' + roomId).update(updates); }
         }
 
-        // --- 8. SYSTEM ELO I KONIEC GRY ---
+        function surrender() { if(isGameOver || !gameData.players) return; triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
+
+        // --- SYSTEM ELO ---
         function triggerGameOver(reason, winnerColor, baseUpdates = {}) {
             clearInterval(timerInterval);
             let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
@@ -597,7 +591,7 @@
             clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu();
         }
 
-        // --- 9. RENDEROWANIE UI ---
+        // --- RENDEROWANIE RYSUNKU UI ---
         function updateUI() {
             if (isGameOver) {
                 document.getElementById('game-over-text').innerText = gameData.endMessage || "Koniec!";
@@ -607,14 +601,8 @@
 
             const hasOpponent = gameData.players && gameData.players.white && gameData.players.black;
             const btnAction = document.getElementById('btn-action');
-            
-            if (!hasOpponent) {
-                btnAction.innerText = "Anuluj szukanie";
-                btnAction.style.background = "#d35400";
-            } else {
-                btnAction.innerText = "Poddaj partię";
-                btnAction.style.background = "#c0392b";
-            }
+            if (!hasOpponent) { btnAction.innerText = "Anuluj szukanie"; btnAction.style.background = "#d35400"; } 
+            else { btnAction.innerText = "Poddaj partię"; btnAction.style.background = "#c0392b"; }
 
             if(gameData.players) {
                 const oppColor = myColor === 'white' ? 'black' : 'white';
