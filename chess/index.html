@@ -82,7 +82,6 @@
         #promotion-content { background: var(--panel-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; }
         .promo-choice { width: 60px; height: 60px; margin: 5px; cursor: pointer; background: #383531; border-radius: 8px; }
         
-        /* Dodatkowe ukrywanie sekcji auth w zależności od stanu */
         .auth-form { display: flex; flex-direction: column; gap: 10px; }
         .separator { margin: 10px 0; color: #777; font-weight: bold; font-size: 0.9rem; }
     </style>
@@ -202,7 +201,8 @@
         const auth = firebase.auth();
 
         // --- 2. ZMIENNE GLOBALNE ---
-        let user = { uid: null, displayName: "", elo: 1200, isGuest: true };
+        // Zmiana startowego ELO z 1200 na 400
+        let user = { uid: null, displayName: "", elo: 400, isGuest: true };
         let isRegistering = false;
         
         let roomId = null;
@@ -217,9 +217,8 @@
         let isGameOver = false;
         let promotionPending = null;
         
-        let gameData = {}; // Kopia danych z bazy
+        let gameData = {};
 
-        // Zegary
         let timerInterval = null;
         let whiteTimeLeft = 0;
         let blackTimeLeft = 0;
@@ -240,7 +239,8 @@
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
                 database.ref('users/' + firebaseUser.uid).once('value', snapshot => {
-                    const data = snapshot.val() || { displayName: "Gracz", elo: 1200 };
+                    // Startowe ELO przy pobieraniu z bazy również zmienione na 400
+                    const data = snapshot.val() || { displayName: "Gracz", elo: 400 };
                     user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false };
                     showMenu();
                 });
@@ -264,7 +264,8 @@
             if (isRegistering) {
                 if(!nick) return alert("Podaj nick!");
                 auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 1200 });
+                    // Zakładanie konta w bazie z nowym ELO startowym 400
+                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400 });
                 }).catch(e => alert(e.message));
             } else {
                 auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
@@ -332,16 +333,13 @@
                 let foundRoom = null;
                 
                 if(waitingRooms) {
-                    // Znajdź pierwszy dostępny pokój
                     for(let rId in waitingRooms) { foundRoom = rId; break; }
                 }
 
                 if(foundRoom) {
-                    // Dołącz i usuń z kolejki
                     queueRef.child(foundRoom).remove();
                     attemptJoinRoom(foundRoom);
                 } else {
-                    // Załóż nowy i czekaj w kolejce
                     const newCode = generateRandomCode();
                     initRoom(newCode, timeControl, true);
                     queueRef.child(newCode).set(true);
@@ -382,7 +380,6 @@
                     uid: user.uid, name: user.displayName, elo: user.elo
                 });
                 
-                // Jeśli dołączyliśmy, odśwież timestamp żeby zegary ruszyły sprawiedliwie
                 database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
                 
                 listenToRoom();
@@ -425,7 +422,6 @@
                 if(isGameOver) return clearInterval(timerInterval);
                 
                 const now = Date.now();
-                // Korygujemy czas ze względu na różnice między serwerem a lokalnym (proste podejście)
                 const elapsed = Math.max(0, now - lastMoveTimestamp); 
                 
                 let wTime = whiteTimeLeft;
@@ -436,7 +432,6 @@
 
                 updateTimerDisplays(wTime, bTime);
 
-                // Sprawdzenie timeoutu tylko przez aktywnego gracza
                 if (currentTurn === myColor) {
                     if ((myColor === 'white' && wTime <= 0) || (myColor === 'black' && bTime <= 0)) {
                         clearInterval(timerInterval);
@@ -463,7 +458,6 @@
             myTimerEl.innerText = format(myColor === 'white' ? wMs : bMs);
             oppTimerEl.innerText = format(oppColor === 'white' ? wMs : bMs);
             
-            // Kolorowanie gdy mało czasu (< 10 sekund)
             if((myColor==='white'?wMs:bMs) < 10000) myTimerEl.classList.add('low'); else myTimerEl.classList.remove('low');
             if((oppColor==='white'?wMs:bMs) < 10000) oppTimerEl.classList.add('low'); else oppTimerEl.classList.remove('low');
         }
@@ -616,7 +610,6 @@
             let wTime = whiteTimeLeft; let bTime = blackTimeLeft;
             if (currentTurn === 'white') wTime -= elapsed; else bTime -= elapsed;
 
-            // Sprawdź czy koniec z braku ruchów
             let hasAnyMoves = false;
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -652,7 +645,6 @@
             let updates = { ...baseUpdates, isGameOver: true, endMessage: reason };
             
             if (gameData.isRanked && winnerColor && !gameData.eloProcessed) {
-                // Oblicz ELO
                 let winnerUid = gameData.players[winnerColor].uid;
                 let loserColor = winnerColor === 'white' ? 'black' : 'white';
                 let loserUid = gameData.players[loserColor].uid;
@@ -660,18 +652,15 @@
                 let winElo = gameData.players[winnerColor].elo;
                 let losElo = gameData.players[loserColor].elo;
                 
-                // Formuła ELO (K=32)
                 let expectedWin = 1 / (1 + Math.pow(10, (losElo - winElo) / 400));
                 let eloChange = Math.round(32 * (1 - expectedWin));
                 
                 updates.eloProcessed = true;
                 updates.eloChangeMsg = `${gameData.players[winnerColor].name} +${eloChange} | ${gameData.players[loserColor].name} -${eloChange}`;
                 
-                // Zapisz do bazy użytkowników
                 database.ref('users/' + winnerUid + '/elo').set(winElo + eloChange);
                 database.ref('users/' + loserUid + '/elo').set(losElo - eloChange);
                 
-                // Aktualizuj lokalnie jeśli to ja
                 if (user.uid === winnerUid) user.elo += eloChange;
                 if (user.uid === loserUid) user.elo -= eloChange;
             }
@@ -694,7 +683,6 @@
                 document.getElementById('game-over-screen').style.display = 'flex';
             } else { document.getElementById('game-over-screen').style.display = 'none'; }
 
-            // Aktualizacja nazw graczy w nagłówkach
             if(gameData.players) {
                 const oppColor = myColor === 'white' ? 'black' : 'white';
                 const me = gameData.players[myColor];
