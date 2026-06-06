@@ -598,7 +598,7 @@
                     // PRZYWRÓCONE ETYKIETY PODPISÓW FIGUR
                     const label = document.createElement('div');
                     label.className = 'piece-owner ' + (pieceStr.startsWith('w_') ? 'owner-white' : 'owner-black');
-                    label.innerText = getPieceNameпольский(pieceStr);
+                    label.innerText = getPieceName(pieceStr);
 
                     const img = document.createElement('img'); img.src = pieceStr.substring(2) + '.png'; img.classList.add('piece');
                     if (pieceStr.startsWith('b_')) img.classList.add('piece-black');
