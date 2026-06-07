@@ -450,13 +450,32 @@ function getValidMoves(row, col, boardToUse = gameBoard) {
 }
 
 function handleSquareClick(row, col) {
-    if (isGameOver || !myColor || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
+    // --- BLOK DIAGNOSTYCZNY (Wyświetli błędy w konsoli pod F12) ---
+    if (isGameOver) { console.log("Kliknięcie odrzucone: Gra się skończyła."); return; }
+    if (!myColor) { console.log("Kliknięcie odrzucone: Nie przypisano Ci koloru."); return; }
+    if (currentTurn !== myColor) { console.log(`Kliknięcie odrzucone: To nie Twój ruch. Tura: ${currentTurn}, Twój kolor: ${myColor}`); return; }
+    if (!gameData.players || !gameData.players.white || !gameData.players.black) { 
+        console.log("Kliknięcie odrzucone: Brak kompletnych danych o graczach w bazie pokoju.", gameData.players); 
+        return; 
+    }
+    // --------------------------------------------------------------
+
     const isHint = validMoves.find(m => m.row === row && m.col === col);
-    if (isHint) { executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type); selectedSquare = null; validMoves = []; } 
-    else {
+    if (isHint) { 
+        executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type); 
+        selectedSquare = null; 
+        validMoves = []; 
+    } else {
         const clickedPiece = gameBoard[row][col];
-        if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) { selectedSquare = { row, col }; validMoves = getValidMoves(row, col, gameBoard); updateUI(); } 
-        else { selectedSquare = null; validMoves = []; updateUI(); }
+        if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) { 
+            selectedSquare = { row, col }; 
+            validMoves = getValidMoves(row, col, gameBoard); 
+            updateUI(); 
+        } else { 
+            selectedSquare = null; 
+            validMoves = []; 
+            updateUI(); 
+        }
     }
 }
 
