@@ -283,15 +283,32 @@ function initRoom(code, timeControlSeconds, isRanked) {
 function attemptJoinRoom(code) {
     roomId = code;
     database.ref('rooms/' + roomId).once('value', snapshot => {
-        const data = snapshot.val(); if(!data) return alert("Pokój nie istnieje!");
-        myColor = data.players.white ? 'black' : 'white';
-        database.ref(`rooms/${roomId}/players/${myColor}`).set({ uid: user.uid, name: user.displayName, elo: user.elo, avatar: user.avatar }).then(() => {
+        const data = snapshot.val(); 
+        if(!data) return alert("Pokój nie istnieje!");
+        
+        // Zabezpieczenie: sprawdźmy kto już siedzi w pokoju
+        const hasWhite = data.players && data.players.white;
+        const hasBlack = data.players && data.players.black;
+        
+        if(hasWhite && hasBlack) return alert("Pokój jest już pełny!");
+        
+        // KLUCZOWA POPRAWKA: Jeśli biały jest zajęty, Ty jesteś czarnym. Jeśli nie, wskakujesz na białego.
+        myColor = hasWhite ? 'black' : 'white';
+        
+        // Aktualizujemy dane pokoju w bazie, dodając Twojego gracza na wolny kolor
+        database.ref(`rooms/${roomId}/players/${myColor}`).set({ 
+            uid: user.uid, 
+            name: user.displayName, 
+            elo: user.elo, 
+            avatar: user.avatar 
+        }).then(() => {
+            // Odświeżamy timestamp, żeby zasygnalizować obu przeglądarkom start meczu
             database.ref(`rooms/${roomId}/lastMoveTimestamp`).set(firebase.database.ServerValue.TIMESTAMP);
-            updatePresence("playing"); listenToRoom();
+            updatePresence("playing"); 
+            listenToRoom();
         });
     });
 }
-
 function listenToRoom() {
     document.getElementById('menu-screen').style.display = 'none'; document.getElementById('game-screen').style.display = 'flex';
     document.getElementById('room-display-code').innerText = `KOD: ${roomId}`; document.getElementById('chat-box').innerHTML = "";
