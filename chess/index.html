@@ -4,91 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PopekChess</title>
-    <style>
-        :root {
-            --light-square: #eeeed2; --dark-square: #769656;
-            --selected-square: #baca44; --last-move-square: rgba(247, 247, 105, 0.6);
-            --check-square: #e74c3c; --hint-color: rgba(0, 0, 0, 0.15); --hint-capture: rgba(0, 0, 0, 0.1);
-            --bg-color: #161513; --panel-bg: #262421; --accent: #81b64c;
-        }
-        
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--bg-color); color: #f1f1f1; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh; }
-        
-        .screen { background: var(--panel-bg); padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); text-align: center; max-width: 450px; width: 90%; display: none; flex-direction: column; gap: 15px; }
-        #game-screen { display: none; flex-direction: column; align-items: center; background: none; box-shadow: none; max-width: 100%; padding: 0; }
-        
-        #status-panel { font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; text-align: center; color: #fff; background: var(--panel-bg); padding: 10px 24px; border-radius: 24px; }
-        
-        #game-container { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; }
-        .player-header { display: flex; justify-content: space-between; align-items: center; background: #1a1917; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; font-weight: bold; }
-        .header-user-info { display: flex; align-items: center; gap: 10px; }
-        .game-avatar { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; background: #444; }
-        .timer { font-family: monospace; font-size: 1.5rem; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; }
-        .timer.low { color: #e74c3c; animation: pulse-time 1s infinite; }
-        @keyframes pulse-time { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        #board { display: grid; grid-template-columns: repeat(8, 72px); grid-template-rows: repeat(8, 72px); border: 6px solid var(--panel-bg); border-radius: 6px; }
-        .square { width: 72px; height: 72px; display: flex; justify-content: center; align-items: center; position: relative; user-select: none; cursor: pointer; }
-        .white-square { background-color: var(--light-square); } .black-square { background-color: var(--dark-square); }
-        .selected { background-color: var(--selected-square) !important; }
-        .last-move { background-color: var(--last-move-square) !important; }
-        .in-check { background-color: var(--check-square) !important; animation: pulse-check 1.5s infinite; }
-        @keyframes pulse-check { 0% { opacity: 1; } 50% { background-color: #c0392b; } 100% { opacity: 1; } }
-        
-        .piece-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; z-index: 1; transition: all 0.15s ease-in-out; }
-        .piece-owner { position: absolute; top: 1px; font-size: 8px; font-weight: bold; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; pointer-events: none; letter-spacing: 0.3px; line-height: 1; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .owner-white { background: #ffffff; color: #000; border: 1px solid #ccc; }
-        .owner-black { background: #262421; color: #fff; border: 1px solid #444; }
-
-        .piece { width: 54px; height: 54px; margin-top: 10px; }
-        .piece-black { filter: brightness(0.45) contrast(1.1) drop-shadow(0px 2px 4px rgba(0,0,0,0.6)); } 
-
-        .hint { width: 22px; height: 22px; background-color: var(--hint-color); border-radius: 50%; position: absolute; z-index: 2; pointer-events: none; }
-        .hint-capture { width: 58px; height: 58px; border: 6px solid var(--hint-capture); border-radius: 50%; position: absolute; z-index: 2; pointer-events: none; }
-        
-        #side-panel { width: 260px; background: var(--panel-bg); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; }
-        .panel-section { background: #1a1917; padding: 10px; border-radius: 6px; border: 1px solid #333; display: flex; flex-direction: column; }
-        .panel-title { font-size: 0.85rem; font-weight: bold; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; }
-        #move-history { height: 90px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #ccc; }
-        
-        /* Czat meczowy */
-        #chat-box { height: 90px; overflow-y: auto; font-size: 0.85rem; color: #fff; margin-bottom: 5px; display: flex; flex-direction: column; gap: 2px; }
-        #chat-input { background: #262421; border: 1px solid #444; padding: 6px; border-radius: 4px; color: white; font-size: 0.85rem; }
-
-        button { background: var(--accent); border: none; color: white; padding: 12px 20px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; }
-        button:hover { background: #a3d16c; }
-        .btn-secondary { background: #383531; border: 1px solid #555; }
-        .btn-secondary:hover { background: #444; }
-        .btn-google { background: #4285F4; } .btn-google:hover { background: #5a95f5; }
-        
-        input, select { background: #1a1917; border: 2px solid #444; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; text-align: center; }
-        
-        /* Profil i Znajomi */
-        .profile-badge { background: #111; padding: 15px; border-radius: 8px; margin-bottom: 5px; border: 1px solid var(--accent); display: flex; align-items: center; gap: 15px; text-align: left; position: relative; }
-        .profile-avatar-container { position: relative; width: 60px; height: 60px; cursor: pointer; }
-        .profile-avatar { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #333; border: 2px solid #555; }
-        .avatar-hint { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); font-size: 9px; text-align: center; color: #fff; padding: 2px 0; border-radius: 0 0 6px 6px; }
-        
-        .friends-list { max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
-        .friend-item { display: flex; align-items: center; justify-content: space-between; background: #262421; padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; }
-        .friend-info { display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .status-online { background: #2ecc71; } .status-ingame { background: #f1c40f; } .status-offline { background: #95a5a6; }
-        .btn-challenge { padding: 4px 8px; font-size: 0.8rem; width: auto; }
-
-        #promotion-modal, #game-over-screen, #draw-modal, #challenge-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; align-items: center; justify-content: center; }
-        #game-over-screen, #draw-modal, #challenge-modal { background: rgba(0,0,0,0.85); flex-direction: column; }
-        #challenge-content, #draw-content { background: var(--panel-bg); padding: 25px; border-radius: 12px; text-align: center; border: 2px solid var(--accent); display: flex; flex-direction: column; gap: 15px; width: 300px; }
-        #game-over-text { font-size: 2rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; text-align: center; }
-        .elo-change { font-size: 1.2rem; margin-bottom: 20px; color: #ccc; }
-        
-        #promotion-content { background: var(--panel-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; }
-        .promo-choice { width: 60px; height: 60px; margin: 5px; cursor: pointer; background: #383531; border-radius: 8px; }
-        
-        .auth-form { display: flex; flex-direction: column; gap: 10px; }
-        .separator { margin: 10px 0; color: #777; font-weight: bold; font-size: 0.9rem; }
-        .hidden-file { display: none; }
-    </style>
+    <link rel="stylesheet" href="style.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -97,7 +13,7 @@
 <body>
 
     <div id="auth-screen" class="screen" style="display: flex;">
-        <h2 style="margin:0; color:#81b64c;">PopekChess</h2>
+        <h1 style="font-size: 2.8rem; margin: 0 0 10px 0; background: linear-gradient(45deg, #81b64c, #a3d16c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; letter-spacing: 1px; text-align: center;">PopekChess</h1>
         <div class="auth-form" id="login-form">
             <button onclick="loginWithGoogle()" class="btn-google">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px; background: white; border-radius: 50%; padding: 2px;">
@@ -106,7 +22,7 @@
             <div class="separator">LUB E-MAIL</div>
             <input type="email" id="auth-email" placeholder="E-mail">
             <input type="password" id="auth-pass" placeholder="Hasło">
-            <input type="text" id="auth-nick" placeholder="Twój Nick (Tylko przy rejestracji)" style="display:none;">
+            <input type="text" id="auth-nick" placeholder="Twój Unikalny Nick" style="display:none;">
             <button onclick="login()">Zaloguj się</button>
             <button onclick="toggleRegister()" class="btn-secondary" id="btn-toggle-reg">Chcę założyć konto</button>
         </div>
@@ -118,6 +34,8 @@
     </div>
 
     <div id="menu-screen" class="screen">
+        <h1 style="font-size: 2.5rem; margin: 5px 0 15px 0; background: linear-gradient(45deg, #81b64c, #a3d16c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; letter-spacing: 1px; text-shadow: 0px 4px 10px rgba(129, 182, 76, 0.2);">PopekChess</h1>
+        
         <div class="profile-badge">
             <div class="profile-avatar-container" onclick="triggerAvatarUpload()">
                 <img id="menu-user-avatar" class="profile-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 24 24' fill='%23555'><circle cx='12' cy='8' r='4'/><path d='M12 14c-6.1 0-8 4-8 4h16s-1.9-4-8-4z'/></svg>">
@@ -133,10 +51,9 @@
         <div style="background: #1a1917; padding: 12px; border-radius: 8px; border: 1px solid #333; text-align: left;">
             <div class="panel-title" style="margin-bottom: 2px;">Znajomi Online</div>
             <div style="display: flex; gap: 5px; margin-bottom: 8px;">
-                <input type="text" id="friend-uid-input" placeholder="Wklej UID znajomego" style="padding: 6px; font-size: 0.85rem; text-align: left;">
-                <button onclick="addFriend()" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">Dodaj</button>
+                <input type="text" id="friend-nick-input" placeholder="Wpisz dokładnie nick znajomego" style="padding: 6px; font-size: 0.85rem; text-align: left;">
+                <button onclick="addFriendByNick()" style="width: auto; padding: 6px 12px; font-size: 0.85rem;">Dodaj</button>
             </div>
-            <div id="my-uid-display" style="font-size: 0.75rem; color: #777; margin-bottom: 5px; cursor: pointer;" onclick="navigator.clipboard.writeText(user.uid); alert('Skopiowano Twój identyfikator UID!');">Twoje UID (kliknij by skopiować): <span style="color:#aaa;" id="uid-val"></span></div>
             <div class="friends-list" id="friends-box"></div>
         </div>
 
@@ -164,7 +81,7 @@
     <div id="challenge-modal">
         <div id="challenge-content">
             <h3 style="margin:0; color: var(--accent);" id="challenge-text">Wyzwanie!</h3>
-            <div style="display:flex; justify-content: space-around;">
+            <div style="display:flex; gap: 10px;">
                 <button onclick="respondChallenge(true)">Graj</button>
                 <button onclick="respondChallenge(false)" class="btn-secondary">Odrzuć</button>
             </div>
@@ -229,6 +146,7 @@
     </div>
 
     <script>
+        // --- UZUPEŁNIJ SWOJE DANE FIREBASE PONIŻEJ ---
         const firebaseConfig = {
             apiKey: "AIzaSyD7DlhKM5AwCavHvaHTP3fclbadPM7bAJY",
             authDomain: "ocet-chess.firebaseapp.com",
@@ -262,7 +180,6 @@
             for(let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length)); return code;
         }
 
-        // --- OBSŁUGA PROFILI I KOLEJEK ---
         auth.onAuthStateChanged(firebaseUser => {
             if (firebaseUser) {
                 const isPasswordLogin = firebaseUser.providerData.some(p => p.providerId === 'password');
@@ -272,7 +189,6 @@
                     const data = snapshot.val();
                     if (data) {
                         user = { uid: firebaseUser.uid, displayName: data.displayName, elo: data.elo, isGuest: false, avatar: data.avatar || "" };
-                        document.getElementById('uid-val').innerText = user.uid;
                         if(user.avatar) document.getElementById('menu-user-avatar').src = user.avatar;
                         showMenu();
                         updatePresence("online");
@@ -289,46 +205,38 @@
             if(status === "online") database.ref('presence/' + user.uid).onDisconnect().remove();
         }
 
-        // --- SYSTEM PROFILOWYCH DO 5MB (KOMPRESJA BASE64 + NADPISYWANIE) ---
         function triggerAvatarUpload() { document.getElementById('avatar-input').click(); }
         function uploadAvatar(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const file = event.target.files[0]; if (!file) return;
             if (file.size > 5 * 1024 * 1024) { alert("Plik jest za duży! Maksymalna wielkość to 5MB."); return; }
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    // Kompresja pliku na kanwasie do mniejszego formatu JPG
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 120, maxH = 120;
-                    let w = img.width, h = img.height;
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                    const maxW = 120, maxH = 120; let w = img.width, h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } } else { if (h > maxH) { w *= maxH / h; h = maxH; } }
-                    canvas.width = w; canvas.height = h;
-                    ctx.drawImage(img, 0, 0, w, h);
-                    
-                    const base64Str = canvas.toDataURL('image/jpeg', 0.7); // Tekst Base64 obrazka
-                    
-                    // Firebase automatycznie nadpisuje starą wartość nową pod tym kluczem
-                    database.ref('users/' + user.uid + '/avatar').set(base64Str).then(() => {
-                        alert("Awatar został pomyślnie zaktualizowany!");
-                    });
+                    canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+                    const base64Str = canvas.toDataURL('image/jpeg', 0.7);
+                    database.ref('users/' + user.uid + '/avatar').set(base64Str).then(() => alert("Awatar zaktualizowany!"));
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // --- ZNAJOMI I WYZWANIA NA POJEDYNEK ---
-        function addFriend() {
-            const fUid = document.getElementById('friend-uid-input').value.trim();
-            if(!fUid || fUid === user.uid) return alert("Niepoprawne UID!");
-            database.ref(`users/${fUid}`).once('value', snap => {
-                if(!snap.exists()) return alert("Taki gracz nie istnieje!");
-                database.ref(`friends/${user.uid}/${fUid}`).set(true).then(() => {
-                    alert("Dodano znajomego!"); document.getElementById('friend-uid-input').value = "";
+        // --- ZNAJOMI ONLINE PO NICKU ---
+        function addFriendByNick() {
+            const nickInput = document.getElementById('friend-nick-input').value.trim();
+            if(!nickInput) return alert("Wpisz nick!");
+            if(nickInput.toLowerCase() === user.displayName.toLowerCase()) return alert("Nie możesz dodać siebie!");
+
+            database.ref('nicknames/' + nickInput.toLowerCase()).once('value', snap => {
+                if(!snap.exists()) return alert("Nie znaleziono takiego gracza!");
+                const friendUid = snap.val();
+                database.ref(`friends/${user.uid}/${friendUid}`).set(true).then(() => {
+                    alert(`Dodano ${nickInput} do znajomych!`);
+                    document.getElementById('friend-nick-input').value = "";
                 });
             });
         }
@@ -343,8 +251,6 @@
                     database.ref(`presence/${fUid}`).once('value', presSnap => {
                         const pres = presSnap.val();
                         const statusClass = pres ? (pres.status === 'online' ? 'status-online' : 'status-ingame') : 'status-offline';
-                        const statusTxt = pres ? (pres.status === 'online' ? 'Dostępny' : 'W grze') : 'Offline';
-                        
                         const item = document.createElement('div'); item.className = 'friend-item';
                         item.innerHTML = `
                             <div class="friend-info">
@@ -360,10 +266,9 @@
         }
 
         function challengeFriend(fUid) {
-            const tc = parseInt(document.getElementById('time-control').value);
-            const cCode = generateRandomCode();
+            const tc = parseInt(document.getElementById('time-control').value); const cCode = generateRandomCode();
             database.ref(`challenges/${fUid}`).set({ fromName: user.displayName, fromUid: user.uid, timeControl: tc, code: cCode });
-            alert("Wysłano wyzwanie! Oczekiwanie na akceptację...");
+            alert("Wysłano wyzwanie!");
         }
 
         function listenForChallenges() {
@@ -378,34 +283,25 @@
         }
 
         function respondChallenge(accepted) {
-            if(!activeChallenge) return;
-            const c = activeChallenge;
-            database.ref(`challenges/${user.uid}`).remove();
-            if(accepted) {
-                isInQueue = false;
-                initRoom(c.code, c.timeControl, false);
-            }
+            if(!activeChallenge) return; const c = activeChallenge; database.ref(`challenges/${user.uid}`).remove();
+            if(accepted) { isInQueue = false; initRoom(c.code, c.timeControl, false); }
             activeChallenge = null;
         }
 
-        // --- CZAT MECZOWY ---
+        // --- CZAT ---
         function sendChatMessage() {
-            const inp = document.getElementById('chat-input');
-            const msg = inp.value.trim(); if(!msg || !roomId) return;
-            database.ref(`rooms/${roomId}/chat`).push({ name: user.displayName, text: msg });
-            inp.value = "";
+            const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg || !roomId) return;
+            database.ref(`rooms/${roomId}/chat`).push({ name: user.displayName, text: msg }); inp.value = "";
         }
-
         function listenToChat() {
             database.ref(`rooms/${roomId}/chat`).on('child_added', snapshot => {
-                const m = snapshot.val();
-                const box = document.getElementById('chat-box');
+                const m = snapshot.val(); const box = document.getElementById('chat-box');
                 box.innerHTML += `<div><strong style="color:var(--accent)">${m.name}:</strong> ${m.text}</div>`;
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        // --- SYSTEM AUTH ---
+        // --- AUTH & WALIDACJA NICKU ---
         function toggleRegister() {
             isRegistering = !isRegistering;
             document.getElementById('auth-nick').style.display = isRegistering ? 'block' : 'none';
@@ -416,12 +312,15 @@
             const email = document.getElementById('auth-email').value.trim(), pass = document.getElementById('auth-pass').value, nick = document.getElementById('auth-nick').value.trim();
             if (!email || !pass) return alert("Podaj e-mail i hasło!");
             if (isRegistering) {
-                if(!nick) return alert("Podaj swój nick!");
-                auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-                    database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400, avatar: "" }).then(() => {
+                if(!nick) return alert("Podaj nick!");
+                database.ref('nicknames').child(nick.toLowerCase()).once('value', snap => {
+                    if(snap.exists()) return alert("Ten nick jest już zajęty!");
+                    auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+                        database.ref('users/' + cred.user.uid).set({ displayName: nick, elo: 400, avatar: "" });
+                        database.ref('nicknames/' + nick.toLowerCase()).set(cred.user.uid);
                         cred.user.sendEmailVerification().then(() => { alert("Potwierdź link na e-mailu."); auth.signOut(); toggleRegister(); });
-                    });
-                }).catch(e => alert(e.message));
+                    }).catch(e => alert(e.message));
+                });
             } else { auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message)); }
         }
         function loginWithGoogle() {
@@ -430,10 +329,18 @@
                 database.ref('users/' + cred.user.uid).once('value', snap => {
                     if (!snap.exists()) {
                         let chosenNick = "";
-                        while(!chosenNick || chosenNick.trim() === "") {
-                            chosenNick = prompt("Podaj swój nick do gry:"); if(chosenNick === null) { auth.signOut(); return; }
-                        }
-                        database.ref('users/' + cred.user.uid).set({ displayName: chosenNick.trim(), elo: 400, avatar: "" });
+                        let checkNick = () => {
+                            chosenNick = prompt("Podaj swój unikalny nick do gry:"); if(chosenNick === null) { auth.signOut(); return; }
+                            chosenNick = chosenNick.trim(); if(!chosenNick) return checkNick();
+                            database.ref('nicknames').child(chosenNick.toLowerCase()).once('value', nickSnap => {
+                                if(nickSnap.exists()) { alert("Ten nick jest zajęty!"); checkNick(); } 
+                                else {
+                                    database.ref('users/' + cred.user.uid).set({ displayName: chosenNick, elo: 400, avatar: "" });
+                                    database.ref('nicknames/' + chosenNick.toLowerCase()).set(cred.user.uid);
+                                }
+                            });
+                        };
+                        checkNick();
                     }
                 });
             }).catch(e => alert(e.message));
@@ -449,11 +356,10 @@
             document.getElementById('menu-player-name').innerText = user.displayName + (user.isGuest ? " (GOŚĆ)" : "");
             document.getElementById('menu-player-elo').innerText = "ELO: " + user.elo;
             const btnMatch = document.getElementById('btn-matchmaking');
-            if(user.isGuest) { btnMatch.disabled = true; btnMatch.innerText = "Matchmaking niedostępny dla gości"; } 
-            else { btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika"; }
+            if(user.isGuest) { btnMatch.disabled = true; btnMatch.innerText = "Matchmaking zablokowany dla gości"; } else { btnMatch.disabled = false; btnMatch.innerText = "Szukaj przeciwnika"; }
         }
 
-        // --- FUNKCJE LOBBY ---
+        // --- LOBBY SYSTEM ---
         function createPrivateGame() { const tc = parseInt(document.getElementById('time-control').value); isInQueue = false; initRoom(generateRandomCode(), tc, false); }
         function joinPrivateGame() { const code = document.getElementById('join-code-input').value.trim().toUpperCase(); if(code.length !== 6) return alert("Kod ma 6 znaków."); isInQueue = false; attemptJoinRoom(code); }
         function startMatchmaking() {
@@ -464,7 +370,7 @@
                 if(rooms) { for(let rId in rooms) { if(rooms[rId] === true) { foundRoom = rId; break; } } }
                 if(foundRoom) { queueRef.child(foundRoom).remove(); isInQueue = false; attemptJoinRoom(foundRoom); } 
                 else { const newCode = generateRandomCode(); isInQueue = true; initRoom(newCode, tc, true); queueRef.child(newCode).set(true); }
-            }).catch(e => alert("Błąd bazy: " + e.message));
+            }).catch(e => alert("Błąd kolejki: " + e.message));
         }
 
         function initRoom(code, timeControlSeconds, isRanked) {
@@ -475,7 +381,7 @@
                 lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
                 players: { [myColor]: { uid: user.uid, name: user.displayName, elo: user.elo, avatar: user.avatar } },
                 historyLog: [], castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
-            }).then(() => { updatePresence("playing"); listenToRoom(); }).catch(e => alert("Błąd zapisu pokoju: " + e.message));
+            }).then(() => { updatePresence("playing"); listenToRoom(); }).catch(e => alert("Błąd bazy: " + e.message));
         }
 
         function attemptJoinRoom(code) {
@@ -492,8 +398,7 @@
 
         function listenToRoom() {
             document.getElementById('menu-screen').style.display = 'none'; document.getElementById('game-screen').style.display = 'flex';
-            document.getElementById('room-display-code').innerText = `KOD: ${roomId}`;
-            document.getElementById('chat-box').innerHTML = "";
+            document.getElementById('room-display-code').innerText = `KOD: ${roomId}`; document.getElementById('chat-box').innerHTML = "";
             database.ref('rooms/' + roomId).off();
             database.ref('rooms/' + roomId).on('value', snapshot => {
                 const data = snapshot.val();
@@ -517,10 +422,11 @@
             } else { if(!isGameOver) triggerGameOver("Poddanie się!", myColor === 'white' ? 'black' : 'white'); }
         }
 
-        function proposeDraw() { if(isGameOver || !roomId || gameData.drawOfferedBy) return; database.ref(`rooms/${roomId}/drawOfferedBy`).set(myColor); }
-        function respondDraw(accepted) { if(accepted) { triggerGameOver("Remis przez uzgodnienie!", null); } else { database.ref(`rooms/${roomId}/drawOfferedBy`).set(""); } }
+        // --- SYSTEM REMISÓW ---
+        function proposeDraw() { if(isGameOver || !roomId || gameData.drawOfferedBy) return; database.ref(`rooms/${roomId}/drawOfferedBy`).set(myColor); alert("Zaproponowano remis."); }
+        function respondDraw(accepted) { if(accepted) { triggerGameOver("Remis za zgodą obu stron!", null); } else { database.ref(`rooms/${roomId}/drawOfferedBy`).set(""); } }
 
-        // --- LOCAL TIMERS ---
+        // --- ZEGAREK ---
         function startLocalTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -534,7 +440,6 @@
                 }
             }, 100);
         }
-
         function updateTimerDisplays(wMs, bMs) {
             const oppColor = myColor === 'white' ? 'black' : 'white';
             const format = (ms) => { if(ms < 0) ms = 0; let s = Math.floor(ms / 1000); let m = Math.floor(s / 60); s = s % 60; return `${m}:${s.toString().padStart(2, '0')}`; };
@@ -634,13 +539,14 @@
             });
         }
 
+        // --- BLOKADA KLIKNIĘĆ PO KOŃCU GRY ---
         function handleSquareClick(row, col) {
-            if (!myColor || isGameOver || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
+            if (isGameOver || !myColor || currentTurn !== myColor || !gameData.players || !gameData.players.white || !gameData.players.black) return;
             const isHint = validMoves.find(m => m.row === row && m.col === col);
             if (isHint) { executeMove(selectedSquare.row, selectedSquare.col, row, col, isHint.type); selectedSquare = null; validMoves = []; } 
             else {
                 const clickedPiece = gameBoard[row][col];
-                if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) { selectedSquare = { row, col }; validMoves = getValidMoves(row, col); updateUI(); } 
+                if (clickedPiece && clickedPiece.startsWith(myColor.charAt(0))) { selectedSquare = { row, col }; validMoves = getValidMoves(row, col, gameBoard); updateUI(); } 
                 else { selectedSquare = null; validMoves = []; updateUI(); }
             }
         }
@@ -668,6 +574,7 @@
         function finalizeTurn(moveData) {
             const nextTurn = currentTurn === 'white' ? 'black' : 'white', elapsed = Math.max(0, Date.now() - lastMoveTimestamp);
             let wTime = whiteTimeLeft, bTime = blackTimeLeft; if (currentTurn === 'white') wTime -= elapsed; else bTime -= elapsed;
+            
             let hasAnyMoves = false;
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
@@ -696,7 +603,7 @@
 
         function backToMenu() { if(roomId) { database.ref('rooms/' + roomId).off(); database.ref(`rooms/${roomId}/chat`).off(); } clearInterval(timerInterval); roomId = null; myColor = null; gameData = {}; isInQueue = false; showMenu(); updatePresence("online"); }
 
-        // --- INTERFEJS UI RENDER ---
+        // --- RENDERING UI ---
         function updateUI() {
             if (isGameOver) {
                 document.getElementById('game-over-text').innerText = gameData.endMessage || "Koniec!";
@@ -716,7 +623,6 @@
                 document.getElementById('my-name').innerText = me ? `${me.name} (${me.elo})` : "Ja";
                 document.getElementById('opp-name').innerText = opp ? `${opp.name} (${opp.elo})` : "Oczekiwanie na gracza...";
                 
-                // Przypisywanie i renderowanie profilowych w nagłówkach
                 const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='%23555'><circle cx='12' cy='8' r='4'/><path d='M12 14c-6.1 0-8 4-8 4h16s-1.9-4-8-4z'/></svg>";
                 document.getElementById('my-avatar-img').src = (me && me.avatar) ? me.avatar : defAvatar;
                 document.getElementById('opp-avatar-img').src = (opp && opp.avatar) ? opp.avatar : defAvatar;
