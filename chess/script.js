@@ -132,9 +132,33 @@ function loadFriendsList() {
 }
 
 function challengeFriend(fUid) {
-    const tc = parseInt(document.getElementById('time-control').value); const cCode = generateRandomCode();
-    database.ref(`challenges/${fUid}`).set({ fromName: user.displayName, fromUid: user.uid, timeControl: tc, code: cCode });
-    alert("Wysłano wyzwanie!");
+    const tc = parseInt(document.getElementById('time-control').value);
+    const cCode = generateRandomCode();
+    
+    // NAPRAWIONO: Zapraszający najpierw tworzy i zapisuje pokój w bazie
+    database.ref('rooms/' + cCode).set({
+        board: initialBoard, turn: 'white', isGameOver: false, isRanked: false, timeControl: tc,
+        whiteTime: tc * 1000, blackTime: tc * 1000, drawOfferedBy: "",
+        lastMoveTimestamp: firebase.database.ServerValue.TIMESTAMP,
+        players: { 
+            // Zapraszający automatycznie zajmuje losowy kolor, tak jak w standardowym pokoju
+            [Math.random() < 0.5 ? "white" : "black"]: { uid: user.uid, name: user.displayName, elo: user.elo, avatar: user.avatar } 
+        },
+        historyLog: [], castlingRights: { w_short: true, w_long: true, b_short: true, b_long: true }
+    }).then(() => {
+        // Dopiero gdy pokój fizycznie istnieje w bazie, wysyłamy wyzwanie do znajomego
+        database.ref(`challenges/${fUid}`).set({ 
+            fromName: user.displayName, 
+            fromUid: user.uid, 
+            timeControl: tc, 
+            code: cCode 
+        });
+        
+        // Zapraszający od razu wchodzi do swojego nowo utworzonego pokoju i czeka
+        roomId = cCode;
+        listenToRoom();
+        alert("Wysłano wyzwanie! Oczekiwanie na dołączenie znajomego...");
+    }).catch(e => alert("Błąd wyzwania: " + e.message));
 }
 
 function listenForChallenges() {
