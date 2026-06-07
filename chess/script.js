@@ -149,8 +149,17 @@ function listenForChallenges() {
 }
 
 function respondChallenge(accepted) {
-    if(!activeChallenge) return; const c = activeChallenge; database.ref(`challenges/${user.uid}`).remove();
-    if(accepted) { isInQueue = false; initRoom(c.code, c.timeControl, false); }
+    if(!activeChallenge) return; 
+    const c = activeChallenge; 
+    
+    // Usuwamy wyzwanie, żeby nie wisiało w bazie
+    database.ref(`challenges/${user.uid}`).remove();
+    
+    if(accepted) { 
+        isInQueue = false; 
+        // Dołączamy do pokoju o kodzie wygenerowanym przez zapraszającego
+        attemptJoinRoom(c.code); 
+    }
     activeChallenge = null;
 }
 
