@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PopekBros</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            display: flex;
+            gap: 30px;
+        }
+        #screenMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            text-align: center;
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="ui">
+        <div>GRA: <span style="color: #ff5722;">PopekBros</span></div>
+        <div>ŻYCIA: <span id="livesVal">5</span></div>
+        <div>MONETY: <span id="scoreVal">0</span>/10</div>
+    </div>
+    <div id="screenMessage">
+        <div id="msgText"></div>
+        <button onclick="resetGame()">Zagraj ponownie</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// UI elementy
+const livesVal = document.getElementById("livesVal");
+const scoreVal = document.getElementById("scoreVal");
+const screenMessage = document.getElementById("screenMessage");
+const msgText = document.getElementById("msgText");
+
+// Ładowanie grafiki gracza
+const playerImg = new Image();
+playerImg.src = 'photo1.png'; 
+// W razie braku pliku photo1.png, narysuje się awaryjny kwadrat
+let imgLoaded = false;
+playerImg.onload = () => { imgLoaded = true; };
+
+// Konfiguracja gry
+const GRAVITY = 0.5;
+const PLAYER_SPEED = 4;
+const JUMP_FORCE = -12;
+
+let player = {
+    x: 50,
+    y: 300,
+    width: 40,
+    height: 40,
+    velX: 0,
+    velY: 0,
+    grounded: false,
+    lives: 5,
+    score: 0
+};
+
+let cameraX = 0;
+let keys = {};
+let gameOver = false;
+
+// Definicja poziomów (Mapa w stylu Mario)
+// T = Trawa/Ziemia, B = Blok/Cegła, P = Rura (Pipe), C = Moneta (Coin), F = Flaga (Meta)
+const tileSize = 40;
+const mapLayout = [
+    "                                                                                ",
+    "                                                                                ",
+    "                                                                                ",
+    "                                                                                ",
+    "                   BBBBB                                                        ",
+    "                                      B  B                                      ",
+    "                                     BB  BB                                     ",
+    "                C   C   C           BBB  BBB                                    ",
+    "              BBBBBBBBBBBBB        BBBB  BBBB             C   C                 ",
+    "                                  BBBBB  BBBBB          BBBBBBBBB               ",
+    "         P                       BBBBBB  BBBBBB                               F ",
+    "       TTTTT       TT      TTT  TTTTTTT  TTTTTTT       TTTTTTTT      TTTTTTTTTTT",
+    "TTTTTTTTTTTTTTTT  TTTTTT  TTTTTTTTTTTTT  TTTTTTTTTT   TTTTTTTTTT    TTTTTTTTTTTT"
+];
+
+let platforms = [];
+let coins = [];
+let finishLine = null;
+
+function parseMap() {
+    platforms = [];
+    coins = [];
+    for (let r = 0; r < mapLayout.length; r++) {
+        for (let c = 0; c < mapLayout[r].length; c++) {
+            let type = mapLayout[r][c];
+            let x = c * tileSize;
+            let y = r * tileSize;
+
+            if (type === 'T') {
+                platforms.push({ x, y, width: tileSize, height: tileSize, color: '#8bc34a' }); // Zielona trawa
+            } else if (type === 'B') {
+                platforms.push({ x, y, width: tileSize, height: tileSize, color: '#ff9800' }); // Cegła
+            } else if (type === 'P') {
+                platforms.push({ x, y, width: tileSize, height: tileSize * 2, color: '#4caf50' }); // Rura
+            } else if (type === 'C') {
+                coins.push({ x: x + 10, y: y + 10, width: 20, height: 20, collected: false });
+            } else if (type === 'F') {
+                finishLine = { x, y: y - tileSize * 3, width: 10, height: tileSize * 4 };
+            }
+        }
+    }
+}
+
+// Obsługa klawiatury
+window.addEventListener("keydown", (e) => { keys[e.code] = true; });
+window.addEventListener("keyup", (e) => { keys[e.code] = false; });
+
+function checkCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
+}
+
+function update() {
+    if (gameOver) return;
+
+    // Ruch w lewo / prawo
+    if (keys["ArrowRight"] || keys["KeyD"]) {
+        if (player.velX < PLAYER_SPEED) player.velX++;
+    } else if (keys["ArrowLeft"] || keys["KeyA"]) {
+        if (player.velX > -PLAYER_SPEED) player.velX--;
+    } else {
+        player.velX *= 0.8; // Tarcie
+    }
+
+    // Skok
+    if ((keys["Space"] || keys["ArrowUp"] || keys["KeyW"]) && player.grounded) {
+        player.velY = JUMP_FORCE;
+        player.grounded = false;
+    }
+
+    // Grawitacja
+    player.velY += GRAVITY;
+
+    // Aktualizacja pozycji
+    player.x += player.velX;
+    player.y += player.velY;
+
+    // Blokada cofania się poza mapę
+    if (player.x < 0) player.x = 0;
+
+    player.grounded = false;
+
+    // Kolizje z platformami
+    for (let plat of platforms) {
+        if (checkCollision(player, plat)) {
+            // Obliczanie wektorów przesunięcia
+            let distX = (player.x + player.width / 2) - (plat.x + plat.width / 2);
+            let distY = (player.y + player.height / 2) - (plat.y + plat.height / 2);
+            let widthSum = (player.width + plat.width) / 2;
+            let heightSum = (player.height + plat.height) / 2;
+
+            if (Math.abs(distX) < widthSum && Math.abs(distY) < heightSum) {
+                let overlapX = widthSum - Math.abs(distX);
+                let overlapY = heightSum - Math.abs(distY);
+
+                if (overlapX >= overlapY) {
+                    if (distY > 0) { // Kolizja od dołu platformy
+                        player.y += overlapY;
+                        player.velY = 0;
+                    } else { // Kolizja od góry platformy
+                        player.y -= overlapY;
+                        player.grounded = true;
+                        player.velY = 0;
+                    }
+                } else {
+                    if (distX > 0) {
+                        player.x += overlapX;
+                    } else {
+                        player.x -= overlapX;
+                    }
+                }
+            }
+        }
+    }
+
+    // Zbieranie monet
+    for (let coin of coins) {
+        if (!coin.collected && checkCollision(player, coin)) {
+            coin.collected = true;
+            player.score++;
+            scoreVal.innerText = player.score;
+        }
+    }
+
+    // Sprawdzenie mety (Flagi)
+    if (finishLine && checkCollision(player, finishLine)) {
+        endGame(true);
+    }
+
+    // Spadek w przepaść (Śmierć)
+    if (player.y > canvas.height) {
+        player.lives--;
+        livesVal.innerText = player.lives;
+        if (player.lives <= 0) {
+            endGame(false);
+        } else {
+            // Reset pozycji po stracie życia
+            player.x = cameraX + 50; 
+            player.y = 100;
+            player.velX = 0;
+            player.velY = 0;
+        }
+    }
+
+    // Kamera podąża za graczem
+    if (player.x > canvas.width / 2) {
+        cameraX = player.x - canvas.width / 2;
+    } else {
+        cameraX = 0;
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Tło (Niebo)
+    ctx.fillStyle = "#5c94fc";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    // Przesunięcie kamery
+    ctx.translate(-cameraX, 0);
+
+    // Rysowanie platform
+    for (let plat of platforms) {
+        ctx.fillStyle = plat.color;
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        // Krawędź dla lepszego wyglądu cegieł
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(plat.x, plat.y, plat.width, plat.height);
+    }
+
+    // Rysowanie monet
+    for (let coin of coins) {
+        if (!coin.collected) {
+            ctx.fillStyle = "#ffd700";
+            ctx.beginPath();
+            ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#b8860b";
+            ctx.stroke();
+        }
+    }
+
+    // Rysowanie Mety (Maszt flagi)
+    if (finishLine) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(finishLine.x, finishLine.y, finishLine.width, finishLine.height);
+        // Czerwona flaga
+        ctx.fillStyle = "#ff0000";
+        ctx.beginPath();
+        ctx.moveTo(finishLine.x + finishLine.width, finishLine.y);
+        ctx.lineTo(finishLine.x + finishLine.width + 30, finishLine.y + 20);
+        ctx.lineTo(finishLine.x + finishLine.width, finishLine.y + 40);
+        ctx.fill();
+    }
+
+    // Rysowanie Gracza (Model z photo1.png lub zastępczy)
+    if (imgLoaded) {
+        ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    } else {
+        // Awaryjny czerwony model, jeśli zdjęcie się nie załaduje
+        ctx.fillStyle = "#ff5722";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(player.x + 25, player.y + 10, 10, 10); // Oko
+    }
+
+    ctx.restore();
+}
+
+function endGame(victory) {
+    gameOver = true;
+    screenMessage.style.display = "block";
+    if (victory) {
+        msgText.innerHTML = "WYGRAŁEŚ!<br><span style='font-size:24px;'>Ukończyłeś PopekBros!</span>";
+        msgText.style.color = "#4caf50";
+    } else {
+        msgText.innerHTML = "GAME OVER<br><span style='font-size:24px;'>Skończyły Ci się życia.</span>";
+        msgText.style.color = "#f44336";
+    }
+}
+
+function resetGame() {
+    player.x = 50;
+    player.y = 300;
+    player.velX = 0;
+    player.velY = 0;
+    player.lives = 5;
+    player.score = 0;
+    player.grounded = false;
+    cameraX = 0;
+    gameOver = false;
+    
+    livesVal.innerText = player.lives;
+    scoreVal.innerText = player.score;
+    screenMessage.style.display = "none";
+    
+    parseMap();
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Inicjalizacja gry
+parseMap();
+gameLoop();
+</script>
+
+</body>
+</html>
