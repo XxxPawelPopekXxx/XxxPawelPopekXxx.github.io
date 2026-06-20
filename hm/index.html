@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projekt X</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui-layer">
+            <div class="score-box">Punkty: <span id="score">0</span></div>
+            <div class="stats-box">Poziom: <span id="level">1</span> | Życia: <span id="lives">3</span></div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="menu-overlay" class="overlay">
+            <div class="menu-content">
+                <h1>PROJEKT: ENIGMA</h1>
+                <p>Użyj strzałek (Lewo/Prawo) lub A/D do poruszania się. Spacja, aby aktywować akcję.</p>
+                <button id="start-btn">URUCHOM</button>
+            </div>
+        </div>
+
+        <div id="gameover-overlay" class="overlay hidden">
+            <div class="menu-content">
+                <h1 class="danger-text">KONIEC GRY</h1>
+                <p>Twój wynik to: <span id="final-score">0</span></p>
+                <button id="restart-btn">ZAGRAJ PONOWNIE</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
