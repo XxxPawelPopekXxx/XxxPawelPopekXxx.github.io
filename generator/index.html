@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌀  PROXY & WTF SOLVE GENERATOR</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0d0f1a 0%, #1a1f2f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* animated background orbs */
+    .glow-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 0;
+      animation: floatOrb 16s infinite alternate ease-in-out;
+    }
+    .orb1 {
+      width: 400px;
+      height: 400px;
+      background: #6f3cff;
+      top: -100px;
+      left: -100px;
+    }
+    .orb2 {
+      width: 500px;
+      height: 500px;
+      background: #00d4ff;
+      bottom: -150px;
+      right: -150px;
+      animation-duration: 20s;
+      animation-delay: -4s;
+    }
+    .orb3 {
+      width: 300px;
+      height: 300px;
+      background: #ff3c9e;
+      top: 40%;
+      right: 10%;
+      animation-duration: 14s;
+      animation-delay: -8s;
+    }
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 40px) scale(1.4); }
+    }
+
+    .card {
+      position: relative;
+      z-index: 10;
+      max-width: 780px;
+      width: 100%;
+      background: rgba(20, 25, 40, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 48px;
+      padding: 2rem 2.2rem 2.8rem;
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: transform 0.2s ease;
+      animation: cardIn 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    @keyframes cardIn {
+      0% { opacity: 0; transform: scale(0.94) translateY(30px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.8rem;
+      flex-wrap: wrap;
+    }
+    .header i {
+      font-size: 2.1rem;
+      color: #9f7aff;
+      filter: drop-shadow(0 0 8px #6f3cff66);
+      animation: pulseIcon 3s infinite;
+    }
+    @keyframes pulseIcon {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .header h1 {
+      font-weight: 600;
+      font-size: 1.9rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #e0e7ff, #b7c9ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .header .badge {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #aab4d6;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge i {
+      font-size: 0.7rem;
+      color: #6fcf97;
+    }
+
+    /* generator group */
+    .generator-box {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 28px;
+      padding: 1.8rem 1.8rem 2rem;
+      margin-bottom: 1.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    .row-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.8rem;
+    }
+    .row-label i {
+      color: #7f92c9;
+      font-size: 1.1rem;
+      width: 24px;
+    }
+    .row-label span {
+      color: #c6d2f0;
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .value-box {
+      background: #0d101c;
+      padding: 0.9rem 1.4rem;
+      border-radius: 60px;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border: 1px solid #2d344a;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .value-box:focus-within {
+      border-color: #8f7aff;
+      box-shadow: 0 0 0 3px rgba(111, 60, 255, 0.2);
+    }
+    .value-box .value {
+      flex: 1;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #ecf2ff;
+      letter-spacing: 0.5px;
+      word-break: break-all;
+      min-height: 1.6rem;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0;
+    }
+    .value-box .value::placeholder {
+      color: #4d5679;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+    }
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      color: #a8b9f0;
+      padding: 0.3rem 0.9rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      border-color: #5f72a8;
+    }
+    .copy-btn i {
+      font-size: 0.8rem;
+    }
+
+    .gen-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1.8rem;
+      justify-content: center;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid #35405f;
+      padding: 0.75rem 1.8rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #d3defa;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+    .btn i {
+      font-size: 1rem;
+      color: #9aaedb;
+    }
+    .btn-primary {
+      background: linear-gradient(145deg, #6f3cff, #4f28c9);
+      border-color: #8b6eff;
+      color: white;
+      box-shadow: 0 8px 18px -6px #4f28c966;
+    }
+    .btn-primary i {
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02);
+      background: linear-gradient(145deg, #8a5aff, #5f3ad9);
+      box-shadow: 0 10px 24px -6px #6f3cffaa;
+    }
+    .btn-secondary {
+      background: rgba(40, 50, 80, 0.5);
+      border-color: #47547a;
+    }
+    .btn-secondary:hover {
+      background: rgba(60, 75, 120, 0.6);
+      border-color: #6f84b8;
+      transform: scale(1.01);
+    }
+    .btn-success {
+      background: #1e7b4c;
+      border-color: #31a86e;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #27945b;
+      transform: scale(1.02);
+    }
+
+    /* music player */
+    .music-player {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.6rem 1.2rem 0.6rem 1.6rem;
+      border-radius: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(2px);
+    }
+    .music-player i {
+      color: #a2b7f0;
+      font-size: 1.3rem;
+      animation: spinSlow 8s linear infinite;
+    }
+    @keyframes spinSlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .music-player .track-name {
+      color: #bccaf5;
+      font-weight: 400;
+      font-size: 0.9rem;
+      letter-spacing: 0.2px;
+      flex: 1;
+    }
+    .music-player audio {
+      width: 140px;
+      height: 30px;
+      background: transparent;
+      border-radius: 40px;
+      filter: invert(0.8) hue-rotate(200deg);
+    }
+    .music-player audio::-webkit-media-controls-panel {
+      background: #151e30;
+    }
+
+    .footer-meta {
+      margin-top: 1.4rem;
+      font-size: 0.7rem;
+      color: #5f6d94;
+      display: flex;
+      justify-content: space-between;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+    }
+
+    /* responsive */
+    @media (max-width: 550px) {
+      .card { padding: 1.5rem; }
+      .header h1 { font-size: 1.5rem; }
+      .badge { display: none; }
+      .gen-actions .btn { flex: 1 1 100%; }
+      .music-player { flex-wrap: wrap; justify-content: center; }
+      .music-player audio { width: 100%; }
+      .value-box { flex-wrap: wrap; }
+      .copy-btn { width: 100%; justify-content: center; }
+    }
+
+    /* toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: #1f2740dd;
+      backdrop-filter: blur(12px);
+      padding: 0.8rem 2rem;
+      border-radius: 60px;
+      color: #e0ebff;
+      border: 1px solid #5f72a8;
+      font-weight: 500;
+      box-shadow: 0 12px 30px #00000066;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) scale(1);
+    }
+    .toast i {
+      color: #6fcf97;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- glowing orbs -->
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="glow-orb orb3"></div>
+
+  <!-- toast -->
+  <div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">copied</span></div>
+
+  <!-- main card -->
+  <div class="card">
+
+    <div class="header">
+      <i class="fas fa-ghost"></i>
+      <h1>proxy · wtf</h1>
+      <div class="badge"><i class="fas fa-circle" style="color: #6fcf97;"></i> fake generator</div>
+    </div>
+
+    <!-- PROXY GENERATOR -->
+    <div class="generator-box">
+      <div class="row-label">
+        <i class="fas fa-network-wired"></i>
+        <span>proxy</span>
+      </div>
+      <div class="value-box" id="proxyBox">
+        <span class="value" id="proxyDisplay">192.168.0.1:8080</span>
+        <button class="copy-btn" id="copyProxyBtn"><i class="fas fa-copy"></i> copy</button>
+      </div>
+
+      <div class="row-label" style="margin-top: 1.4rem;">
+        <i class="fas fa-puzzle-piece"></i>
+        <span>wtf solve · CFLTPTTLBL4Q56EF</span>
+      </div>
+      <div class="value-box" id="wtfBox">
+        <span class="value" id="wtfDisplay">WTF-CFLTPTTLBL4Q56EF</span>
+        <button class="copy-btn" id="copyWtfBtn"><i class="fas fa-copy"></i> copy</button>
+      </div>
+
+      <!-- actions -->
+      <div class="gen-actions">
+        <button class="btn btn-primary" id="generateBothBtn"><i class="fas fa-sync-alt"></i> fresh both</button>
+        <button class="btn btn-secondary" id="generateProxyBtn"><i class="fas fa-arrow-rotate-right"></i> proxy</button>
+        <button class="btn btn-secondary" id="generateWtfBtn"><i class="fas fa-dice-d6"></i> wtf solve</button>
+      </div>
+    </div>
+
+    <!-- MUSIC PLAYER (fake) -->
+    <div class="music-player">
+      <i class="fas fa-compact-disc"></i>
+      <span class="track-name"><i class="fas fa-music" style="margin-right: 6px;"></i>music1.mp3 · ambient</span>
+      <audio controls id="audioPlayer">
+        <source src="music1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+      <span style="color: #5f6d94; font-size: 0.7rem; opacity: 0.6;">🎧</span>
+    </div>
+
+    <div class="footer-meta">
+      <span><i class="far fa-clock"></i> fake proxy · no logs</span>
+      <span><i class="fas fa-shield-alt"></i> wtf-solve v2.1</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // DOM refs
+      const proxyDisplay = document.getElementById('proxyDisplay');
+      const wtfDisplay = document.getElementById('wtfDisplay');
+      const generateBothBtn = document.getElementById('generateBothBtn');
+      const generateProxyBtn = document.getElementById('generateProxyBtn');
+      const generateWtfBtn = document.getElementById('generateWtfBtn');
+      const copyProxyBtn = document.getElementById('copyProxyBtn');
+      const copyWtfBtn = document.getElementById('copyWtfBtn');
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+
+      // --- helpers ---
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      // random proxy: ip:port (fake)
+      function generateFakeProxy() {
+        const oct1 = randomInt(1, 223);
+        const oct2 = randomInt(0, 255);
+        const oct3 = randomInt(0, 255);
+        const oct4 = randomInt(1, 254);
+        const port = randomInt(1024, 65535);
+        return `${oct1}.${oct2}.${oct3}.${oct4}:${port}`;
+      }
+
+      // WTF solve generator: base pattern WTF- + 16 chars (uppercase + digits)
+      // example: WTF-CFLTPTTLBL4Q56EF
+      function generateWtfSolve() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = 'WTF-';
+        for (let i = 0; i < 16; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+
+      // update both
+      function updateBoth() {
+        const proxy = generateFakeProxy();
+        const wtf = generateWtfSolve();
+        proxyDisplay.textContent = proxy;
+        wtfDisplay.textContent = wtf;
+        // subtle animation (refresh)
+        [proxyDisplay, wtfDisplay].forEach(el => {
+          el.style.transition = 'color 0.15s';
+          el.style.color = '#b7ccff';
+          setTimeout(() => { el.style.color = '#ecf2ff'; }, 150);
+        });
+      }
+
+      // update only proxy
+      function updateProxy() {
+        const proxy = generateFakeProxy();
+        proxyDisplay.textContent = proxy;
+        proxyDisplay.style.color = '#b7ccff';
+        setTimeout(() => { proxyDisplay.style.color = '#ecf2ff'; }, 150);
+      }
+
+      // update only wtf
+      function updateWtf() {
+        const wtf = generateWtfSolve();
+        wtfDisplay.textContent = wtf;
+        wtfDisplay.style.color = '#b7ccff';
+        setTimeout(() => { wtfDisplay.style.color = '#ecf2ff'; }, 150);
+      }
+
+      // --- toast ---
+      let toastTimeout = null;
+
+      function showToast(msg) {
+        toastMsg.textContent = msg || 'copied!';
+        toast.classList.add('show');
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2200);
+      }
+
+      // --- copy ---
+      function copyText(text, label = 'copied') {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast(`✓ ${label}`);
+          }).catch(() => {
+            fallbackCopy(text, label);
+          });
+        } else {
+          fallbackCopy(text, label);
+        }
+      }
+
+      function fallbackCopy(text, label) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast(`✓ ${label}`);
+        } catch (e) {
+          showToast('⚠️ copy failed');
+        }
+        document.body.removeChild(textarea);
+      }
+
+      // --- event listeners ---
+      generateBothBtn.addEventListener('click', updateBoth);
+      generateProxyBtn.addEventListener('click', updateProxy);
+      generateWtfBtn.addEventListener('click', updateWtf);
+
+      copyProxyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const proxy = proxyDisplay.textContent.trim();
+        if (proxy) copyText(proxy, 'proxy copied');
+        else showToast('⚠️ nothing to copy');
+      });
+
+      copyWtfBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const wtf = wtfDisplay.textContent.trim();
+        if (wtf) copyText(wtf, 'WTF copied');
+        else showToast('⚠️ nothing to copy');
+      });
+
+      // also click on value box copies? no, keep buttons only.
+
+      // init with random values
+      updateBoth();
+
+      // (optional) audio check: if music1.mp3 not found, no error
+      const audio = document.getElementById('audioPlayer');
+      audio.addEventListener('error', function() {
+        // silent fallback: just show placeholder
+        console.log('music1.mp3 not found — but it’s fine (fake)');
+        // we don't spam user.
+      });
+
+      // extra: click on proxy or wtf value copies? but we have button
+      // double click on value copies too (bonus)
+      proxyDisplay.addEventListener('dblclick', function() {
+        const val = proxyDisplay.textContent.trim();
+        if (val) copyText(val, 'proxy');
+      });
+      wtfDisplay.addEventListener('dblclick', function() {
+        const val = wtfDisplay.textContent.trim();
+        if (val) copyText(val, 'WTF');
+      });
+
+      // generate on load? already done.
+    })();
+  </script>
+
+</body>
+</html>
