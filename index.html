@@ -1,403 +1,70 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paweł RNG - Gra Kolekcjonerska</title>
-<style>
-/* --- CSS STYLES (Dark Theme Base) --- */
-:root {
---bg-color: #1a1a2e;
---panel-color: #16213e;
---accent-color: #0f3460;
---text-color: #e94560;
---highlight-color: #f1f1f1;
---common-color: #808080; /* Gray */
---uncommon-color: #00ff00; /* Green */
---rare-color: #00bfff; /* Deep Sky Blue */
---epic-color: #9400d3; /* Dark Violet */
---legendary-color: #ffd700; /* Gold */
---mythic-color: #ff4500; /* Orange Red */
---cooldown-color: #ff6b6b;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Paweł</title>
+    <style>
+        /* Reset all margins and paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-background-color: var(--bg-color);
-color: var(--highlight-color);
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-margin: 0;
-padding: 20px;
-display: flex;
-justify-content: center;
-min-height: 100vh;
-user-select: none;
-}
+        /* Full viewport black background */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.game-container {
-width: 100%;
-max-width: 1200px;
-display: grid;
-grid-template-columns: 300px 1fr 300px;
-grid-template-rows: auto 1fr auto;
-gap: 15px;
-height: 90vh;
-}
+        /* Image container: forces full screen */
+        .image-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* Panels */
-.panel {
-background-color: var(--panel-color);
-border: 2px solid var(--accent-color);
-border-radius: 10px;
-padding: 15px;
-box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-overflow-y: auto;
-}
+        /* Image takes full screen, stretched if needed */
+        .fullscreen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;    /* stretches to fill exactly */
+            display: block;
+            background: #0a0a0a; /* fallback */
+            user-select: none;
+            -webkit-user-drag: none;
+        }
 
-/* Header & Top Bar */
-.header-panel {
-grid-column: 1 / -1;
-display: flex;
-justify-content: space-between;
-align-items: center;
-height: 60px;
-}
-.currency-display {
-font-size: 1.5rem;
-font-weight: bold;
-color: var(--legendary-color);
-}
-.theme-selector select {
-background: var(--accent-color);
-color: white;
-border: none;
-padding: 5px 10px;
-border-radius: 5px;
-}
-
-/* Main Roll Area */
-.roll-area {
-grid-column: 2;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-position: relative;
-}
-
-.pawel-display {
-width: 300px;
-height: 300px;
-background-color: #000;
-border: 4px solid var(--accent-color);
-border-radius: 15px;
-margin-bottom: 20px;
-display: flex;
-align-items: center;
-justify-content: center;
-flex-direction: column;
-transition: transform 0.3s;
-position: relative;
-overflow: hidden;
-}
-
-.pawel-image {
-width: 100%;
-height: 100%;
-object-fit: cover;
-display: none; /* Hidden until loaded */
-}
-
-.pawel-placeholder {
-font-size: 2rem;
-color: var(--text-color);
-text-align: center;
-}
-
-.rarity-tag {
-position: absolute;
-top: 10px;
-right: 10px;
-padding: 5px 10px;
-border-radius: 5px;
-font-weight: bold;
-font-size: 0.9rem;
-background: rgba(0,0,0,0.7);
-}
-
-.roll-button {
-padding: 15px 50px;
-font-size: 1.5rem;
-background: linear-gradient(45deg, var(--accent-color), var(--text-color));
-border: none;
-border-radius: 30px;
-color: white;
-cursor: pointer;
-transition: all 0.2s;
-box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
-}
-.roll-button:hover:not(:disabled) {
-transform: scale(1.05);
-box-shadow: 0 8px 20px rgba(233, 69, 96, 0.6);
-}
-.roll-button:disabled {
-background: #555;
-cursor: not-allowed;
-transform: scale(1);
-}
-
-.cooldown-overlay {
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0,0,0,0.6);
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 2rem;
-color: white;
-border-radius: 15px;
-display: none;
-}
-
-/* Sidebar Panels (Left & Right) */
-.left-panel { grid-column: 1; }
-.right-panel { grid-column: 3; }
-
-h3 {
-color: var(--text-color);
-border-bottom: 1px solid var(--accent-color);
-padding-bottom: 5px;
-margin-top: 0;
-}
-
-/* Upgrades List */
-.upgrade-item {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 10px;
-background: var(--accent-color);
-margin-bottom: 8px;
-border-radius: 5px;
-cursor: pointer;
-transition: background 0.2s;
-}
-.upgrade-item:hover { background: #1a4a8a; }
-.upgrade-item b { color: var(--uncommon-color); }
-
-/* Equipment Grid */
-.equipment-grid {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 5px;
-margin-top: 10px;
-}
-.equip-slot {
-aspect-ratio: 1;
-background: #2a2a4a;
-border: 2px dashed #444;
-border-radius: 5px;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-font-size: 1.5rem;
-position: relative;
-}
-.equip-slot.filled {
-border-style: solid;
-border-color: var(--rare-color);
-}
-.equip-slot .remove-btn {
-position: absolute;
-top: -5px;
-right: -5px;
-background: red;
-color: white;
-border: none;
-border-radius: 50%;
-width: 15px;
-height: 15px;
-font-size: 10px;
-cursor: pointer;
-display: none;
-}
-.equip-slot.filled:hover .remove-btn { display: block; }
-
-/* Quests */
-.quest-item {
-background: #222;
-padding: 10px;
-margin-bottom: 8px;
-border-radius: 5px;
-border-left: 4px solid var(--common-color);
-}
-.quest-item.completed {
-border-left-color: var(--uncommon-color);
-opacity: 0.7;
-}
-.quest-progress {
-font-size: 0.8rem;
-color: #aaa;
-margin-top: 5px;
-}
-.quest-reward {
-color: var(--legendary-color);
-float: right;
-}
-
-/* History Log */
-.history-log {
-font-family: monospace;
-font-size: 0.9rem;
-max-height: 150px;
-overflow-y: auto;
-margin-top: 10px;
-padding: 5px;
-background: #111;
-border-radius: 5px;
-}
-.log-entry { margin-bottom: 2px; }
-.log-common { color: var(--common-color); }
-.log-uncommon { color: var(--uncommon-color); }
-.log-rare { color: var(--rare-color); }
-.log-epic { color: var(--epic-color); }
-.log-legendary { color: var(--legendary-color); }
-.log-mythic { color: var(--mythic-color); }
-
-/* Footer */
-.footer-panel {
-grid-column: 1 / -1;
-text-align: center;
-font-size: 0.8rem;
-opacity: 0.6;
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-color); }
-::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
-
-/* Theme Variations (Applied via JS) */
-body.theme-light {
---bg-color: #f0f0f0;
---panel-color: #ffffff;
---accent-color: #ddd;
---text-color: #d63384;
---highlight-color: #333;
-}
-body.theme-neon {
---bg-color: #050505;
---panel-color: #111;
---accent-color: #ff00ff;
---text-color: #00ffff;
---highlight-color: #fff;
-}
-</style>
+        /* Optional subtle overlay to hint at fullscreen (totally optional) */
+        .hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.2);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 12px;
+            letter-spacing: 1px;
+            pointer-events: none;
+            z-index: 999;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(2px);
+        }
+    </style>
 </head>
 <body>
-
-<div class="game-container">
-<!-- Header -->
-<div class="panel header-panel">
-<div class="title">
-<h1 style="margin:0; color:var(--text-color);">Paweł RNG</h1>
-</div>
-<div class="currency-display">
-💰 Monety: <span id="coin-display">0</span>
-</div>
-<div class="theme-selector">
-<label>Temat: </label>
-<select id="theme-select" onchange="changeTheme(this.value)">
-<option value="dark">Ciemny (Domyślny)</option>
-<option value="light">Jasny</option>
-<option value="neon">Neon</option>
-</select>
-</div>
-</div>
-
-<!-- Left Panel: Upgrades -->
-<div class="panel left-panel">
-<h3>🛒 Sklep Ulepszeń</h3>
-<div id="upgrades-list">
-<!-- Populated by JS -->
-</div>
-<h3 style="margin-top:20px;">📜 Historia Ostatnich</h3>
-<div class="history-log" id="history-log">
-<!-- Populated by JS -->
-</div>
-</div>
-
-<!-- Main Roll Area -->
-<div class="panel roll-area">
-<div class="pawel-display" id="pawel-display">
-<div class="pawel-placeholder" id="pawel-placeholder">
-Naciśnij "Roll"<br>dla Pawła!
-</div>
-<!-- ASSET NOTE: Replace placeholder with actual <img> tag -->
-<!-- <img src="photo.png" class="pawel-image" id="pawel-image"> -->
-<div class="rarity-tag" id="rarity-tag" style="display:none;"></div>
-<div class="cooldown-overlay" id="cooldown-overlay">2.0</div>
-</div>
-
-<button class="roll-button" id="roll-btn" onclick="rollPawel()">
-🎲 ROLL
-</button>
-
-<div style="margin-top: 15px; color: #aaa;">
-Szansa na lepsze: <span id="luck-display">0%</span> |
-Cooldown: <span id="cooldown-display">2.0s</span>
-</div>
-</div>
-
-<!-- Right Panel: Equipment & Quests -->
-<div class="panel right-panel">
-<h3>⚔️ Ekwipunek</h3>
-<div class="equipment-grid" id="equipment-grid">
-<!-- 16 Slots generated by JS -->
-</div>
-<p style="font-size:0.8rem; color:#aaa; margin-top:5px;">
-Kliknij przedmiot z ekwipunku, aby go wyposażyć.
-</p>
-
-<h3 style="margin-top:20px;">🎯 Codzienne Questy</h3>
-<div id="quests-container">
-<!-- Populated by JS -->
-</div>
-<div style="margin-top:10px; font-size:0.8rem; color:#aaa;">
-Questy resetują się o północy.
-</div>
-</div>
-
-<!-- Footer -->
-<div class="footer-panel panel">
-<p>Paweł RNG v1.0 | Gra nie jest powiązana z Roblox Sol's RNG. Wszystkie prawa zastrzeżone.</p>
-</div>
-</div>
-
-<script>
-/**
-* PAWEŁ RNG - COMPLETE GAME LOGIC
-* Contains: State Management, RNG System, Upgrades, Equipment, Quests, Audio
-*/
-
-// --- GAME CONFIGURATION & DATA ---
-
-// Paweł Types Configuration (16 Types)
-// Each has: id, name, rarity (chance weight), coinReward, color (for placeholder)
-const PAWEL_TYPES = [
-{ id: 1, name: "Paweł Zwykły", rarity: "common", weight: 50, reward: 10, color: "#808080" },
-{ id: 2, name: "Paweł Robotnik", rarity: "common", weight: 45, reward: 15, color: "#8B4513" },
-{ id: 3, name: "Paweł Student", rarity: "uncommon", weight: 30, reward: 25, color: "#00ff00" },
-{ id: 4, name: "Paweł Gamer", rarity: "uncommon", weight: 25, reward: 30, color: "#32CD32" },
-{ id: 5, name: "Paweł Sportowiec", rarity: "rare", weight: 15, reward: 50, color: "#00bfff" },
-{ id: 6, name: "Paweł Muzyk", rarity: "rare", weight: 12, reward: 60, color: "#1E90FF" },
-{ id: 7, name: "Paweł Naukowiec", rarity: "epic", weight: 8, reward: 100, color: "#9400d3" },
-{ id: 8, name: "Paweł Artysta", rarity: "epic", weight: 7, reward: 120, color: "#8A2BE2" },
-{ id: 9, name: "Paweł Szef", rarity: "legendary", weight: 4, reward: 250, color: "#ffd700" },
-{ id: 10, name: "Paweł Król", rarity: "legendary", weight: 3, reward: 300, color: "#FFD700" },
-{ id: 11, name: "Paweł Anioł", rarity: "mythic", weight: 1.5, reward: 500, color: "#ff4500" },
-{ id: 12, name: "Paweł Demon", rarity: "mythic", weight: 1.2, reward: 600, color: "#FF0000" },
-{ id: 13, name: "Paweł Kosmita", rarity: "mythic", weight: 1.0, reward: 800, color: "#00FFFF"
+    <div class="image-container">
+        <img src="image.png" alt="Full screen image" class="fullscreen-image" />
+    </div>
+    <div class="hint">⛶ fullscreen · stretched</div>
+</body>
+</html>
