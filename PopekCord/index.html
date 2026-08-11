@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PopekCord</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-darker: #1e1f22;
+      --bg-dark: #2b2d31;
+      --bg-light: #313338;
+      --bg-lighter: #383a40;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --text-main: #f2f3f5;
+      --text-muted: #949ba4;
+      --online: #23a55a;
+      --idle: #f0b232;
+      --dnd: #f23f43;
+      --offline: #80848e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-darker); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+
+    /* Helper Classes */
+    .hidden { display: none !important; }
+    .btn { padding: 10px 20px; border: none; border-radius: 4px; background: var(--accent); color: white; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #4e5058; }
+    .btn-secondary:hover { background: #6d6f78; }
+    .btn-danger { background: var(--dnd); }
+
+    /* Auth Screen */
+    #auth-screen { position: fixed; inset: 0; background: var(--bg-darker); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .auth-card { background: var(--bg-dark); padding: 32px; border-radius: 8px; width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; }
+    .auth-card h2 { margin-bottom: 8px; font-size: 24px; }
+    .auth-card p { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; }
+    .auth-card input { width: 100%; padding: 10px; margin-bottom: 12px; background: var(--bg-darker); border: 1px solid #111; border-radius: 4px; color: white; outline: none; }
+    .auth-card .btn { width: 100%; margin-top: 8px; }
+    .auth-divider { margin: 16px 0; color: var(--text-muted); font-size: 12px; position: relative; }
+    .google-btn { background: #ea4335; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .google-btn:hover { background: #d63022; }
+
+    /* Main App Layout */
+    #app-container { display: flex; width: 100vw; height: 100vh; }
+
+    /* Sidebar Server Rail */
+    .server-rail { width: 72px; background: var(--bg-darker); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 8px; }
+    .server-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-light); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; position: relative; color: var(--text-main); font-weight: bold; }
+    .server-icon:hover, .server-icon.active { border-radius: 16px; background: var(--accent); }
+    .server-divider { width: 32px; height: 2px; background: var(--bg-lighter); margin: 4px 0; }
+
+    /* Channels Sidebar */
+    .channels-sidebar { width: 240px; background: var(--bg-dark); display: flex; flex-direction: column; }
+    .sidebar-header { height: 48px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 16px; font-weight: bold; justify-content: space-between; }
+    .sidebar-content { flex: 1; padding: 12px 8px; overflow-y: auto; }
+    .section-title { font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; padding: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .channel-item { padding: 8px; border-radius: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .channel-item:hover, .channel-item.active { background: var(--bg-lighter); color: var(--text-main); }
+
+    /* User Controls Footer */
+    .user-footer { height: 52px; background: #232428; padding: 8px; display: flex; align-items: center; gap: 8px; }
+    .avatar-wrapper { position: relative; width: 32px; height: 32px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--accent); }
+    .status-indicator { width: 10px; height: 10px; border-radius: 50%; position: absolute; bottom: 0; right: 0; border: 2px solid #232428; }
+    .status-online { background: var(--online); }
+    .status-idle { background: var(--idle); }
+    .status-dnd { background: var(--dnd); }
+    .status-offline { background: var(--offline); }
+    .user-info { flex: 1; overflow: hidden; }
+    .user-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-status-text { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Chat Area */
+    .chat-area { flex: 1; background: var(--bg-light); display: flex; flex-direction: column; }
+    .chat-header { height: 48px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 16px; font-weight: bold; gap: 8px; }
+    .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+    .message-card { display: flex; gap: 16px; }
+    .message-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); object-fit: cover; }
+    .message-content { flex: 1; }
+    .message-header { display: flex; gap: 8px; align-items: baseline; }
+    .message-author { font-weight: 600; font-size: 15px; }
+    .message-time { font-size: 12px; color: var(--text-muted); }
+    .message-body { margin-top: 4px; font-size: 14px; color: var(--text-main); word-break: break-word; }
+
+    .chat-input-area { padding: 16px; }
+    .chat-input { width: 100%; padding: 12px; background: #383a40; border: none; border-radius: 8px; color: white; outline: none; }
+
+    /* Discovery View */
+    .discovery-view { flex: 1; background: var(--bg-light); padding: 32px; overflow-y: auto; }
+    .discovery-header { text-align: center; margin-bottom: 32px; }
+    .discovery-search { width: 100%; max-width: 600px; padding: 12px; background: var(--bg-darker); border: none; border-radius: 8px; color: white; margin-top: 16px; outline: none; }
+    .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .server-card { background: var(--bg-dark); border-radius: 8px; padding: 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+    /* Custom Modal Overlay */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+    .modal-card { background: var(--bg-dark); width: 400px; border-radius: 8px; padding: 24px; position: relative; }
+    .modal-card h3 { margin-bottom: 16px; }
+    .modal-card input, .modal-card select { width: 100%; padding: 10px; margin-bottom: 12px; background: var(--bg-darker); border: 1px solid #111; border-radius: 4px; color: white; outline: none; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-screen">
+    <div class="auth-card">
+      <h2>Welcome to PopekCord</h2>
+      <p id="auth-subtitle">Log in with your email or Google</p>
+      
+      <form id="auth-form">
+        <input type="email" id="auth-email" placeholder="Email" required />
+        <input type="password" id="auth-password" placeholder="Password" required />
+        <button type="submit" class="btn" id="auth-submit-btn">Log In</button>
+      </form>
+
+      <div class="auth-divider">OR</div>
+      
+      <button class="btn google-btn" id="google-auth-btn">
+        <i class="fab fa-google"></i> Continue with Google
+      </button>
+
+      <p style="margin-top: 16px; font-size: 13px;">
+        <span id="auth-toggle-text">Need an account?</span> 
+        <a href="#" id="auth-toggle-btn" style="color: var(--accent);">Register</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="app-container" class="hidden">
+    <div class="server-rail">
+      <div class="server-icon active" id="btn-dm-view" title="Direct Messages">
+        <i class="fab fa-discord"></i>
+      </div>
+      <div class="server-divider"></div>
+      <div id="servers-list"></div>
+      <div class="server-icon" id="btn-add-server" title="Add/Create Server">
+        <i class="fas fa-plus" style="color: var(--online);"></i>
+      </div>
+      <div class="server-icon" id="btn-discovery-view" title="Discover Servers">
+        <i class="fas fa-compass" style="color: var(--online);"></i>
+      </div>
+    </div>
+
+    <div class="channels-sidebar">
+      <div class="sidebar-header">
+        <span id="sidebar-title">Direct Messages</span>
+      </div>
+      <div class="sidebar-content" id="sidebar-content">
+        </div>
+      
+      <div class="user-footer">
+        <div class="avatar-wrapper" id="user-profile-trigger" style="cursor:pointer;" title="Edit Profile">
+          <img src="" id="user-avatar-img" class="user-avatar" alt="pfp" />
+          <div id="user-status-dot" class="status-indicator status-online"></div>
+        </div>
+        <div class="user-info">
+          <div class="user-name" id="user-display-name">Username</div>
+          <div class="user-status-text" id="user-custom-status">Online</div>
+        </div>
+        <i class="fas fa-sign-out-alt" id="btn-logout" style="cursor: pointer; color: var(--text-muted);" title="Logout"></i>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chat-view">
+      <div class="chat-header">
+        <span id="chat-title-icon">#</span>
+        <span id="chat-title">general</span>
+      </div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Message..." />
+      </div>
+    </div>
+
+    <div class="discovery-view hidden" id="discovery-view">
+      <div class="discovery-header">
+        <h2>Find your community on PopekCord</h2>
+        <p style="color: var(--text-muted); margin-top: 4px;">From gaming to music, find a place for you.</p>
+        <input type="text" id="discovery-search-input" class="discovery-search" placeholder="Explore public servers..." />
+      </div>
+      <div class="server-grid" id="discovery-server-grid"></div>
+    </div>
+  </div>
+
+  <div id="modal-container" class="hidden"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+      signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getFirestore, doc, setDoc, getDoc, collection, addDoc, query, 
+      where, onSnapshot, orderBy, serverTimestamp, getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // --- Firebase Configuration ---
+    // TODO: Replace with your actual Firebase Project Configuration credentials
+const firebaseConfig = {
+  apiKey: "AIzaSyDSAmm8at7lg8ihmUpyGFZ522FrqCH9P20",
+  authDomain: "popekcord.firebaseapp.com",
+  projectId: "popekcord",
+  storageBucket: "popekcord.firebasestorage.app",
+  messagingSenderId: "717460703857",
+  appId: "1:717460703857:web:9c0e3dd02ef4c5e7cca9d0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    // App State
+    let currentUser = null;
+    let currentUserData = null;
+    let currentView = 'dm'; // 'dm', 'server', 'discovery'
+    let activeTargetId = null; // DM Receiver UID or Server ID
+    let activeChannelId = 'general';
+    let messageUnsub = null;
+
+    // --- Custom Modal System ---
+    function openModal(title, contentHTML, onConfirm) {
+      const container = document.getElementById('modal-container');
+      container.innerHTML = `
+        <div class="modal-overlay">
+          <div class="modal-card">
+            <h3>${title}</h3>
+            <div>${contentHTML}</div>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+              <button class="btn" id="modal-confirm">Confirm</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.classList.remove('hidden');
+
+      document.getElementById('modal-cancel').onclick = () => container.classList.add('hidden');
+      document.getElementById('modal-confirm').onclick = () => {
+        if (onConfirm()) container.classList.add('hidden');
+      };
+    }
+
+    // --- Auth Logic ---
+    let isRegisterMode = false;
+    const authForm = document.getElementById('auth-form');
+    const authToggleBtn = document.getElementById('auth-toggle-btn');
+    const googleAuthBtn = document.getElementById('google-auth-btn');
+
+    authToggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-subtitle').innerText = isRegisterMode ? 'Create an account' : 'Log in with your email or Google';
+      document.getElementById('auth-submit-btn').innerText = isRegisterMode ? 'Register' : 'Log In';
+      document.getElementById('auth-toggle-text').innerText = isRegisterMode ? 'Already have an account?' : 'Need an account?';
+      authToggleBtn.innerText = isRegisterMode ? 'Log In' : 'Register';
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      try {
+        if (isRegisterMode) {
+          const res = await createUserWithEmailAndPassword(auth, email, password);
+          const username = email.split('@')[0];
+          await setDoc(doc(db, "users", res.user.uid), {
+            uid: res.user.uid,
+            email: email,
+            displayName: username,
+            pfp: `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`,
+            status: 'online',
+            customStatus: 'Coding in PopekCord'
+          });
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (err) {
+        openModal("Authentication Error", `<p>${err.message}</p>`, () => true);
+      }
+    });
+
+    googleAuthBtn.addEventListener('click', async () => {
+      try {
+        const res = await signInWithPopup(auth, googleProvider);
+        const userRef = doc(db, "users", res.user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            uid: res.user.uid,
+            email: res.user.email,
+            displayName: res.user.displayName || res.user.email.split('@')[0],
+            pfp: res.user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${res.user.uid}`,
+            status: 'online',
+            customStatus: 'Using Google Sign-In'
+          });
+        }
+      } catch (err) {
+        openModal("Google Sign-In Error", `<p>${err.message}</p>`, () => true);
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    // Monitor Auth State
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+
+        // Sync User Data
+        onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            currentUserData = docSnap.data();
+            updateUserFooter();
+          }
+        });
+
+        loadServers();
+        switchView('dm');
+      } else {
+        currentUser = null;
+        currentUserData = null;
+        document.getElementById('app-container').classList.add('hidden');
+        document.getElementById('auth-screen').classList.remove('hidden');
+      }
+    });
+
+    // --- Profile Settings ---
+    document.getElementById('user-profile-trigger').addEventListener('click', () => {
+      const formHTML = `
+        <label style="font-size:12px; color:var(--text-muted)">Display Name</label>
+        <input type="text" id="modal-edit-name" value="${currentUserData.displayName}" />
+        <label style="font-size:12px; color:var(--text-muted)">Avatar Image URL</label>
+        <input type="text" id="modal-edit-pfp" value="${currentUserData.pfp}" />
+        <label style="font-size:12px; color:var(--text-muted)">Status Text</label>
+        <input type="text" id="modal-edit-status-text" value="${currentUserData.customStatus || ''}" />
+        <label style="font-size:12px; color:var(--text-muted)">Status Indicator</label>
+        <select id="modal-edit-status">
+          <option value="online" ${currentUserData.status === 'online' ? 'selected' : ''}>Online</option>
+          <option value="idle" ${currentUserData.status === 'idle' ? 'selected' : ''}>Idle</option>
+          <option value="dnd" ${currentUserData.status === 'dnd' ? 'selected' : ''}>Do Not Disturb</option>
+          <option value="offline" ${currentUserData.status === 'offline' ? 'selected' : ''}>Invisible</option>
+        </select>
+      `;
+
+      openModal("Edit Profile", formHTML, async () => {
+        const name = document.getElementById('modal-edit-name').value;
+        const pfp = document.getElementById('modal-edit-pfp').value;
+        const statusText = document.getElementById('modal-edit-status-text').value;
+        const status = document.getElementById('modal-edit-status').value;
+
+        await setDoc(doc(db, "users", currentUser.uid), {
+          displayName: name,
+          pfp: pfp,
+          customStatus: statusText,
+          status: status
+        }, { merge: true });
+
+        return true;
+      });
+    });
+
+    function updateUserFooter() {
+      document.getElementById('user-avatar-img').src = currentUserData.pfp;
+      document.getElementById('user-display-name').innerText = currentUserData.displayName;
+      document.getElementById('user-custom-status').innerText = currentUserData.customStatus || '';
+      
+      const dot = document.getElementById('user-status-dot');
+      dot.className = `status-indicator status-${currentUserData.status}`;
+    }
+
+    // --- Navigation & Views ---
+    document.getElementById('btn-dm-view').addEventListener('click', () => switchView('dm'));
+    document.getElementById('btn-discovery-view').addEventListener('click', () => switchView('discovery'));
+
+    function switchView(view, targetId = null) {
+      currentView = view;
+      activeTargetId = targetId;
+
+      document.getElementById('chat-view').classList.add('hidden');
+      document.getElementById('discovery-view').classList.add('hidden');
+
+      if (view === 'dm') {
+        document.getElementById('sidebar-title').innerText = "Direct Messages";
+        document.getElementById('chat-view').classList.remove('hidden');
+        loadDMSidebar();
+      } else if (view === 'server') {
+        document.getElementById('chat-view').classList.remove('hidden');
+        loadServerSidebar(targetId);
+      } else if (view === 'discovery') {
+        document.getElementById('sidebar-title').innerText = "Discover";
+        document.getElementById('discovery-view').classList.remove('hidden');
+        loadDiscoveryPage();
+      }
+    }
+
+    // --- Direct Messages ---
+    function loadDMSidebar() {
+      const sidebar = document.getElementById('sidebar-content');
+      sidebar.innerHTML = `<div class="section-title">Direct Messages</div>`;
+
+      onSnapshot(collection(db, "users"), (snapshot) => {
+        sidebar.innerHTML = `<div class="section-title">Direct Messages</div>`;
+        snapshot.forEach((userDoc) => {
+          if (userDoc.id === currentUser.uid) return;
+          const u = userDoc.data();
+
+          const div = document.createElement('div');
+          div.className = `channel-item ${activeTargetId === u.uid ? 'active' : ''}`;
+          div.innerHTML = `
+            <img src="${u.pfp}" style="width:24px;height:24px;border-radius:50%;" />
+            <span>${u.displayName}</span>
+          `;
+          div.onclick = () => {
+            activeTargetId = u.uid;
+            document.querySelectorAll('.channel-item').forEach(e => e.classList.remove('active'));
+            div.classList.add('active');
+            openDMChat(u);
+          };
+          sidebar.appendChild(div);
+        });
+      });
+    }
+
+    function openDMChat(targetUser) {
+      document.getElementById('chat-title-icon').innerText = "@";
+      document.getElementById('chat-title').innerText = targetUser.displayName;
+      
+      const dmChatId = [currentUser.uid, targetUser.uid].sort().join("_");
+      listenToMessages(`dms/${dmChatId}/messages`);
+    }
+
+    // --- Servers & Channels ---
+    function loadServers() {
+      const container = document.getElementById('servers-list');
+      onSnapshot(collection(db, "servers"), (snapshot) => {
+        container.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const s = docSnap.data();
+          if (s.members && s.members.includes(currentUser.uid)) {
+            const div = document.createElement('div');
+            div.className = `server-icon ${activeTargetId === docSnap.id ? 'active' : ''}`;
+            div.innerText = s.name.substring(0, 2).toUpperCase();
+            div.title = s.name;
+            div.onclick = () => {
+              document.querySelectorAll('.server-icon').forEach(e => e.classList.remove('active'));
+              div.classList.add('active');
+              switchView('server', docSnap.id);
+            };
+            container.appendChild(div);
+          }
+        });
+      });
+    }
+
+    function loadServerSidebar(serverId) {
+      const sidebar = document.getElementById('sidebar-content');
+      getDoc(doc(db, "servers", serverId)).then(docSnap => {
+        if (!docSnap.exists()) return;
+        const server = docSnap.data();
+        document.getElementById('sidebar-title').innerText = server.name;
+
+        sidebar.innerHTML = `
+          <div class="section-title">
+            Text Channels
+            <i class="fas fa-plus" id="btn-add-channel" style="cursor:pointer"></i>
+          </div>
+        `;
+
+        server.channels.forEach((ch) => {
+          const div = document.createElement('div');
+          div.className = `channel-item ${activeChannelId === ch ? 'active' : ''}`;
+          div.innerHTML = `<i class="fas fa-hashtag"></i> <span>${ch}</span>`;
+          div.onclick = () => {
+            activeChannelId = ch;
+            document.querySelectorAll('.channel-item').forEach(e => e.classList.remove('active'));
+            div.classList.add('active');
+            openServerChat(serverId, ch);
+          };
+          sidebar.appendChild(div);
+        });
+
+        document.getElementById('btn-add-channel').onclick = () => {
+          openModal("Create Channel", `<input type="text" id="modal-channel-name" placeholder="channel-name" />`, async () => {
+            const channelName = document.getElementById('modal-channel-name').value.toLowerCase().replace(/\s+/g, '-');
+            if (channelName) {
+              const updatedChannels = [...server.channels, channelName];
+              await setDoc(doc(db, "servers", serverId), { channels: updatedChannels }, { merge: true });
+              loadServerSidebar(serverId);
+            }
+            return true;
+          });
+        };
+
+        // Open default channel
+        openServerChat(serverId, server.channels[0] || 'general');
+      });
+    }
+
+    function openServerChat(serverId, channelName) {
+      document.getElementById('chat-title-icon').innerText = "#";
+      document.getElementById('chat-title').innerText = channelName;
+      listenToMessages(`servers/${serverId}/channels/${channelName}/messages`);
+    }
+
+    // Server Creation
+    document.getElementById('btn-add-server').addEventListener('click', () => {
+      openModal("Create a Server", `<input type="text" id="modal-server-name" placeholder="Server Name" />`, async () => {
+        const serverName = document.getElementById('modal-server-name').value;
+        if (serverName) {
+          const newServerRef = doc(collection(db, "servers"));
+          await setDoc(newServerRef, {
+            id: newServerRef.id,
+            name: serverName,
+            owner: currentUser.uid,
+            members: [currentUser.uid],
+            channels: ['general', 'lobby']
+          });
+          switchView('server', newServerRef.id);
+        }
+        return true;
+      });
+    });
+
+    // --- Chat Logic ---
+    function listenToMessages(path) {
+      if (messageUnsub) messageUnsub();
+
+      const messagesContainer = document.getElementById('chat-messages');
+      messagesContainer.innerHTML = "";
+
+      const q = query(collection(db, path), orderBy("timestamp", "asc"));
+      messageUnsub = onSnapshot(q, (snapshot) => {
+        messagesContainer.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const msg = docSnap.data();
+          const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
+          const msgEl = document.createElement('div');
+          msgEl.className = 'message-card';
+          msgEl.innerHTML = `
+            <img src="${msg.authorPfp}" class="message-avatar" />
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-author">${msg.authorName}</span>
+                <span class="message-time">${time}</span>
+              </div>
+              <div class="message-body">${escapeHTML(msg.text)}</div>
+            </div>
+          `;
+          messagesContainer.appendChild(msgEl);
+        });
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+
+      // Bind input handler
+      const chatInput = document.getElementById('chat-input');
+      chatInput.onkeydown = async (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+          const text = chatInput.value.trim();
+          chatInput.value = '';
+          await addDoc(collection(db, path), {
+            text: text,
+            authorId: currentUser.uid,
+            authorName: currentUserData.displayName,
+            authorPfp: currentUserData.pfp,
+            timestamp: serverTimestamp()
+          });
+        }
+      };
+    }
+
+    // --- Discovery View ---
+    async function loadDiscoveryPage() {
+      const grid = document.getElementById('discovery-server-grid');
+      grid.innerHTML = "Loading...";
+
+      const querySnapshot = await getDocs(collection(db, "servers"));
+      renderDiscoveryGrid(querySnapshot);
+
+      document.getElementById('discovery-search-input').oninput = (e) => {
+        const val = e.target.value.toLowerCase();
+        renderDiscoveryGrid(querySnapshot, val);
+      };
+    }
+
+    function renderDiscoveryGrid(snapshot, filter = '') {
+      const grid = document.getElementById('discovery-server-grid');
+      grid.innerHTML = "";
+
+      snapshot.forEach((docSnap) => {
+        const s = docSnap.data();
+        if (s.name.toLowerCase().includes(filter)) {
+          const isMember = s.members && s.members.includes(currentUser.uid);
+          const card = document.createElement('div');
+          card.className = 'server-card';
+          card.innerHTML = `
+            <div class="server-icon" style="width:64px;height:64px;font-size:20px;">${s.name.substring(0,2).toUpperCase()}</div>
+            <h3>${escapeHTML(s.name)}</h3>
+            <p style="font-size:12px; color:var(--text-muted);">${s.members.length} Members</p>
+            <button class="btn ${isMember ? 'btn-secondary' : ''}" style="width:100%; margin-top: auto;">
+              ${isMember ? 'Joined' : 'Join Server'}
+            </button>
+          `;
+
+          const btn = card.querySelector('button');
+          if (!isMember) {
+            btn.onclick = async () => {
+              const updatedMembers = [...s.members, currentUser.uid];
+              await setDoc(doc(db, "servers", s.id), { members: updatedMembers }, { merge: true });
+              switchView('server', s.id);
+            };
+          }
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    // Helper Utility
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+  </script>
+</body>
+</html>
