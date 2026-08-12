@@ -108,10 +108,14 @@
         .comment-header h3 { margin: 0; font-size: 16px; }
         .comment-header .fa-times { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 20px; }
         .comment-list { flex-grow: 1; overflow-y: auto; padding: 15px; }
-        .comment-item { margin-bottom: 15px; font-size: 14px; background: #222; padding: 10px; border-radius: 10px; }
+        .comment-item { margin-bottom: 15px; font-size: 14px; background: #222; padding: 10px; border-radius: 10px; position: relative; }
         .comment-item strong { color: var(--tiktok-red); font-size: 12px; }
         .comment-item span.date { color: #888; font-size: 10px; margin-left: 5px; }
         .comment-item p { margin: 5px 0 0 0; word-break: break-word; }
+        .comment-actions { margin-top: 8px; display: flex; gap: 15px; }
+        .comment-actions span { color: #aaa; font-size: 11px; cursor: pointer; transition: color 0.2s; }
+        .comment-actions span:hover { color: white; }
+        .comment-actions .delete-btn:hover { color: #ff4d4d; }
         
         /* Dodatki do logowania i inputów */
         .auth-panel { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #111; }
@@ -188,12 +192,12 @@
         };
 
         let db;
-        let auth; // Zmienna dla autoryzacji
+        let auth; 
 
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
-            auth = firebase.auth(); // Inicjalizacja kont
+            auth = firebase.auth(); 
         } catch(e) {
             console.error("Firebase nie zostało skonfigurowane poprawnie.");
         }
@@ -206,16 +210,24 @@
         const loggedUserNick = document.getElementById('logged-user-nick');
         const authMsg = document.getElementById('auth-msg');
 
-        // Nasłuchuj zmian logowania
         if(auth) {
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     authPanel.style.display = 'none';
                     commentInputArea.style.display = 'flex';
-                    loggedUserNick.innerText = user.displayName || "Anonim";
+                    // Jeżeli profil nie został jeszcze załadowany, pokaż fallback
+                    loggedUserNick.innerText = user.displayName || "Użytkownik"; 
+                    
+                    // Po zalogowaniu możemy chcieć odświeżyć komentarze (aby przyciski edycji się pojawiły)
+                    if (currentCommentVideoId !== null) {
+                        loadComments(currentCommentVideoId);
+                    }
                 } else {
                     authPanel.style.display = 'flex';
                     commentInputArea.style.display = 'none';
+                    if (currentCommentVideoId !== null) {
+                        loadComments(currentCommentVideoId); // ukrycie przycisków edycji
+                    }
                 }
             });
         }
@@ -229,8 +241,10 @@
 
             auth.createUserWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
-                    // Aktualizuj profil o podany nick
-                    return userCredential.user.updateProfile({ displayName: nick });
+                    // Aktualizuj profil o podany nick i wymuś odświeżenie UI natychmiast
+                    return userCredential.user.updateProfile({ displayName: nick }).then(() => {
+                        loggedUserNick.innerText = nick;
+                    });
                 })
                 .then(() => {
                     document.getElementById('auth-email').value = "";
@@ -257,7 +271,7 @@
         }
 
         // ==========================================
-        // 2. GŁÓWNA LOGIKA APLIKACJI (WIDEO, LAJKI)
+        // 2. GŁÓWNA LOGIKA APLIKACJI
         // ==========================================
         const container = document.getElementById('video-container');
         const TOTAL_VIDEOS = 300;
@@ -362,9 +376,9 @@
         }
 
         // ==========================================
-        // 3. OBSŁUGA KOMENTARZY (Z AUTOREM I COOLDOWNEM)
+        // 3. OBSŁUGA KOMENTARZY (Z EDYCJĄ I USUWANIEM)
         // ==========================================
-        const COOLDOWN_TIME = 60000; // 1 minuta w milisekundach
+        const COOLDOWN_TIME = 60000; 
 
         function openComments(index) {
             if (!db) { alert("Brak połączenia z bazą!"); return; }
@@ -392,13 +406,19 @@
                 }
 
                 let commentsArr = [];
-                querySnapshot.forEach((doc) => commentsArr.push(doc.data()));
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    data.id = doc.id; // Zapisujemy ID dokumentu do edycji/usuwania
+                    commentsArr.push(data);
+                });
                 
                 commentsArr.sort((a, b) => {
                     const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
                     const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
                     return timeA - timeB; 
                 });
+
+                const currentUser = auth.currentUser;
 
                 commentsArr.forEach((data) => {
                     const div = document.createElement('div');
@@ -410,9 +430,21 @@
                         dateStr = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0');
                     }
 
+                    let actionsHtml = '';
+                    // Pokazujemy przyciski tylko jeśli uid zalogowanego = uid autora
+                    if (currentUser && currentUser.uid === data.authorUid) {
+                        actionsHtml = `
+                            <div class="comment-actions">
+                                <span onclick="editComment('${data.id}')"><i class="fas fa-edit"></i> Edytuj</span>
+                                <span class="delete-btn" onclick="deleteComment('${data.id}')"><i class="fas fa-trash"></i> Usuń</span>
+                            </div>
+                        `;
+                    }
+
                     div.innerHTML = `
-                        <strong>${data.authorName || 'Anonim'}</strong> <span class="date">${dateStr}</span>
-                        <p>${data.text}</p>
+                        <strong>${data.authorName || 'Użytkownik'}</strong> <span class="date">${dateStr}</span>
+                        <p id="comment-text-${data.id}">${data.text}</p>
+                        ${actionsHtml}
                     `;
                     list.appendChild(div);
                 });
@@ -431,7 +463,6 @@
             if (!user) { alert("Musisz być zalogowany!"); return; }
             if (text === '' || currentCommentVideoId === null) return;
             
-            // Logika Cooldown
             const lastTime = localStorage.getItem('lastCommentTime');
             if (lastTime) {
                 const timePassed = Date.now() - parseInt(lastTime);
@@ -442,22 +473,47 @@
                 }
             }
 
-            input.value = ''; // Wyczyść pole tekstowe po wysłaniu
+            input.value = ''; 
             
             db.collection("comments").add({
                 videoId: currentCommentVideoId,
                 text: text,
-                authorName: user.displayName || "Anonim", // Zapisz Nick
-                authorUid: user.uid, // Zapisz ID Konta
+                authorName: user.displayName || "Użytkownik", // Używamy realnego nicku
+                authorUid: user.uid, 
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                // Zapisz czas dodania, aby odpalić cooldown
                 localStorage.setItem('lastCommentTime', Date.now().toString());
             }).catch(error => {
                 console.error("Błąd zapisu:", error);
                 alert("Brak uprawnień. Sprawdź Firestore Rules.");
             });
         }
+
+        // --- Nowe funkcje: Edycja i Usuwanie ---
+        function deleteComment(docId) {
+            if(confirm("Na pewno chcesz usunąć ten komentarz?")) {
+                db.collection("comments").doc(docId).delete().catch(error => {
+                    console.error("Błąd podczas usuwania:", error);
+                    alert("Nie udało się usunąć komentarza.");
+                });
+            }
+        }
+
+        function editComment(docId) {
+            const textElement = document.getElementById('comment-text-' + docId);
+            const currentText = textElement.innerText;
+            const newText = prompt("Edytuj komentarz:", currentText);
+            
+            if (newText !== null && newText.trim() !== "") {
+                db.collection("comments").doc(docId).update({
+                    text: newText.trim()
+                }).catch(error => {
+                    console.error("Błąd podczas edycji:", error);
+                    alert("Nie udało się zedytować komentarza.");
+                });
+            }
+        }
+        // ---------------------------------------
 
         function handleEnter(e) {
             if (e.key === 'Enter') {
@@ -466,7 +522,7 @@
         }
 
         // ==========================================
-        // 4. INTERAKCJE UI (Tapnięcia i Lajki)
+        // 4. INTERAKCJE UI
         // ==========================================
         let clickTimer = null;
         function handleTap(e, element, index) {
