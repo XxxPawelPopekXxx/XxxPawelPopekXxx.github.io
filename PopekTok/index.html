@@ -229,12 +229,12 @@
         let isShowingLiked = false;
         let currentCommentVideoId = null;
 
-        // Odczyt parametru z URL (obsługuje np. /PopekTok/12)
-        const pathSegments = window.location.pathname.split('/').filter(p => p);
-        const urlId = parseInt(pathSegments[pathSegments.length - 1]);
+        // Odczyt parametru z URL dla GitHub Pages (np. ?v=12)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlId = parseInt(urlParams.get('v'));
         if (!isNaN(urlId) && urlId > 0 && urlId <= TOTAL_VIDEOS) {
-            lastWatched = urlId;
-        }
+        lastWatched = urlId;
+}
 
         // ==========================================
         // 2. LOGIKA KONT (AUTH & PROFILE)
@@ -336,8 +336,8 @@
                     if (video) { video.play().catch(()=>{}); entry.target.classList.remove('is-paused'); }
                     if (!isShowingLiked) {
                         localStorage.setItem('lastWatched', index);
-                        history.replaceState(null, null, `/PopekTok/${index}`);
-                    }
+                        history.replaceState(null, null, `?v=${index}`);
+}
                 } else {
                     if (video) { video.pause(); video.currentTime = 0; entry.target.classList.add('is-paused'); }
                 }
@@ -386,7 +386,7 @@
         // 4. UDOSTĘPNIANIE
         // ==========================================
         function shareVideo(index) {
-            const shareUrl = `${window.location.origin}/PopekTok/${index}`;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?v=${index}`;
             if (navigator.share) {
                 navigator.share({ title: 'PopekTok', text: `Zobacz PopekTok #${index}!`, url: shareUrl })
                 .catch((e) => console.log('Błąd udostępniania', e));
