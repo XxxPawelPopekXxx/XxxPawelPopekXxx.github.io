@@ -1,556 +1,496 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PopekTok</title>
+    <title>PopekTok Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
     <style>
-        :root {
-            --bg-black: #010101;
-            --tiktok-red: #ff0050;
-            --text-white: #ffffff;
-        }
-
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #0a0a0a; font-family: 'ProximaNova', sans-serif;
-            color: var(--text-white); display: flex; justify-content: center; align-items: center;
-        }
-
-        #app-wrapper {
-            position: relative; width: 100%; height: 100dvh;
-            background-color: var(--bg-black); overflow: hidden;
-        }
-
-        @media (min-width: 768px) {
-            #app-wrapper {
-                height: 90vh; max-width: 400px; border-radius: 30px; 
-                border: 8px solid #222; box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            }
-        }
-
-        #video-container {
-            width: 100%; height: 100%; scroll-snap-type: y mandatory;
-            overflow-y: scroll; scrollbar-width: none; 
-            overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
-        }
-        #video-container::-webkit-scrollbar { display: none; } 
-
-        .video-player {
-            width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; 
-            position: relative; display: flex; align-items: center; justify-content: center;
-            background: #000; overflow: hidden;
-        }
-
-        video, .fallback-img {
-            width: 100%; height: 100%; object-fit: contain; cursor: pointer; z-index: 2;
-        }
-
-        .loader {
-            position: absolute; width: 40px; height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%;
-            border-top-color: var(--text-white); animation: spin 1s ease-in-out infinite;
-            z-index: 1; 
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .play-indicator {
-            position: absolute; font-size: 80px; color: rgba(255, 255, 255, 0.6);
-            pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 5;
-        }
-        .is-paused .play-indicator { opacity: 1; }
-
-        .floating-heart {
-            position: absolute; color: var(--tiktok-red); font-size: 80px; pointer-events: none;
-            transform: translate(-50%, -50%) scale(0); animation: popHeart 0.8s ease-out forwards;
-            z-index: 15; text-shadow: 0 0 15px rgba(0,0,0,0.4);
-        }
-        @keyframes popHeart {
-            0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 1; }
-            20% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
-            40% { transform: translate(-50%, -50%) scale(1) rotate(-5deg); }
-            100% { transform: translate(-50%, -150%) scale(1.5) rotate(0deg); opacity: 0; }
-        }
-
-        .ui-overlay { position: absolute; bottom: 80px; left: 15px; z-index: 10; pointer-events: none; }
-        .side-bar { position: absolute; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 25px; align-items: center; z-index: 10; }
-        .icon-btn { font-size: 32px; cursor: pointer; text-shadow: 0 0 10px rgba(0,0,0,0.8); transition: transform 0.2s; }
-        .icon-btn:active { transform: scale(0.9); }
+        :root { --bg-black: #010101; --tiktok-red: #ff0050; --text-white: #ffffff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #0a0a0a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-white); display: flex; justify-content: center; align-items: center; }
+        #app-wrapper { position: relative; width: 100%; height: 100dvh; background-color: var(--bg-black); overflow: hidden; display: flex; }
+        @media (min-width: 768px) { #app-wrapper { height: 90vh; max-width: 400px; border-radius: 30px; border: 8px solid #222; box-shadow: 0 0 30px rgba(0,0,0,0.8); } }
+        
+        /* Video Container */
+        #main-content { width: 100%; height: 100%; position: relative; transition: width 0.3s; }
+        #video-container { width: 100%; height: 100%; scroll-snap-type: y mandatory; overflow-y: scroll; scrollbar-width: none; overscroll-behavior-y: none; }
+        #video-container::-webkit-scrollbar { display: none; }
+        .video-player { width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; }
+        video, .fallback-img { width: 100%; height: 100%; object-fit: contain; cursor: pointer; z-index: 2; }
+        
+        /* UI Elements */
+        .side-bar { position: absolute; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 20px; align-items: center; z-index: 10; }
+        .icon-btn { font-size: 30px; cursor: pointer; text-shadow: 0 0 10px rgba(0,0,0,0.8); transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .icon-btn span { font-size: 12px; font-weight: bold; }
         .liked { color: var(--tiktok-red); }
-
-        .nav-tabs { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; z-index: 20; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+        .ui-overlay { position: absolute; bottom: 80px; left: 15px; z-index: 10; pointer-events: none; text-shadow: 0 0 5px rgba(0,0,0,1); }
+        .mute-btn { position: absolute; top: 20px; right: 20px; z-index: 20; font-size: 24px; cursor: pointer; text-shadow: 0 0 5px #000; }
+        
+        /* Navigation & Modals */
+        .bottom-menu { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.95)); display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+        .nav-tabs { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; z-index: 20; text-shadow: 0 0 5px #000; }
         .nav-item { cursor: pointer; opacity: 0.6; transition: 0.2s; }
         .active-tab { opacity: 1; border-bottom: 2px solid white; padding-bottom: 3px; }
         
-        .bottom-menu { position: absolute; bottom: 0; width: 100%; height: 60px; background: linear-gradient(transparent, rgba(0,0,0,0.95)); display: flex; justify-content: space-around; align-items: center; z-index: 20; }
-
-        /* Bottom Sheet (Modal) */
-        .modal-sheet {
-            position: absolute; bottom: -100%; left: 0; width: 100%; height: 75%;
-            background-color: #1a1a1a; border-top-left-radius: 15px; border-top-right-radius: 15px;
-            z-index: 30; transition: bottom 0.3s ease-in-out; display: flex; flex-direction: column;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
-        }
+        .modal-sheet { position: absolute; bottom: -100%; left: 0; width: 100%; height: 75%; background-color: #1a1a1a; border-radius: 15px 15px 0 0; z-index: 30; transition: bottom 0.3s; display: flex; flex-direction: column; box-shadow: 0 -5px 25px rgba(0,0,0,0.8); }
         .modal-sheet.active { bottom: 0; }
+        .modal-sheet.full { height: 100%; border-radius: 0; }
         .modal-header { padding: 15px; text-align: center; border-bottom: 1px solid #333; position: relative; }
-        .modal-header h3 { margin: 0; font-size: 16px; }
         .modal-header .fa-times { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 20px; }
         
-        /* Komentarze */
-        .comment-list { flex-grow: 1; overflow-y: auto; padding: 15px; }
-        .comment-item { display: flex; gap: 10px; margin-bottom: 15px; background: #222; padding: 10px; border-radius: 10px; }
-        .comment-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; background: #444; }
-        .comment-content { flex-grow: 1; }
-        .comment-content strong { color: var(--tiktok-red); font-size: 12px; }
-        .comment-content span.date { color: #888; font-size: 10px; margin-left: 5px; }
-        .comment-content p { margin: 5px 0 0 0; font-size: 14px; word-break: break-word; }
-        .comment-actions { margin-top: 8px; display: flex; gap: 15px; }
-        .comment-actions span { color: #aaa; font-size: 11px; cursor: pointer; transition: color 0.2s; }
-        .comment-actions span:hover { color: white; }
-        .comment-actions .delete-btn { color: #ff4d4d; }
-
-        /* Formularze */
-        .auth-panel, .profile-panel { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; background: #111; }
-        .auth-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: none; background: #333; color: white; outline: none; box-sizing: border-box;}
-        .auth-btn { padding: 10px; border-radius: 10px; border: none; background: var(--tiktok-red); color: white; cursor: pointer; font-weight: bold; flex-grow: 1;}
+        /* Inputs & Forms */
+        .input-row, .auth-panel, .profile-panel { padding: 15px; background: #111; display: flex; gap: 10px; flex-direction: column; }
+        .auth-input, .chat-input { width: 100%; padding: 12px; border-radius: 10px; border: none; background: #333; color: white; outline: none; box-sizing: border-box; }
+        .auth-btn { padding: 10px; border-radius: 10px; border: none; background: var(--tiktok-red); color: white; cursor: pointer; font-weight: bold; }
         
-        .comment-input-area { padding: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 5px; background: #111; }
-        .input-row { display: flex; gap: 10px; align-items: center; width: 100%; }
-        .input-row input { flex-grow: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
-        .send-btn { color: var(--tiktok-red); cursor: pointer; font-size: 24px; }
-        .user-info-row { display: flex; justify-content: space-between; font-size: 12px; color: #aaa; padding: 0 5px; align-items: center;}
+        /* Comments & Lists */
+        .scroll-list { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .list-item { display: flex; gap: 10px; background: #222; padding: 10px; border-radius: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #444; }
+        .item-content { flex-grow: 1; font-size: 14px; }
+        .item-content strong { color: var(--tiktok-red); }
+        .item-actions { display: flex; gap: 15px; margin-top: 8px; font-size: 12px; color: #aaa; }
+        .item-actions i { cursor: pointer; transition: 0.2s; } .item-actions i:hover { color: white; }
+        .reply-box { margin-top: 10px; padding-left: 15px; border-left: 2px solid #444; }
+        
+        /* Split Chat Screen */
+        .chat-overlay { position: absolute; right: -100%; width: 70%; height: 100%; background: rgba(20,20,20,0.95); z-index: 25; transition: right 0.3s; display: flex; flex-direction: column; border-left: 1px solid #333; backdrop-filter: blur(5px); }
+        .chat-overlay.active { right: 0; }
+        .msg-bubble { max-width: 80%; padding: 8px 12px; border-radius: 15px; margin-bottom: 10px; font-size: 13px; }
+        .msg-mine { background: var(--tiktok-red); align-self: flex-end; border-bottom-right-radius: 0; }
+        .msg-theirs { background: #444; align-self: flex-start; border-bottom-left-radius: 0; }
     </style>
 </head>
 <body>
-
     <div id="app-wrapper">
-        <div class="nav-tabs">
-            <span class="nav-item active-tab" onclick="showFeed()">For You</span>
-            <span class="nav-item" onclick="showLiked()">Liked</span>
-        </div>
-
-        <div id="video-container"></div>
-
-        <div class="bottom-menu">
-            <i class="fas fa-home icon-btn" onclick="showFeed()" style="font-size: 24px;"></i>
-            <i class="fas fa-heart icon-btn" onclick="showLiked()" style="font-size: 24px;"></i>
-            <i class="fas fa-user icon-btn" onclick="openProfile()" style="font-size: 24px;"></i>
-        </div>
-
-        <!-- Modal Komentarzy -->
-        <div id="comment-modal" class="modal-sheet">
-            <div class="modal-header">
-                <h3>Komentarze <span id="comment-count">(0)</span></h3>
-                <i class="fas fa-times" onclick="closeModal('comment-modal')"></i>
+        <div id="main-content">
+            <i class="fas fa-volume-up mute-btn" id="global-mute" onclick="toggleMute()"></i>
+            <div class="nav-tabs">
+                <span class="nav-item active-tab" onclick="showFeed()">Dla Ciebie</span>
+                <span class="nav-item" onclick="showLiked()">Polubione</span>
             </div>
             
-            <div id="comment-list" class="comment-list"></div>
-
-            <div id="auth-panel" class="auth-panel">
-                <div id="auth-msg" style="text-align: center; font-size: 13px; color: #ff4d4d;">Zaloguj się, aby komentować</div>
-                <input type="text" id="auth-nick" class="auth-input" placeholder="Twój Nick (do rejestracji)">
-                <input type="email" id="auth-email" class="auth-input" placeholder="Adres E-mail">
-                <input type="password" id="auth-pass" class="auth-input" placeholder="Hasło (min. 6 znaków)">
-                <div style="display: flex; gap: 10px;">
-                    <button class="auth-btn" onclick="loginUser()">Zaloguj</button>
-                    <button class="auth-btn" style="background: #444;" onclick="registerUser()">Zarejestruj</button>
-                </div>
-            </div>
-
-            <div id="comment-input-area" class="comment-input-area" style="display: none;">
-                <div class="user-info-row">
-                    <span style="display: flex; align-items: center; gap: 5px;">
-                        <img id="logged-user-avatar" src="image4.png" style="width:20px; height:20px; border-radius:50%;">
-                        <strong id="logged-user-nick" style="color:white;"></strong>
-                    </span>
-                </div>
-                <div class="input-row">
-                    <input type="text" id="comment-input" placeholder="Dodaj komentarz..." onkeypress="handleEnter(event)">
-                    <i class="fas fa-arrow-circle-up send-btn" onclick="addComment()"></i>
-                </div>
+            <div id="video-container"></div>
+            
+            <div class="bottom-menu">
+                <i class="fas fa-home icon-btn" onclick="showFeed()"></i>
+                <i class="fas fa-user-friends icon-btn" onclick="openFriends()"></i>
+                <i class="fas fa-plus-square icon-btn" onclick="openPropose()"></i>
+                <i class="fas fa-user icon-btn" onclick="openProfile()"></i>
+                <i class="fas fa-shield-alt icon-btn admin-only" style="display:none;" onclick="openAdmin()"></i>
             </div>
         </div>
 
-        <!-- Modal Profilu -->
-        <div id="profile-modal" class="modal-sheet">
+        <!-- Chat Split Screen -->
+        <div id="chat-overlay" class="chat-overlay">
             <div class="modal-header">
-                <h3>Mój Profil</h3>
-                <i class="fas fa-times" onclick="closeModal('profile-modal')"></i>
+                <h3 id="chat-friend-name">Czat</h3>
+                <i class="fas fa-times" onclick="closeChat()"></i>
             </div>
-            <div class="profile-panel" id="profile-settings" style="display: none;">
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <img id="preview-avatar" src="image4.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom: 10px;">
-                </div>
-                <input type="text" id="update-nick" class="auth-input" placeholder="Nowa nazwa profilu">
-                <input type="text" id="update-photo" class="auth-input" placeholder="Link do zdjęcia URL (np. imgur)">
-                <button class="auth-btn" onclick="updateProfile()">Zapisz Zmiany</button>
-                <button class="auth-btn" style="background: #444; margin-top: 15px;" onclick="logoutUser()">Wyloguj się</button>
-            </div>
-            <div class="profile-panel" id="profile-login-req" style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                <p>Musisz być zalogowany, aby edytować profil.</p>
-                <button class="auth-btn" onclick="closeModal('profile-modal'); openComments(1);">Przejdź do logowania</button>
+            <div class="scroll-list" id="chat-messages" style="flex-grow:1; display:flex; flex-direction:column;"></div>
+            <div style="padding:10px; background:#111; display:flex; gap:10px;">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Napisz..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <i class="fas fa-paper-plane" style="color:var(--tiktok-red); cursor:pointer; font-size:24px; align-self:center;" onclick="sendMsg()"></i>
             </div>
         </div>
 
+        <!-- Modals -->
+        <div id="comment-modal" class="modal-sheet">
+            <div class="modal-header"><h3>Komentarze <span id="comment-count">(0)</span></h3><i class="fas fa-times" onclick="closeModal('comment-modal')"></i></div>
+            <div id="comment-list" class="scroll-list"></div>
+            <div id="comment-input-area" class="input-row" style="display:none; flex-direction:row;">
+                <input type="text" id="comment-input" class="auth-input" placeholder="Dodaj komentarz..." onkeypress="if(event.key==='Enter') addComment()">
+                <i class="fas fa-arrow-circle-up" style="color:var(--tiktok-red); cursor:pointer; font-size:30px; align-self:center;" onclick="addComment()"></i>
+            </div>
+        </div>
+
+        <div id="profile-modal" class="modal-sheet full">
+            <div class="modal-header"><h3>Profil</h3><i class="fas fa-times" onclick="closeModal('profile-modal')"></i></div>
+            <div id="auth-panel" class="auth-panel">
+                <p style="text-align:center; color:gray;">Zaloguj się, aby zyskać pełen dostęp.</p>
+                <input type="text" id="auth-nick" class="auth-input" placeholder="Nick (przy rejestracji)">
+                <input type="email" id="auth-email" class="auth-input" placeholder="E-mail">
+                <input type="password" id="auth-pass" class="auth-input" placeholder="Hasło">
+                <button class="auth-btn" onclick="loginUser()">Zaloguj</button>
+                <button class="auth-btn" style="background:#444;" onclick="registerUser()">Zarejestruj</button>
+            </div>
+            <div id="profile-settings" class="profile-panel" style="display:none;">
+                <div style="text-align:center;">
+                    <img id="preview-avatar" src="" class="avatar" style="width:80px; height:80px; margin-bottom:10px;">
+                    <h3 id="profile-nick-display" style="margin:0;"></h3>
+                    <p style="color:#aaa; font-size:12px; margin:5px 0;">Konto utworzono: <span id="profile-date"></span></p>
+                    <p style="color:#aaa; font-size:12px; margin:5px 0;">Zaproponowane filmy: <span id="profile-uploads">0</span></p>
+                </div>
+                <input type="text" id="update-photo" class="auth-input" placeholder="URL nowego avatara">
+                <button class="auth-btn" onclick="updateProfile()">Zapisz Zmiany</button>
+                <button class="auth-btn" style="background:#444;" onclick="logoutUser()">Wyloguj</button>
+            </div>
+        </div>
+
+        <div id="friends-modal" class="modal-sheet full">
+            <div class="modal-header"><h3>Znajomi</h3><i class="fas fa-times" onclick="closeModal('friends-modal')"></i></div>
+            <div class="input-row" style="flex-direction:row;">
+                <input type="text" id="friend-nick" class="auth-input" placeholder="Wpisz pseudonim znajomego">
+                <button class="auth-btn" onclick="addFriend()">Dodaj</button>
+            </div>
+            <div id="friends-list" class="scroll-list"></div>
+        </div>
+
+        <div id="propose-modal" class="modal-sheet">
+            <div class="modal-header"><h3>Zaproponuj Film</h3><i class="fas fa-times" onclick="closeModal('propose-modal')"></i></div>
+            <div class="profile-panel">
+                <input type="text" id="propose-url" class="auth-input" placeholder="Link do pliku .mp4">
+                <button class="auth-btn" onclick="proposeVideo()">Wyślij do akceptacji</button>
+            </div>
+        </div>
+
+        <div id="admin-modal" class="modal-sheet full">
+            <div class="modal-header"><h3>Panel Admina</h3><i class="fas fa-times" onclick="closeModal('admin-modal')"></i></div>
+            <div class="nav-tabs" style="position:relative; margin-bottom:10px;">
+                <span class="nav-item active-tab">Oczekujące Filmy</span>
+            </div>
+            <div id="admin-list" class="scroll-list"></div>
+        </div>
     </div>
 
     <script>
-        // ==========================================
-        // 1. KONFIGURACJA I ZMIENNE
-        // ==========================================
+        // 1. CONFIGURATION
         const firebaseConfig = {
-            apiKey: "AIzaSyBnxvLaH6HF6gWqlJO9pCVaKvEC5eCrMzA",
-            authDomain: "popektok.firebaseapp.com",
-            projectId: "popektok",
-            storageBucket: "popektok.firebasestorage.app",
-            messagingSenderId: "805938481983",
-            appId: "1:805938481983:web:755947062531b57e24618a"
+            apiKey: "AIzaSyBnxvLaH6HF6gWqlJO9pCVaKvEC5eCrMzA", authDomain: "popektok.firebaseapp.com",
+            projectId: "popektok", storageBucket: "popektok.firebasestorage.app"
         };
+        const ADMIN_UID = "RF1LMBT4FoenkaaJDHs2Y45um3s1"; 
+        
+        let db, auth;
+        try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); auth = firebase.auth(); } catch(e) {}
 
-        const ADMIN_UID = "RF1LMBT4FoenkaaJDHs2Y45um3s1"; // Wklej swój UID z Firebase Auth
-        let db, auth; 
+        let currentUserData = null;
+        let isMuted = false;
+        let currentChatFriend = null;
+        let activeVideoId = null;
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth(); 
-        } catch(e) { console.error("Firebase err"); }
-
-        const container = document.getElementById('video-container');
-        const TOTAL_VIDEOS = 300;
-        let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || [];
-        let lastWatched = parseInt(localStorage.getItem('lastWatched')) || 1;
-        let isShowingLiked = false;
-        let currentCommentVideoId = null;
-
-        // Odczyt parametru z URL dla GitHub Pages (np. ?v=12)
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlId = parseInt(urlParams.get('v'));
-        if (!isNaN(urlId) && urlId > 0 && urlId <= TOTAL_VIDEOS) {
-        lastWatched = urlId;
-}
-
-        // ==========================================
-        // 2. LOGIKA KONT (AUTH & PROFILE)
-        // ==========================================
-        if(auth) {
-            auth.onAuthStateChanged((user) => {
-                const authPanel = document.getElementById('auth-panel');
-                const commentInputArea = document.getElementById('comment-input-area');
-                const profileSettings = document.getElementById('profile-settings');
-                const profileLoginReq = document.getElementById('profile-login-req');
-
-                if (user) {
-                    authPanel.style.display = 'none';
-                    commentInputArea.style.display = 'flex';
-                    profileSettings.style.display = 'flex';
-                    profileLoginReq.style.display = 'none';
-                    
-                    document.getElementById('logged-user-nick').innerText = user.displayName || "Użytkownik"; 
-                    document.getElementById('logged-user-avatar').src = user.photoURL || "image4.png";
-                    document.getElementById('preview-avatar').src = user.photoURL || "image4.png";
-                    document.getElementById('update-nick').value = user.displayName || "";
-                    document.getElementById('update-photo').value = user.photoURL || "";
-
-                    if (currentCommentVideoId !== null) loadComments(currentCommentVideoId);
-                } else {
-                    authPanel.style.display = 'flex';
-                    commentInputArea.style.display = 'none';
-                    profileSettings.style.display = 'none';
-                    profileLoginReq.style.display = 'flex';
-                    if (currentCommentVideoId !== null) loadComments(currentCommentVideoId);
+        // 2. AUTH & PROFILES
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                document.getElementById('auth-panel').style.display = 'none';
+                document.getElementById('profile-settings').style.display = 'flex';
+                document.getElementById('comment-input-area').style.display = 'flex';
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = (user.uid === ADMIN_UID) ? 'flex' : 'none');
+                
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                if (!userDoc.exists) {
+                    await db.collection("users").doc(user.uid).set({
+                        uid: user.uid, nick: user.displayName || "User", photo: user.photoURL || "",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(), uploads: 0, friends: []
+                    });
                 }
-            });
-        }
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                    currentUserData = doc.data();
+                    document.getElementById('preview-avatar').src = currentUserData.photo || "https://via.placeholder.com/150";
+                    document.getElementById('profile-nick-display').innerText = currentUserData.nick;
+                    document.getElementById('profile-uploads').innerText = currentUserData.uploads || 0;
+                    if(currentUserData.createdAt) {
+                        document.getElementById('profile-date').innerText = currentUserData.createdAt.toDate().toLocaleDateString();
+                    }
+                });
+            } else {
+                currentUserData = null;
+                document.getElementById('auth-panel').style.display = 'flex';
+                document.getElementById('profile-settings').style.display = 'none';
+                document.getElementById('comment-input-area').style.display = 'none';
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+        });
 
         function registerUser() {
             const nick = document.getElementById('auth-nick').value.trim();
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
-
-            if (!nick) { document.getElementById('auth-msg').innerText = "Podaj Nick!"; return; }
-
-            auth.createUserWithEmailAndPassword(email, pass).then((cred) => {
-                return cred.user.updateProfile({ displayName: nick, photoURL: "image4.png" });
-            }).catch((error) => { document.getElementById('auth-msg').innerText = "Błąd: " + error.message; });
+            if (!nick) return alert("Podaj Nick!");
+            auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+                cred.user.updateProfile({ displayName: nick });
+                db.collection("users").doc(cred.user.uid).set({ uid: cred.user.uid, nick: nick, nickLower: nick.toLowerCase(), photo: "", createdAt: firebase.firestore.FieldValue.serverTimestamp(), uploads: 0, friends: [] });
+                closeModal('profile-modal');
+            }).catch(e => alert(e.message));
         }
 
         function loginUser() {
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-pass').value;
-            auth.signInWithEmailAndPassword(email, pass).catch(() => {
-                document.getElementById('auth-msg').innerText = "Błąd logowania.";
-            });
+            auth.signInWithEmailAndPassword(document.getElementById('auth-email').value, document.getElementById('auth-pass').value)
+            .then(() => closeModal('profile-modal')).catch(e => alert("Błąd logowania."));
         }
-
-        function logoutUser() {
-            auth.signOut();
-            closeModal('profile-modal');
-        }
-
+        function logoutUser() { auth.signOut(); closeModal('profile-modal'); }
         function updateProfile() {
-            const user = auth.currentUser;
-            if(!user) return;
-            const newNick = document.getElementById('update-nick').value.trim();
-            const newPhoto = document.getElementById('update-photo').value.trim() || "image4.png";
-
-            user.updateProfile({
-                displayName: newNick,
-                photoURL: newPhoto
-            }).then(() => {
-                alert("Profil zaktualizowany!");
-                document.getElementById('logged-user-nick').innerText = newNick;
-                document.getElementById('logged-user-avatar').src = newPhoto;
-                document.getElementById('preview-avatar').src = newPhoto;
-            }).catch(e => alert("Błąd zapisu: " + e.message));
+            const photo = document.getElementById('update-photo').value.trim();
+            if(photo) db.collection("users").doc(auth.currentUser.uid).update({ photo: photo });
+            alert("Zapisano!");
         }
 
-        function openProfile() { document.getElementById('profile-modal').classList.add('active'); }
-        function closeModal(id) { 
-            document.getElementById(id).classList.remove('active'); 
-            if(id === 'comment-modal') currentCommentVideoId = null;
+        // 3. VIDEO FEED
+        const container = document.getElementById('video-container');
+        const TOTAL_VIDEOS = 10; // Przykładowa liczba na start
+        
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('global-mute').className = isMuted ? "fas fa-volume-mute mute-btn" : "fas fa-volume-up mute-btn";
+            document.querySelectorAll('video').forEach(v => v.muted = isMuted);
         }
 
-        // ==========================================
-        // 3. OBSŁUGA WIDEO & FEED
-        // ==========================================
-        const loadObserver = new IntersectionObserver((entries) => {
+        const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
-                if (entry.isIntersecting && entry.target.classList.contains('empty')) {
-                    renderVideoHTML(entry.target);
-                }
-            });
-        }, { rootMargin: "100% 0px 100% 0px" });
-
-        const playObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const video = entry.target.querySelector('video');
-                const index = parseInt(entry.target.dataset.index);
+                const vid = entry.target.querySelector('video');
                 if (entry.isIntersecting) {
-                    if (video) { video.play().catch(()=>{}); entry.target.classList.remove('is-paused'); }
-                    if (!isShowingLiked) {
-                        localStorage.setItem('lastWatched', index);
-                        history.replaceState(null, null, `?v=${index}`);
-}
-                } else {
-                    if (video) { video.pause(); video.currentTime = 0; entry.target.classList.add('is-paused'); }
-                }
+                    activeVideoId = entry.target.dataset.id;
+                    if(vid) { vid.muted = isMuted; vid.play().catch(()=>{}); }
+                    incrementViews(activeVideoId);
+                } else if(vid) vid.pause();
             });
         }, { threshold: 0.6 });
 
-        function initFeed() {
-            isShowingLiked = false;
+        async function showFeed() {
             container.innerHTML = '';
-            for (let i = 1; i <= TOTAL_VIDEOS; i++) {
-                const w = document.createElement('div');
-                w.className = 'video-player empty'; w.id = `wrapper-${i}`; w.dataset.index = i;
-                container.appendChild(w); loadObserver.observe(w); playObserver.observe(w);
+            for(let i=1; i<=TOTAL_VIDEOS; i++) {
+                const w = document.createElement('div'); w.className = 'video-player'; w.dataset.id = i;
+                container.appendChild(w);
+                renderVideo(w, i, `video${i}.mp4`);
+                observer.observe(w);
             }
-            setTimeout(() => {
-                const target = document.getElementById(`wrapper-${lastWatched}`);
-                if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
-            }, 50);
+            // Zaciągnij zaakceptowane filmy z bazy
+            db.collection("videos").where("status", "==", "approved").get().then(snap => {
+                snap.forEach(doc => {
+                    const w = document.createElement('div'); w.className = 'video-player'; w.dataset.id = doc.id;
+                    container.appendChild(w); renderVideo(w, doc.id, doc.data().url, doc.data().authorNick); observer.observe(w);
+                });
+            });
         }
 
-        function renderVideoHTML(wrapper) {
-            const index = parseInt(wrapper.dataset.index);
-            const isLiked = likedVideos.includes(index) ? 'liked' : '';
-            wrapper.classList.remove('empty');
+        function renderVideo(wrapper, id, url, author = "@Popek") {
             wrapper.innerHTML = `
-                <div class="loader"></div>
-                <i class="fas fa-play play-indicator"></i>
-                <video id="vid-${index}" loop playsinline preload="metadata" onclick="handleTap(event, this, ${index})" src="video${index}.mp4"></video>
+                <video src="${url}" loop playsinline onclick="this.paused ? this.play() : this.pause()"></video>
                 <div class="side-bar">
-                    <i class="fas fa-heart icon-btn like-btn-${index} ${isLiked}" onclick="toggleLike(${index})"></i>
-                    <i class="fas fa-comment-dots icon-btn" onclick="openComments(${index})"></i>
-                    <i class="fas fa-share icon-btn" onclick="shareVideo(${index})"></i>
+                    <div class="icon-btn" onclick="likeVideo('${id}')"><i class="fas fa-heart" id="vid-heart-${id}"></i><span id="vid-likes-${id}">0</span></div>
+                    <div class="icon-btn" onclick="openComments('${id}')"><i class="fas fa-comment-dots"></i></div>
+                    <div class="icon-btn" onclick="shareToChat('${url}')"><i class="fas fa-share"></i></div>
                 </div>
-                <div class="ui-overlay">
-                    <h4 style="margin:0 0 5px 0;">@Popek</h4>
-                    <p style="margin:0; font-size: 14px;">PopekTok #${index}</p>
-                </div>
+                <div class="ui-overlay"><h4>${author}</h4><p><i class="fas fa-eye"></i> <span id="vid-views-${id}">0</span> wyświetleń</p></div>
             `;
-            const vid = wrapper.querySelector('video');
-            vid.onerror = function() {
-                vid.outerHTML = `<img src="image2.png" class="fallback-img" onclick="handleTap(event, this, ${index})">`;
-            };
+            // Nasłuchiwanie statystyk
+            db.collection("videoStats").doc(String(id)).onSnapshot(doc => {
+                if(doc.exists) {
+                    document.getElementById(`vid-likes-${id}`).innerText = doc.data().likes || 0;
+                    document.getElementById(`vid-views-${id}`).innerText = doc.data().views || 0;
+                }
+            });
         }
 
-        // ==========================================
-        // 4. UDOSTĘPNIANIE
-        // ==========================================
-        function shareVideo(index) {
-            const shareUrl = `${window.location.origin}${window.location.pathname}?v=${index}`;
-            if (navigator.share) {
-                navigator.share({ title: 'PopekTok', text: `Zobacz PopekTok #${index}!`, url: shareUrl })
-                .catch((e) => console.log('Błąd udostępniania', e));
+        function incrementViews(id) {
+            db.collection("videoStats").doc(String(id)).set({ views: firebase.firestore.FieldValue.increment(1) }, {merge:true});
+        }
+
+        function likeVideo(id) {
+            if(!auth.currentUser) return openProfile();
+            const ref = db.collection("videoStats").doc(String(id));
+            const icon = document.getElementById(`vid-heart-${id}`);
+            if(icon.classList.contains('liked')) {
+                icon.classList.remove('liked');
+                ref.set({ likes: firebase.firestore.FieldValue.increment(-1) }, {merge:true});
             } else {
-                navigator.clipboard.writeText(shareUrl).then(() => alert("Skopiowano link do schowka!"));
+                icon.classList.add('liked');
+                ref.set({ likes: firebase.firestore.FieldValue.increment(1) }, {merge:true});
             }
         }
 
-        // ==========================================
-        // 5. KOMENTARZE I PANEL ADMINA
-        // ==========================================
-        function openComments(index) {
-            currentCommentVideoId = index;
+        // 4. COMMENTS & REPLIES
+        let currentReplyId = null;
+        function openComments(vidId) {
             document.getElementById('comment-modal').classList.add('active');
-            loadComments(index);
-        }
-
-        function loadComments(index) {
-            const list = document.getElementById('comment-list');
-            list.innerHTML = '<div class="loader" style="position:relative; margin: 20px auto;"></div>';
-
-            db.collection("comments").where("videoId", "==", index).onSnapshot((snap) => {
-                list.innerHTML = '';
+            activeVideoId = vidId;
+            db.collection("comments").where("videoId", "==", String(vidId)).orderBy("timestamp").onSnapshot(snap => {
+                const list = document.getElementById('comment-list'); list.innerHTML = '';
                 document.getElementById('comment-count').innerText = `(${snap.size})`;
-                
-                if (snap.empty) { list.innerHTML = '<p style="text-align:center; color:#888;">Brak komentarzy.</p>'; return; }
-
-                let arr = [];
-                snap.forEach((doc) => { let d = doc.data(); d.id = doc.id; arr.push(d); });
-                arr.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-
-                const currentUser = auth.currentUser;
-
-                arr.forEach((data) => {
-                    const div = document.createElement('div');
-                    div.className = 'comment-item';
-                    
-                    let dateStr = "";
-                    if (data.timestamp) {
-                        const d = data.timestamp.toDate();
-                        dateStr = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0');
-                    }
-
-                    let actionsHtml = '';
-                    const isOwner = currentUser && currentUser.uid === data.authorUid;
-                    const isAdmin = currentUser && currentUser.uid === ADMIN_UID;
-
-                    if (isOwner || isAdmin) {
-                        actionsHtml = `<div class="comment-actions">`;
-                        if (isOwner) actionsHtml += `<span onclick="editComment('${data.id}')"><i class="fas fa-edit"></i> Edytuj</span>`;
-                        actionsHtml += `<span class="delete-btn" onclick="deleteComment('${data.id}')"><i class="fas fa-trash"></i> Usuń ${isAdmin && !isOwner ? '(Admin)' : ''}</span></div>`;
-                    }
-
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div'); div.className = 'list-item';
                     div.innerHTML = `
-                        <img src="${data.authorPhoto || 'image4.png'}" class="comment-avatar">
-                        <div class="comment-content">
-                            <strong>${data.authorName || 'Użytkownik'}</strong> <span class="date">${dateStr}</span>
-                            <p id="comment-text-${data.id}">${data.text}</p>
-                            ${actionsHtml}
+                        <img src="${d.photo||'https://via.placeholder.com/40'}" class="avatar">
+                        <div class="item-content">
+                            <strong>${d.author}</strong> <span style="color:#aaa; font-size:10px;">${d.likes||0} <i class="fas fa-heart"></i></span>
+                            <p style="margin:5px 0;">${d.text}</p>
+                            <div class="item-actions">
+                                <span onclick="likeComment('${doc.id}')"><i class="fas fa-heart"></i> Lubię to</span>
+                                <span onclick="setReply('${doc.id}', '${d.author}')"><i class="fas fa-reply"></i> Odpowiedz</span>
+                            </div>
+                            <div id="replies-${doc.id}" class="reply-box"></div>
                         </div>
                     `;
                     list.appendChild(div);
+                    loadReplies(doc.id);
                 });
-                setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
             });
         }
 
         function addComment() {
+            if(!auth.currentUser) return;
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
-            const user = auth.currentUser;
+            if(!text) return;
             
-            if (!user) return alert("Zaloguj się!");
-            if (text === '' || currentCommentVideoId === null) return;
-            
-            input.value = ''; 
-            
-            db.collection("comments").add({
-                videoId: currentCommentVideoId,
-                text: text,
-                authorName: user.displayName || "Użytkownik",
-                authorPhoto: user.photoURL || "image4.png",
-                authorUid: user.uid, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            if(currentReplyId) {
+                db.collection("comments").doc(currentReplyId).collection("replies").add({
+                    text: text, author: currentUserData.nick, photo: currentUserData.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                currentReplyId = null; input.placeholder = "Dodaj komentarz...";
+            } else {
+                db.collection("comments").add({
+                    videoId: String(activeVideoId), text: text, author: currentUserData.nick, photo: currentUserData.photo,
+                    likes: 0, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            input.value = '';
+        }
+
+        function setReply(commentId, author) {
+            currentReplyId = commentId;
+            document.getElementById('comment-input').placeholder = `Odpowiedz do ${author}...`;
+            document.getElementById('comment-input').focus();
+        }
+
+        function likeComment(docId) {
+            db.collection("comments").doc(docId).update({ likes: firebase.firestore.FieldValue.increment(1) });
+        }
+
+        function loadReplies(commentId) {
+            db.collection("comments").doc(commentId).collection("replies").orderBy("timestamp").onSnapshot(snap => {
+                const box = document.getElementById(`replies-${commentId}`); box.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    box.innerHTML += `<div style="margin-bottom:5px; font-size:12px;"><strong>${d.author}</strong>: ${d.text}</div>`;
+                });
             });
         }
 
-        function deleteComment(docId) {
-            if(confirm("Usunąć ten komentarz?")) {
-                db.collection("comments").doc(docId).delete();
-            }
+        // 5. FRIENDS & SPLIT CHAT
+        function openFriends() {
+            if(!auth.currentUser) return openProfile();
+            document.getElementById('friends-modal').classList.add('active');
+            renderFriends();
         }
 
-        function editComment(docId) {
-            const currentText = document.getElementById('comment-text-' + docId).innerText;
-            const newText = prompt("Edytuj komentarz:", currentText);
-            if (newText && newText.trim() !== "") {
-                db.collection("comments").doc(docId).update({ text: newText.trim() });
-            }
+        async function addFriend() {
+            const nick = document.getElementById('friend-nick').value.trim().toLowerCase();
+            if(!nick) return;
+            const snap = await db.collection("users").where("nickLower", "==", nick).get();
+            if(snap.empty) return alert("Nie znaleziono użytkownika.");
+            const friendId = snap.docs[0].id;
+            if(friendId === auth.currentUser.uid) return alert("Nie możesz dodać siebie.");
+            
+            db.collection("users").doc(auth.currentUser.uid).update({ friends: firebase.firestore.FieldValue.arrayUnion(friendId) });
+            db.collection("users").doc(friendId).update({ friends: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid) });
+            alert("Dodano znajomego!");
         }
 
-        function handleEnter(e) { if (e.key === 'Enter') addComment(); }
-
-        // ==========================================
-        // 6. INTERAKCJE (LIKE, DOUBLE TAP)
-        // ==========================================
-        let clickTimer = null;
-        function handleTap(e, el, index) {
-            const w = el.closest('.video-player');
-            if (clickTimer == null) {
-                clickTimer = setTimeout(() => {
-                    clickTimer = null;
-                    if (el.tagName === 'VIDEO') {
-                        if (el.paused) { el.play(); w.classList.remove('is-paused'); } 
-                        else { el.pause(); w.classList.add('is-paused'); }
-                    }
-                }, 250);
-            } else {
-                clearTimeout(clickTimer); clickTimer = null;
-                if (el.tagName === 'VIDEO' && el.paused) { el.play(); w.classList.remove('is-paused'); }
-                if (!likedVideos.includes(index)) toggleLike(index);
-                
-                const heart = document.createElement('i');
-                heart.className = 'fas fa-heart floating-heart';
-                const rect = w.getBoundingClientRect();
-                heart.style.left = `${e.clientX - rect.left}px`;
-                heart.style.top = `${e.clientY - rect.top}px`;
-                w.appendChild(heart);
-                setTimeout(() => heart.remove(), 800);
-            }
+        function renderFriends() {
+            if(!currentUserData || !currentUserData.friends) return;
+            const list = document.getElementById('friends-list'); list.innerHTML = '';
+            currentUserData.friends.forEach(async (fId) => {
+                const fDoc = await db.collection("users").doc(fId).get();
+                if(fDoc.exists) {
+                    const d = fDoc.data();
+                    list.innerHTML += `
+                        <div class="list-item" style="align-items:center;">
+                            <img src="${d.photo||'https://via.placeholder.com/40'}" class="avatar">
+                            <strong style="flex-grow:1;">${d.nick}</strong>
+                            <button class="auth-btn" style="padding:5px 10px;" onclick="openChat('${fId}', '${d.nick}')">Napisz</button>
+                        </div>
+                    `;
+                }
+            });
         }
 
-        function toggleLike(index) {
-            const icons = document.querySelectorAll(`.like-btn-${index}`);
-            if (likedVideos.includes(index)) {
-                likedVideos = likedVideos.filter(id => id !== index);
-                icons.forEach(i => i.classList.remove('liked'));
-            } else {
-                likedVideos.push(index);
-                icons.forEach(i => i.classList.add('liked'));
-            }
-            localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
+        function openChat(friendId, friendNick) {
+            currentChatFriend = friendId;
+            document.getElementById('chat-overlay').classList.add('active');
+            document.getElementById('chat-friend-name').innerText = `Czat: ${friendNick}`;
+            closeModal('friends-modal');
+            
+            const chatId = auth.currentUser.uid < friendId ? `${auth.currentUser.uid}_${friendId}` : `${friendId}_${auth.currentUser.uid}`;
+            db.collection("chats").doc(chatId).collection("messages").orderBy("timestamp").onSnapshot(snap => {
+                const box = document.getElementById('chat-messages'); box.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const isMine = d.sender === auth.currentUser.uid;
+                    box.innerHTML += `<div class="msg-bubble ${isMine ? 'msg-mine' : 'msg-theirs'}">${d.text.includes('.mp4') ? `<a href="${d.text}" style="color:white; text-decoration:underline;">Wysłał(a) film!</a>` : d.text}</div>`;
+                });
+                box.scrollTop = box.scrollHeight;
+            });
         }
 
-        function showLiked() {
-            isShowingLiked = true; container.innerHTML = '';
-            document.querySelectorAll('.nav-item')[1].classList.add('active-tab');
-            document.querySelectorAll('.nav-item')[0].classList.remove('active-tab');
-            if (likedVideos.length === 0) return container.innerHTML = '<div class="video-player"><h2 style="color:white">Brak polubień</h2></div>';
-            likedVideos.forEach(id => createEmptyWrapper(id));
+        function closeChat() { document.getElementById('chat-overlay').classList.remove('active'); currentChatFriend = null; }
+        
+        function sendMsg(forcedText = null) {
+            const text = forcedText || document.getElementById('chat-input').value.trim();
+            if(!text || !currentChatFriend) return;
+            const chatId = auth.currentUser.uid < currentChatFriend ? `${auth.currentUser.uid}_${currentChatFriend}` : `${currentChatFriend}_${auth.currentUser.uid}`;
+            db.collection("chats").doc(chatId).collection("messages").add({
+                text: text, sender: auth.currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('chat-input').value = '';
         }
 
-        function showFeed() {
-            document.querySelectorAll('.nav-item')[0].classList.add('active-tab');
-            document.querySelectorAll('.nav-item')[1].classList.remove('active-tab');
-            initFeed();
-        }
-        function createEmptyWrapper(index) {
-            const w = document.createElement('div');
-            w.className = 'video-player empty'; w.id = `wrapper-${index}`; w.dataset.index = index;
-            container.appendChild(w); loadObserver.observe(w); playObserver.observe(w);
+        function shareToChat(url) {
+            if(!auth.currentUser) return openProfile();
+            openFriends();
+            alert("Otwarto znajomych. Wybierz z kim chcesz pisać, a następnie wklej mu link.");
+            // Kopiowanie do schowka dla wygody
+            navigator.clipboard.writeText(url);
         }
 
-        window.onload = initFeed;
+        // 6. ADMIN & VIDEO PROPOSAL
+        function openPropose() {
+            if(!auth.currentUser) return openProfile();
+            document.getElementById('propose-modal').classList.add('active');
+        }
+
+        function proposeVideo() {
+            const url = document.getElementById('propose-url').value.trim();
+            if(!url) return;
+            db.collection("videos").add({
+                url: url, authorUid: auth.currentUser.uid, authorNick: currentUserData.nick, status: "pending", timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                db.collection("users").doc(auth.currentUser.uid).update({ uploads: firebase.firestore.FieldValue.increment(1) });
+                alert("Wysłano do akceptacji!"); closeModal('propose-modal');
+            });
+        }
+
+        function openAdmin() {
+            document.getElementById('admin-modal').classList.add('active');
+            db.collection("videos").where("status", "==", "pending").onSnapshot(snap => {
+                const list = document.getElementById('admin-list'); list.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    list.innerHTML += `
+                        <div class="list-item" style="flex-direction:column;">
+                            <span><strong>Od:</strong> ${d.authorNick} | <strong>Link:</strong> <a href="${d.url}" target="_blank" style="color:var(--tiktok-red)">Sprawdź</a></span>
+                            <div style="display:flex; gap:10px;">
+                                <button class="auth-btn" onclick="approveVideo('${doc.id}')">Akceptuj</button>
+                                <button class="auth-btn" style="background:#444;" onclick="rejectVideo('${doc.id}')">Odrzuć</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function approveVideo(id) { db.collection("videos").doc(id).update({ status: "approved" }); }
+        function rejectVideo(id) { db.collection("videos").doc(id).delete(); }
+
+        // UTILS
+        function openProfile() { document.getElementById('profile-modal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        window.onload = showFeed;
     </script>
 </body>
 </html>
