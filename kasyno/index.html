@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Popek Kasyno</title>
+<style>
+  :root {
+    --bg: #0c0e12;
+    --bg2: #12151c;
+    --card: #161a24;
+    --card2: #1c2230;
+    --line: #2a3142;
+    --text: #f0f3fa;
+    --muted: #8b95a8;
+    --purple: #7c5cff;
+    --purple2: #9b7bff;
+    --green: #00e701;
+    --green-dim: #0a3d12;
+    --red: #ff3b5c;
+    --red-dim: #3d0a14;
+    --gold: #ffc860;
+    --blue: #3d9eff;
+    --radius: 16px;
+    --font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 50% -15%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(ellipse 600px 400px at 100% 50%, rgba(0,231,1,.04), transparent 50%);
+  }
+
+  /* HEADER */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding: 12px 20px;
+    background: rgba(12,14,18,.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 900; font-size: 1.2rem; letter-spacing: -.02em;
+  }
+  .brand-badge {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--purple), #ff5c8a);
+    display: grid; place-items: center; font-size: 1.1rem;
+    box-shadow: 0 4px 20px rgba(124,92,255,.4);
+  }
+  .brand-text {
+    background: linear-gradient(90deg, #fff, var(--gold));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .wallet {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--line);
+    padding: 8px 14px; border-radius: 999px; font-weight: 800;
+  }
+  .wallet em { color: var(--gold); font-style: normal; }
+
+  /* LAYOUT */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 16px 120px; }
+
+  .nav {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;
+    background: var(--card); padding: 6px; border-radius: 14px; border: 1px solid var(--line);
+  }
+  .nav button {
+    flex: 1; min-width: 70px; border: none; cursor: pointer;
+    background: transparent; color: var(--muted); font-weight: 700;
+    padding: 10px 12px; border-radius: 10px; font-size: .9rem; transition: .15s;
+  }
+  .nav button:hover { color: var(--text); background: var(--card2); }
+  .nav button.on { background: var(--purple); color: #fff; box-shadow: 0 4px 16px rgba(124,92,255,.35); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 1.2rem; margin-bottom: 4px; }
+  .muted { color: var(--muted); font-size: .9rem; margin-bottom: 14px; }
+
+  /* GAME GRID */
+  .games {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .gcard {
+    position: relative; overflow: hidden;
+    background: var(--card2); border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px 12px; text-align: center;
+    cursor: pointer; transition: .18s;
+  }
+  .gcard::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(124,92,255,.12), transparent 55%);
+    opacity: 0; transition: .18s;
+  }
+  .gcard:hover { border-color: var(--purple); transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.35); }
+  .gcard:hover::before { opacity: 1; }
+  .gcard .e { font-size: 2rem; display: block; margin-bottom: 8px; position: relative; }
+  .gcard .n { font-weight: 800; font-size: .95rem; position: relative; }
+
+  /* FORMS */
+  label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  input[type=number], select {
+    width: 100%; background: var(--bg); border: 1px solid var(--line);
+    color: var(--text); padding: 12px 14px; border-radius: 12px;
+    font-size: 1rem; font-weight: 600; margin-bottom: 12px; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--purple); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+  .row > * { flex: 1; min-width: 110px; }
+
+  .btn {
+    border: none; cursor: pointer; font-weight: 800; border-radius: 12px;
+    padding: 12px 18px; font-size: .95rem; transition: .12s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .btn-p { background: var(--purple); color: #fff; }
+  .btn-p:hover:not(:disabled) { background: var(--purple2); }
+  .btn-g { background: var(--green); color: #041a06; }
+  .btn-g:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn-r { background: var(--red); color: #fff; }
+  .btn-y { background: var(--gold); color: #1a1200; }
+  .btn-b { background: var(--blue); color: #fff; }
+  .btn-x { background: var(--card2); color: var(--text); border: 1px solid var(--line); }
+
+  .back { margin-bottom: 14px; }
+
+  /* RESULTS */
+  .res {
+    margin-top: 14px; padding: 14px 16px; border-radius: 12px;
+    background: var(--card2); border: 1px solid var(--line);
+    font-weight: 600;
+  }
+  .res.win { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .res.loss { border-color: var(--red); background: var(--red-dim); color: #ff8a9e; }
+  .res.draw { border-color: var(--gold); color: var(--gold); }
+  .res.play { border-color: var(--blue); color: var(--blue); }
+
+  /* MINES */
+  .mines-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px;
+    max-width: 340px; margin: 14px 0;
+  }
+  .mcell {
+    aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card2); font-size: 1.25rem; cursor: pointer;
+    transition: .1s; font-weight: 700;
+  }
+  .mcell:hover:not(:disabled) { border-color: var(--purple); }
+  .mcell.safe { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .mcell.bomb { background: var(--red-dim); border-color: var(--red); }
+  .mcell:disabled { cursor: default; }
+
+  /* KENO */
+  .keno-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px;
+    max-width: 360px; margin: 14px 0;
+  }
+  .knum {
+    aspect-ratio: 1; border-radius: 10px; border: none;
+    background: #252b3a; color: var(--text); font-weight: 800;
+    font-size: 1rem; cursor: pointer; transition: .1s;
+  }
+  .knum:hover { filter: brightness(1.15); }
+  .knum.on { background: var(--green); color: #041a06; box-shadow: 0 0 12px rgba(0,231,1,.35); }
+
+  /* CRASH */
+  .crash-box {
+    text-align: center; padding: 28px 10px; margin: 10px 0;
+    background: var(--bg); border-radius: 14px; border: 1px solid var(--line);
+  }
+  .crash-mult {
+    font-size: clamp(2.5rem, 8vw, 3.8rem); font-weight: 900;
+    font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+  }
+
+  /* BJ */
+  .bj-line { margin: 8px 0; font-size: 1.05rem; }
+  .bj-cards { font-size: 1.5rem; letter-spacing: .06em; font-weight: 700; }
+
+  /* RPS */
+  .rps-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .rps-row .btn { font-size: 1.6rem; min-width: 72px; padding: 14px; }
+
+  /* STATS */
+  .stat {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0; border-bottom: 1px solid var(--line); font-weight: 600;
+  }
+  .stat:last-child { border-bottom: none; }
+  .stat span:first-child { color: var(--muted); font-weight: 500; }
+
+  /* MUSIC PLAYER */
+  .player {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: rgba(18,21,28,.96); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 10px 16px 12px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .player-info { flex: 1; min-width: 120px; }
+  .player-info .t { font-weight: 800; font-size: .9rem; }
+  .player-info .s { color: var(--muted); font-size: .75rem; }
+  .player-ctrls { display: flex; align-items: center; gap: 6px; }
+  .player-ctrls button {
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: var(--card2); color: var(--text); cursor: pointer;
+    font-size: 1rem; display: grid; place-items: center; transition: .12s;
+  }
+  .player-ctrls button.play-main {
+    width: 46px; height: 46px; background: var(--purple); font-size: 1.15rem;
+  }
+  .player-ctrls button:hover { filter: brightness(1.15); }
+  .vol-wrap { display: flex; align-items: center; gap: 6px; min-width: 100px; }
+  .vol-wrap input[type=range] { width: 80px; accent-color: var(--purple); }
+  .progress {
+    flex-basis: 100%; height: 4px; background: var(--line); border-radius: 2px;
+    cursor: pointer; order: -1; position: relative;
+  }
+  .progress-bar {
+    height: 100%; background: var(--purple); border-radius: 2px; width: 0%;
+    pointer-events: none;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-12px);
+    background: var(--card2); border: 1px solid var(--line);
+    padding: 12px 20px; border-radius: 12px; font-weight: 700;
+    z-index: 300; opacity: 0; pointer-events: none; transition: .25s;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45); max-width: 90vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none !important; }
+  footer.note {
+    text-align: center; color: var(--muted); font-size: .75rem;
+    padding: 8px; margin-bottom: 70px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">🎰</div>
+    <span class="brand-text">Popek Kasyno</span>
+  </div>
+  <div class="wallet">💰 <em id="bal">100</em> <span style="color:var(--muted);font-weight:600">monet</span></div>
+</div>
+
+<div class="wrap">
+  <nav class="nav" id="nav">
+    <button class="on" data-v="games">Gry</button>
+    <button data-v="eco">Ekonomia</button>
+    <button data-v="shop">Sklep</button>
+    <button data-v="stats">Stats</button>
+  </nav>
+
+  <!-- GAMES -->
+  <section id="v-games">
+    <div class="card" id="gameListCard">
+      <h2>Wybierz grę</h2>
+      <p class="muted">Lokalne kasyno · zero prawdziwych pieniędzy</p>
+      <div class="games" id="gameGrid"></div>
+    </div>
+    <div class="card hidden" id="gamePlayCard">
+      <button class="btn btn-x back" id="backBtn">← Menu gier</button>
+      <div id="gameRoot"></div>
+    </div>
+  </section>
+
+  <!-- ECONOMY -->
+  <section id="v-eco" class="hidden">
+    <div class="card">
+      <h2>☀️ Daily</h2>
+      <p class="muted">10 monet + streak (max +15) · VIP +5</p>
+      <button class="btn btn-y" id="btnDaily">Odbierz daily</button>
+      <div class="muted" id="dailyInfo" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>🙏 Beg</h2>
+      <p class="muted">Co 1h · ~35% na 1–8 monet · 1% jackpot 100</p>
+      <button class="btn btn-p" id="btnBeg">Żebrz</button>
+      <div class="muted" id="begInfo" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section id="v-shop" class="hidden">
+    <div class="card">
+      <h2>🛒 Sklep</h2>
+      <p class="muted">Zakup zapisuje się lokalnie w przeglądarce</p>
+      <div class="games" id="shopGrid"></div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="v-stats" class="hidden">
+    <div class="card">
+      <h2>📊 Statystyki</h2>
+      <div id="statsBox"></div>
+      <button class="btn btn-r" id="btnReset" style="margin-top:16px">Reset konta</button>
+    </div>
+  </section>
+</div>
+
+<footer class="note">Popek Kasyno · tylko dla zabawy · nie hazard na prawdziwe pieniądze</footer>
+
+<!-- MUSIC PLAYER -->
+<div class="player" id="player">
+  <div class="progress" id="seek"><div class="progress-bar" id="seekBar"></div></div>
+  <div class="player-info">
+    <div class="t" id="trackTitle">Track 1</div>
+    <div class="s">Popek Radio</div>
+  </div>
+  <div class="player-ctrls">
+    <button type="button" id="btnPrev" title="Poprzedni">⏮</button>
+    <button type="button" class="play-main" id="btnPlay" title="Play/Pause">▶</button>
+    <button type="button" id="btnNext" title="Następny">⏭</button>
+  </div>
+  <div class="vol-wrap">
+    <span style="font-size:.85rem">🔊</span>
+    <input type="range" id="vol" min="0" max="1" step="0.01" value="0.45" />
+  </div>
+</div>
+<audio id="audio" preload="metadata"></audio>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== MUSIC ========== */
+const musicFiles = [
+  'https://xxxpawelpopekxxx.github.io/music.mp3',
+  'https://xxxpawelpopekxxx.github.io/music2.mp3',
+  'https://xxxpawelpopekxxx.github.io/music3.mp3',
+  'https://xxxpawelpopekxxx.github.io/music4.mp3',
+  'https://xxxpawelpopekxxx.github.io/music5.mp3',
+  'https://xxxpawelpopekxxx.github.io/music6.mp3',
+  'https://xxxpawelpopekxxx.github.io/music7.mp3',
+  'https://xxxpawelpopekxxx.github.io/music8.mp3'
+];
+
+const audio = document.getElementById('audio');
+let trackIdx = 0;
+let isPlaying = false;
+
+function loadTrack(i) {
+  trackIdx = (i + musicFiles.length) % musicFiles.length;
+  audio.src = musicFiles[trackIdx];
+  document.getElementById('trackTitle').textContent = 'Track ' + (trackIdx + 1);
+  document.getElementById('seekBar').style.width = '0%';
+  if (isPlaying) {
+    audio.play().catch(() => {
+      isPlaying = false;
+      document.getElementById('btnPlay').textContent = '▶';
+    });
+  }
+}
+function togglePlay() {
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    document.getElementById('btnPlay').textContent = '▶';
+  } else {
+    audio.play().then(() => {
+      isPlaying = true;
+      document.getElementById('btnPlay').textContent = '⏸';
+    }).catch(() => toast('Kliknij Play ponownie (przeglądarka blokuje autoplay)'));
+  }
+}
+document.getElementById('btnPlay').onclick = togglePlay;
+document.getElementById('btnPrev').onclick = () => { loadTrack(trackIdx - 1); if (isPlaying) audio.play(); };
+document.getElementById('btnNext').onclick = () => { loadTrack(trackIdx + 1); if (isPlaying) audio.play(); };
+document.getElementById('vol').oninput = (e) => { audio.volume = +e.target.value; };
+audio.volume = 0.45;
+audio.addEventListener('ended', () => loadTrack(trackIdx + 1));
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  document.getElementById('seekBar').style.width = (audio.currentTime / audio.duration * 100) + '%';
+});
+document.getElementById('seek').onclick = (e) => {
+  if (!audio.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+};
+loadTrack(0);
+
+/* ========== STATE ========== */
+const KEY = 'popek_kasyno_v2';
+const DEF = {
+  balance: 100, lastDaily: 0, lastBeg: 0, streak: 0, vipUntil: 0,
+  totalWagered: 0, totalWon: 0, totalLost: 0, rich: false
+};
+let S = (() => {
+  try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
+  catch { return { ...DEF }; }
+})();
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(S));
+  document.getElementById('bal').textContent = Math.floor(S.balance).toLocaleString('pl-PL');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function vip() { return S.vipUntil && Date.now() < S.vipUntil; }
+function canBet(n) {
+  n = Math.floor(+n);
+  if (!Number.isFinite(n) || n < 1) return 'Min. bet = 1';
+  if (n > S.balance) return 'Za mało monet (' + S.balance + ')';
+  return null;
+}
+/** Correct P&L: win adds (payout - bet), loss subtracts bet */
+function settle(bet, won, mult) {
+  bet = Math.floor(bet);
+  S.totalWagered += bet;
+  if (won) {
+    const payout = Math.floor(bet * mult);
+    S.balance += (payout - bet);
+    S.totalWon += Math.max(payout, 0);
+    save();
+    return payout;
+  }
+  S.balance -= bet;
+  S.totalLost += bet;
+  save();
+  return 0;
+}
+
+/* ========== NAV ========== */
+document.querySelectorAll('#nav button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#nav button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    ['games','eco','shop','stats'].forEach(v => {
+      document.getElementById('v-' + v).classList.toggle('hidden', btn.dataset.v !== v);
+    });
+    if (btn.dataset.v === 'stats') renderStats();
+    if (btn.dataset.v === 'games') showList();
+  };
+});
+
+const GAMES = [
+  { id:'crash', e:'🚀', n:'Crash' },
+  { id:'mines', e:'💣', n:'Mines' },
+  { id:'coinflip', e:'🪙', n:'Coinflip' },
+  { id:'dice', e:'🎲', n:'Dice' },
+  { id:'roulette', e:'🎡', n:'Ruletka' },
+  { id:'blackjack', e:'🃏', n:'Blackjack' },
+  { id:'plinko', e:'📍', n:'Plinko' },
+  { id:'keno', e:'🎱', n:'Keno' },
+  { id:'rps', e:'✊', n:'RPS' },
+];
+
+function showList() {
+  document.getElementById('gameListCard').classList.remove('hidden');
+  document.getElementById('gamePlayCard').classList.add('hidden');
+  const g = document.getElementById('gameGrid');
+  g.innerHTML = GAMES.map(x =>
+    `<div class="gcard" data-id="${x.id}"><span class="e">${x.e}</span><span class="n">${x.n}</span></div>`
+  ).join('');
+  g.querySelectorAll('.gcard').forEach(c => c.onclick = () => openGame(c.dataset.id));
+}
+document.getElementById('backBtn').onclick = showList;
+
+function openGame(id) {
+  document.getElementById('gameListCard').classList.add('hidden');
+  document.getElementById('gamePlayCard').classList.remove('hidden');
+  const root = document.getElementById('gameRoot');
+  const fn = {
+    crash: uiCrash, mines: uiMines, coinflip: uiCoin, dice: uiDice,
+    roulette: uiRoulette, blackjack: uiBJ, plinko: uiPlinko, keno: uiKeno, rps: uiRps
+  }[id];
+  if (fn) fn(root); else root.innerHTML = '???';
+}
+
+function betField(val = 10) {
+  return `<label>Bet</label><input type="number" id="bet" min="1" step="1" value="${val}" />`;
+}
+
+/* ===== CRASH ===== */
+function uiCrash(root) {
+  root.innerHTML = `
+    <h2>🚀 Crash</h2>
+    <p class="muted">Cash out zanim runie.</p>
+    ${betField()}
+    <div class="row">
+      <button class="btn btn-p" id="cStart">Start</button>
+      <button class="btn btn-g" id="cOut" disabled>Cash Out</button>
+    </div>
+    <div class="crash-box"><div class="crash-mult" id="cMult" style="color:var(--blue)">1.00x</div></div>
+    <div id="cRes"></div>`;
+
+  let running = false, mult = 1, crashAt = 1, timer = null, cashed = false, activeBet = 0;
+
+  document.getElementById('cStart').onclick = () => {
+    if (running) return;
+    activeBet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(activeBet); if (err) return toast(err);
+    cashed = false; running = true; mult = 1;
+    const r = Math.random();
+    crashAt = r < 0.04 ? 1.0 : Math.min(200, Math.max(1.01, +(0.97 / (1 - r)).toFixed(2)));
+    document.getElementById('cOut').disabled = false;
+    document.getElementById('cStart').disabled = true;
+    document.getElementById('cRes').innerHTML = '';
+    const el = document.getElementById('cMult');
+    el.style.color = 'var(--blue)';
+    el.textContent = '1.00x';
+
+    timer = setInterval(() => {
+      if (cashed || !running) return;
+      mult = +(mult + 0.05 + mult * 0.016).toFixed(2);
+      el.textContent = mult.toFixed(2) + 'x';
+      if (mult >= crashAt) {
+        clearInterval(timer); running = false;
+        document.getElementById('cOut').disabled = true;
+        document.getElementById('cStart').disabled = false;
+        el.style.color = 'var(--red)';
+        settle(activeBet, false, 1);
+        document.getElementById('cRes').innerHTML =
+          `<div class="res loss">💥 Crash @ ${mult.toFixed(2)}x · −${activeBet}</div>`;
+      }
+    }, 70);
+  };
+
+  document.getElementById('cOut').onclick = () => {
+    if (!running || cashed) return;
+    cashed = true; running = false; clearInterval(timer);
+    document.getElementById('cOut').disabled = true;
+    document.getElementById('cStart').disabled = false;
+    const locked = mult;
+    document.getElementById('cMult').style.color = 'var(--green)';
+    const payout = settle(activeBet, true, locked);
+    document.getElementById('cRes').innerHTML =
+      `<div class="res win">✅ Cash out @ ${locked.toFixed(2)}x · +${payout}</div>`;
+  };
+}
+
+/* ===== MINES ===== */
+function uiMines(root) {
+  root.innerHTML = `
+    <h2>💣 Mines</h2>
+    <p class="muted">5×4 · unikaj bomb · cash out kiedy chcesz</p>
+    ${betField()}
+    <label>Liczba min</label>
+    <input type="number" id="mc" min="1" max="8" value="3" />
+    <button class="btn btn-p" id="mStart">Start</button>
+    <div class="mines-grid" id="mGrid"></div>
+    <button class="btn btn-g hidden" id="mCash">Cash Out</button>
+    <div id="mRes"></div>`;
+
+  let bombs = new Set(), open = new Set(), live = false, bet = 0, minesN = 3, curM = 1;
+
+  function calcM(opened, mines) {
+    const total = 20, safe = total - mines;
+    let m = 1;
+    for (let i = 0; i < opened; i++) m *= (total - i) / (safe - i);
+    return Math.max(1.05, +(m * 0.96).toFixed(2));
+  }
+
+  document.getElementById('mStart').onclick = () => {
+    bet = Math.floor(+document.getElementById('bet').value);
+    minesN = Math.min(8, Math.max(1, +document.getElementById('mc').value || 3));
+    const err = canBet(bet); if (err) return toast(err);
+    bombs = new Set();
+    while (bombs.size < minesN) bombs.add(Math.floor(Math.random() * 20));
+    open = new Set(); live = true; curM = 1;
+    document.getElementById('mRes').innerHTML = '';
+    const cash = document.getElementById('mCash');
+    cash.classList.remove('hidden'); cash.disabled = true;
+    cash.textContent = 'Cash Out';
+    const grid = document.getElementById('mGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 20; i++) {
+      const b = document.createElement('button');
+      b.className = 'mcell'; b.type = 'button'; b.textContent = '';
+      b.onclick = () => tile(i, b);
+      grid.appendChild(b);
+    }
+  };
+
+  function tile(i, btn) {
+    if (!live || open.has(i)) return;
+    if (bombs.has(i)) {
+      live = false;
+      btn.textContent = '💣'; btn.classList.add('bomb');
+      [...document.getElementById('mGrid').children].forEach((c, idx) => {
+        c.disabled = true;
+        if (bombs.has(idx)) { c.textContent = '💣'; c.classList.add('bomb'); }
+      });
+      settle(bet, false, 1);
+      document.getElementById('mCash').classList.add('hidden');
+      document.getElementById('mRes').innerHTML = `<div class="res loss">💣 Bomba · −${bet}</div>`;
+      return;
+    }
+    open.add(i);
+    btn.textContent = '💎'; btn.classList.add('safe'); btn.disabled = true;
+    curM = calcM(open.size, minesN);
+    const cash = document.getElementById('mCash');
+    cash.disabled = false;
+    cash.textContent = `Cash Out (${curM.toFixed(2)}x)`;
+    if (open.size >= 20 - minesN) {
+      live = false;
+      const p = settle(bet, true, curM);
+      cash.classList.add('hidden');
+      document.getElementById('mRes').innerHTML = `<div class="res win">Wyczyszczone! +${p}</div>`;
+    }
+  }
+
+  document.getElementById('mCash').onclick = () => {
+    if (!live || open.size === 0) return;
+    live = false;
+    [...document.getElementById('mGrid').children].forEach(c => c.disabled = true);
+    const p = settle(bet, true, curM);
+    document.getElementById('mCash').classList.add('hidden');
+    document.getElementById('mRes').innerHTML =
+      `<div class="res win">Cash out ${curM.toFixed(2)}x · +${p}</div>`;
+  };
+}
+
+/* ===== COINFLIP ===== */
+function uiCoin(root) {
+  root.innerHTML = `
+    <h2>🪙 Coinflip</h2>
+    <p class="muted">Orzeł lub reszka · 1.95x</p>
+    ${betField()}
+    <div class="row">
+      <button class="btn btn-p" id="h">Orzeł</button>
+      <button class="btn btn-p" id="t">Reszka</button>
+    </div>
+    <div id="cfR"></div>`;
+  function go(side) {
+    const bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    const res = Math.random() < 0.5 ? 'h' : 't';
+    const label = res === 'h' ? 'Orzeł' : 'Reszka';
+    if (side === res) {
+      const p = settle(bet, true, 1.95);
+      document.getElementById('cfR').innerHTML = `<div class="res win">${label} · +${p}</div>`;
+    } else {
+      settle(bet, false, 1);
+      document.getElementById('cfR').innerHTML = `<div class="res loss">${label} · −${bet}</div>`;
+    }
+  }
+  document.getElementById('h').onclick = () => go('h');
+  document.getElementById('t').onclick = () => go('t');
+}
+
+/* ===== DICE ===== */
+function uiDice(root) {
+  root.innerHTML = `
+    <h2>🎲 Dice</h2>
+    <p class="muted">Over / Under 3.5</p>
+    ${betField()}
+    <div class="row">
+      <button class="btn btn-p" id="ov">Over 4–6</button>
+      <button class="btn btn-p" id="un">Under 1–3</button>
+    </div>
+    <div id="dR"></div>`;
+  function go(over) {
+    const bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    const roll = 1 + Math.floor(Math.random() * 6);
+    const won = over ? roll >= 4 : roll <= 3;
+    if (won) {
+      const p = settle(bet, true, 1.95);
+      document.getElementById('dR').innerHTML = `<div class="res win">🎲 ${roll} · +${p}</div>`;
+    } else {
+      settle(bet, false, 1);
+      document.getElementById('dR').innerHTML = `<div class="res loss">🎲 ${roll} · −${bet}</div>`;
+    }
+  }
+  document.getElementById('ov').onclick = () => go(true);
+  document.getElementById('un').onclick = () => go(false);
+}
+
+/* ===== ROULETTE ===== */
+const REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+function uiRoulette(root) {
+  root.innerHTML = `
+    <h2>🎡 Ruletka</h2>
+    ${betField()}
+    <label>Zakład</label>
+    <select id="rt">
+      <option value="red">Czerwone ×2</option>
+      <option value="black">Czarne ×2</option>
+      <option value="green">Zero ×14</option>
+      <option value="odd">Nieparzyste ×2</option>
+      <option value="even">Parzyste ×2</option>
+      <option value="low">1–18 ×2</option>
+      <option value="high">19–36 ×2</option>
+    </select>
+    <button class="btn btn-p" id="spin">Zakręć</button>
+    <div id="rR"></div>`;
+  document.getElementById('spin').onclick = () => {
+    const bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    const type = document.getElementById('rt').value;
+    const n = Math.floor(Math.random() * 37);
+    const col = n === 0 ? 'green' : REDS.has(n) ? 'red' : 'black';
+    const mults = { red:2, black:2, green:14, odd:2, even:2, low:2, high:2 };
+    let won = false;
+    if (type === 'red' && col === 'red') won = true;
+    if (type === 'black' && col === 'black') won = true;
+    if (type === 'green' && n === 0) won = true;
+    if (type === 'odd' && n && n % 2 === 1) won = true;
+    if (type === 'even' && n && n % 2 === 0) won = true;
+    if (type === 'low' && n >= 1 && n <= 18) won = true;
+    if (type === 'high' && n >= 19) won = true;
+    const em = col === 'red' ? '🔴' : col === 'black' ? '⚫' : '🟢';
+    if (won) {
+      const p = settle(bet, true, mults[type]);
+      document.getElementById('rR').innerHTML = `<div class="res win">${em} ${n} · +${p}</div>`;
+    } else {
+      settle(bet, false, 1);
+      document.getElementById('rR').innerHTML = `<div class="res loss">${em} ${n} · −${bet}</div>`;
+    }
+  };
+}
+
+/* ===== BLACKJACK ===== */
+function uiBJ(root) {
+  root.innerHTML = `
+    <h2>🃏 Blackjack</h2>
+    ${betField()}
+    <button class="btn btn-p" id="deal">Rozdaj</button>
+    <div id="bjA" class="hidden" style="margin-top:12px">
+      <div class="bj-line">Krupier: <span class="bj-cards" id="bjD"></span></div>
+      <div class="bj-line">Ty: <span class="bj-cards" id="bjP"></span></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-b" id="hit">Hit</button>
+        <button class="btn btn-g" id="stand">Stand</button>
+      </div>
+    </div>
+    <div id="bjR"></div>`;
+
+  const R = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const card = () => R[Math.floor(Math.random() * R.length)];
+  function handVal(h) {
+    let t = 0, a = 0;
+    for (const c of h) {
+      if (c === 'A') { a++; t += 11; }
+      else if ('JQK'.includes(c)) t += 10;
+      else t += +c;
+    }
+    while (t > 21 && a) { t -= 10; a--; }
+    return t;
+  }
+  let P = [], D = [], bet = 0, live = false;
+
+  function paint(show) {
+    document.getElementById('bjP').textContent = P.join(' ') + ' (' + handVal(P) + ')';
+    document.getElementById('bjD').textContent = show
+      ? D.join(' ') + ' (' + handVal(D) + ')'
+      : D[0] + ' ❓';
+  }
+  function finish() {
+    live = false;
+    document.getElementById('hit').disabled = true;
+    document.getElementById('stand').disabled = true;
+    while (handVal(D) < 17) D.push(card());
+    paint(true);
+    const pv = handVal(P), dv = handVal(D);
+    let html;
+    if (pv > 21) {
+      settle(bet, false, 1);
+      html = `<div class="res loss">Bust (${pv}) · −${bet}</div>`;
+    } else if (dv > 21 || pv > dv) {
+      const m = (pv === 21 && P.length === 2) ? 2.5 : 2;
+      const p = settle(bet, true, m);
+      html = `<div class="res win">Wygrana · +${p}</div>`;
+    } else if (pv === dv) {
+      html = `<div class="res draw">Remis · zwrot</div>`;
+    } else {
+      settle(bet, false, 1);
+      html = `<div class="res loss">Przegrana · −${bet}</div>`;
+    }
+    document.getElementById('bjR').innerHTML = html;
+  }
+
+  document.getElementById('deal').onclick = () => {
+    bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    P = [card(), card()]; D = [card(), card()]; live = true;
+    document.getElementById('bjA').classList.remove('hidden');
+    document.getElementById('bjR').innerHTML = '';
+    document.getElementById('hit').disabled = false;
+    document.getElementById('stand').disabled = false;
+    paint(false);
+    if (handVal(P) === 21) finish();
+  };
+  document.getElementById('hit').onclick = () => {
+    if (!live) return;
+    P.push(card()); paint(false);
+    if (handVal(P) >= 21) finish();
+  };
+  document.getElementById('stand').onclick = () => { if (live) finish(); };
+}
+
+/* ===== PLINKO ===== */
+function uiPlinko(root) {
+  root.innerHTML = `
+    <h2>📍 Plinko</h2>
+    ${betField()}
+    <label>Ryzyko</label>
+    <select id="risk">
+      <option value="low">Niskie</option>
+      <option value="medium" selected>Średnie</option>
+      <option value="high">Wysokie</option>
+    </select>
+    <button class="btn btn-p" id="drop">Drop</button>
+    <div id="pR"></div>`;
+  const T = {
+    low: [0.5,0.8,1,1.2,1.5,1.2,1,0.8,0.5],
+    medium: [0.2,0.5,1,1.5,3,1.5,1,0.5,0.2],
+    high: [0,0.2,0.5,1,5,1,0.5,0.2,0],
+  };
+  document.getElementById('drop').onclick = () => {
+    const bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    const row = T[document.getElementById('risk').value];
+    const i = Math.floor(Math.random() * row.length);
+    const m = row[i];
+    if (m > 0) {
+      const p = settle(bet, true, m);
+      const cls = m >= 1 ? 'win' : 'draw';
+      document.getElementById('pR').innerHTML =
+        `<div class="res ${cls}">Slot ${i+1} · ${m}x · ${m >= 1 ? '+'+p : 'zwrot '+p}</div>`;
+    } else {
+      settle(bet, false, 1);
+      document.getElementById('pR').innerHTML = `<div class="res loss">Slot ${i+1} · 0x · −${bet}</div>`;
+    }
+  };
+}
+
+/* ===== KENO ===== */
+function uiKeno(root) {
+  root.innerHTML = `
+    <h2>🎱 Keno</h2>
+    <p class="muted">Wybierz 1–10 liczb · losujemy 10 z 20</p>
+    ${betField()}
+    <div class="keno-grid" id="kG"></div>
+    <div class="row">
+      <button class="btn btn-g" id="kPlay">Play</button>
+      <button class="btn btn-x" id="kClr">Clear</button>
+    </div>
+    <div id="kR"></div>`;
+  const picks = new Set();
+  const grid = document.getElementById('kG');
+  for (let n = 1; n <= 20; n++) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'knum'; b.textContent = n;
+    b.onclick = () => {
+      if (picks.has(n)) picks.delete(n);
+      else {
+        if (picks.size >= 10) return toast('Max 10 liczb');
+        picks.add(n);
+      }
+      b.classList.toggle('on', picks.has(n));
+    };
+    grid.appendChild(b);
+  }
+  document.getElementById('kClr').onclick = () => {
+    picks.clear();
+    grid.querySelectorAll('.knum').forEach(x => x.classList.remove('on'));
+  };
+  const PAY = {0:0,1:0,2:1,3:2.5,4:5,5:10,6:20,7:50,8:100,9:250,10:500};
+  document.getElementById('kPlay').onclick = () => {
+    if (!picks.size) return toast('Wybierz liczby');
+    const bet = Math.floor(+document.getElementById('bet').value);
+    const err = canBet(bet); if (err) return toast(err);
+    const drawn = new Set();
+    while (drawn.size < 10) drawn.add(1 + Math.floor(Math.random() * 20));
+    const hits = [...picks].filter(x => drawn.has(x)).sort((a,b)=>a-b);
+    const m = PAY[hits.length] || 0;
+    const d = [...drawn].sort((a,b)=>a-b).join(' ');
+    if (m > 0) {
+      const p = settle(bet, true, m);
+      document.getElementById('kR').innerHTML =
+        `<div class="res win">Trafienia ${hits.length}: ${hits.join(', ')||'—'} · Los: ${d} · +${p}</div>`;
+    } else {
+      settle(bet, false, 1);
+      document.getElementById('kR').innerHTML =
+        `<div class="res loss">Trafienia ${hits.length} · Los: ${d} · −${bet}</div>`;
+    }
+  };
+}
+
+/* ===== RPS ===== */
+function uiRps(root) {
+  root.innerHTML = `
+    <h2>✊ Kamień · Papier · Nożyce</h2>
+    <p class="muted">Vs bot · 1.9x</p>
+    ${betField()}
+    <div class="rps-row">
+      <button class="btn btn-p" data-m="rock">🪨</button>
+      <button class="btn btn-p" data-m="paper">📄</button>
+      <button class="btn btn-p" data-m="scissors">✂️</button>
+    </div>
+    <div id="rpsR"></div>`;
+  const beat = { rock:'scissors', paper:'rock', scissors:'paper' };
+  const L = { rock:'Kamień', paper:'Papier', scissors:'Nożyce' };
+  root.querySelectorAll('[data-m]').forEach(btn => {
+    btn.onclick = () => {
+      const bet = Math.floor(+document.getElementById('bet').value);
+      const err = canBet(bet); if (err) return toast(err);
+      const you = btn.dataset.m;
+      const bot = ['rock','paper','scissors'][Math.floor(Math.random()*3)];
+      if (you === bot) {
+        document.getElementById('rpsR').innerHTML =
+          `<div class="res draw">Remis · ${L[you]} vs ${L[bot]}</div>`;
+      } else if (beat[you] === bot) {
+        const p = settle(bet, true, 1.9);
+        document.getElementById('rpsR').innerHTML =
+          `<div class="res win">${L[you]} bije ${L[bot]} · +${p}</div>`;
+      } else {
+        settle(bet, false, 1);
+        document.getElementById('rpsR').innerHTML =
+          `<div class="res loss">${L[bot]} bije ${L[you]} · −${bet}</div>`;
+      }
+    };
+  });
+}
+
+/* ===== ECONOMY ===== */
+document.getElementById('btnDaily').onclick = () => {
+  const day = 86400000;
+  if (S.lastDaily && Date.now() - S.lastDaily < day) {
+    const h = Math.ceil((day - (Date.now() - S.lastDaily)) / 3600000);
+    document.getElementById('dailyInfo').textContent = `Już odebrane · wróć za ~${h}h`;
+    return;
+  }
+  if (S.lastDaily && Date.now() - S.lastDaily < day * 2) S.streak += 1;
+  else S.streak = 1;
+  const bonus = Math.min(S.streak, 15) + (vip() ? 5 : 0);
+  const total = 10 + bonus;
+  S.balance += total;
+  S.lastDaily = Date.now();
+  save();
+  document.getElementById('dailyInfo').textContent = `+${total} · streak ${S.streak}🔥`;
+  toast('Daily +' + total);
+};
+
+document.getElementById('btnBeg').onclick = () => {
+  if (S.lastBeg && Date.now() - S.lastBeg < 3600000) {
+    document.getElementById('begInfo').textContent = 'Poczekaj godzinę';
+    return;
+  }
+  S.lastBeg = Date.now();
+  const r = Math.random();
+  let msg;
+  if (r < 0.01) { S.balance += 100; msg = '🎰 JACKPOT +100'; }
+  else if (r < 0.36) {
+    const a = 1 + Math.floor(Math.random() * 8);
+    S.balance += a; msg = `Dostajesz +${a}`;
+  } else {
+    msg = ['Nikt nic nie dał.','Gołębie Cię olewają.','Skill issue.','Pusto.'][Math.floor(Math.random()*4)];
+  }
+  save();
+  document.getElementById('begInfo').textContent = msg;
+  toast(msg);
+};
+
+/* ===== SHOP ===== */
+const SHOP = [
+  { id:'vip', name:'VIP 7 dni', price:5000, desc:'+5 do daily' },
+  { id:'rich', name:"I'm Rich", price:25000, desc:'Tytuł flex' },
+  { id:'boost', name:'Extra daily', price:800, desc:'+10 od razu' },
+];
+function renderShop() {
+  document.getElementById('shopGrid').innerHTML = SHOP.map(i => `
+    <div class="gcard" style="cursor:default">
+      <div class="n">${i.name}</div>
+      <div class="muted" style="margin:6px 0;font-size:.8rem">${i.desc}</div>
+      <div style="color:var(--gold);font-weight:800;margin-bottom:8px">${i.price.toLocaleString()} 🪙</div>
+      <button class="btn btn-p" data-buy="${i.id}" style="width:100%">Kup</button>
+    </div>`).join('');
+  document.querySelectorAll('[data-buy]').forEach(b => {
+    b.onclick = () => {
+      const item = SHOP.find(x => x.id === b.dataset.buy);
+      if (S.balance < item.price) return toast('Za mało monet');
+      S.balance -= item.price;
+      if (item.id === 'vip') S.vipUntil = Date.now() + 7 * 86400000;
+      if (item.id === 'rich') S.rich = true;
+      if (item.id === 'boost') S.balance += 10;
+      save();
+      toast('Kupiono: ' + item.name);
+      renderShop();
+    };
+  });
+}
+
+/* ===== STATS ===== */
+function renderStats() {
+  const net = S.totalWon - S.totalLost;
+  document.getElementById('statsBox').innerHTML = `
+    <div class="stat"><span>Saldo</span><b>${Math.floor(S.balance).toLocaleString()} 🪙</b></div>
+    <div class="stat"><span>Streak</span><b>${S.streak} 🔥</b></div>
+    <div class="stat"><span>VIP</span><b>${vip() ? 'Tak' : 'Nie'}</b></div>
+    <div class="stat"><span>Postawione</span><b>${S.totalWagered.toLocaleString()}</b></div>
+    <div class="stat"><span>Wygrane</span><b>${S.totalWon.toLocaleString()}</b></div>
+    <div class="stat"><span>Przegrane</span><b>${S.totalLost.toLocaleString()}</b></div>
+    <div class="stat"><span>Netto</span><b style="color:${net>=0?'var(--green)':'var(--red)'}">${net.toLocaleString()}</b></div>
+    ${S.rich ? '<div class="stat"><span>Tytuł</span><b>💎 I\'m Rich</b></div>' : ''}`;
+}
+document.getElementById('btnReset').onclick = () => {
+  if (!confirm('Zresetować konto do 100 monet?')) return;
+  S = { ...DEF };
+  save();
+  renderStats();
+  toast('Zresetowano');
+};
+
+/* INIT */
+save();
+showList();
+renderShop();
+</script>
+</body>
+</html>
