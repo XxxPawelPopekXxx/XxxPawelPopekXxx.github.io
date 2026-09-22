@@ -166,18 +166,6 @@
   .mcell.bomb { background: var(--red-dim); border-color: var(--red); }
   .mcell:disabled { cursor: default; }
 
-  /* KENO */
-  .keno-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px;
-    max-width: 360px; margin: 14px 0;
-  }
-  .knum {
-    aspect-ratio: 1; border-radius: 10px; border: none;
-    background: #252b3a; color: var(--text); font-weight: 800;
-    font-size: 1rem; cursor: pointer; transition: .1s;
-  }
-  .knum:hover { filter: brightness(1.15); }
-  .knum.on { background: var(--green); color: #041a06; box-shadow: 0 0 12px rgba(0,231,1,.35); }
 
   /* CRASH */
   .crash-box {
@@ -276,7 +264,6 @@
   <section id="v-games">
     <div class="card" id="gameListCard">
       <h2>Wybierz grę</h2>
-      <p class="muted">Lokalne kasyno · zero prawdziwych pieniędzy</p>
       <div class="games" id="gameGrid"></div>
     </div>
     <div class="card hidden" id="gamePlayCard">
@@ -320,7 +307,7 @@
   </section>
 </div>
 
-<footer class="note">Popek Kasyno · tylko dla zabawy · nie hazard na prawdziwe pieniądze</footer>
+<footer class="note">Popek Kasyno · Popek to goat · lubimy hazard</footer>
 
 <!-- MUSIC PLAYER -->
 <div class="player" id="player">
@@ -468,7 +455,6 @@ const GAMES = [
   { id:'roulette', e:'🎡', n:'Ruletka' },
   { id:'blackjack', e:'🃏', n:'Blackjack' },
   { id:'plinko', e:'📍', n:'Plinko' },
-  { id:'keno', e:'🎱', n:'Keno' },
   { id:'rps', e:'✊', n:'RPS' },
 ];
 
@@ -489,7 +475,7 @@ function openGame(id) {
   const root = document.getElementById('gameRoot');
   const fn = {
     crash: uiCrash, mines: uiMines, coinflip: uiCoin, dice: uiDice,
-    roulette: uiRoulette, blackjack: uiBJ, plinko: uiPlinko, keno: uiKeno, rps: uiRps
+    roulette: uiRoulette, blackjack: uiBJ, plinko: uiPlinko, rps: uiRps
   }[id];
   if (fn) fn(root); else root.innerHTML = '???';
 }
@@ -853,59 +839,6 @@ function uiPlinko(root) {
   };
 }
 
-/* ===== KENO ===== */
-function uiKeno(root) {
-  root.innerHTML = `
-    <h2>🎱 Keno</h2>
-    <p class="muted">Wybierz 1–10 liczb · losujemy 10 z 20</p>
-    ${betField()}
-    <div class="keno-grid" id="kG"></div>
-    <div class="row">
-      <button class="btn btn-g" id="kPlay">Play</button>
-      <button class="btn btn-x" id="kClr">Clear</button>
-    </div>
-    <div id="kR"></div>`;
-  const picks = new Set();
-  const grid = document.getElementById('kG');
-  for (let n = 1; n <= 20; n++) {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'knum'; b.textContent = n;
-    b.onclick = () => {
-      if (picks.has(n)) picks.delete(n);
-      else {
-        if (picks.size >= 10) return toast('Max 10 liczb');
-        picks.add(n);
-      }
-      b.classList.toggle('on', picks.has(n));
-    };
-    grid.appendChild(b);
-  }
-  document.getElementById('kClr').onclick = () => {
-    picks.clear();
-    grid.querySelectorAll('.knum').forEach(x => x.classList.remove('on'));
-  };
-  const PAY = {0:0,1:0,2:1,3:2.5,4:5,5:10,6:20,7:50,8:100,9:250,10:500};
-  document.getElementById('kPlay').onclick = () => {
-    if (!picks.size) return toast('Wybierz liczby');
-    const bet = Math.floor(+document.getElementById('bet').value);
-    const err = canBet(bet); if (err) return toast(err);
-    const drawn = new Set();
-    while (drawn.size < 10) drawn.add(1 + Math.floor(Math.random() * 20));
-    const hits = [...picks].filter(x => drawn.has(x)).sort((a,b)=>a-b);
-    const m = PAY[hits.length] || 0;
-    const d = [...drawn].sort((a,b)=>a-b).join(' ');
-    if (m > 0) {
-      const p = settle(bet, true, m);
-      document.getElementById('kR').innerHTML =
-        `<div class="res win">Trafienia ${hits.length}: ${hits.join(', ')||'—'} · Los: ${d} · +${p}</div>`;
-    } else {
-      settle(bet, false, 1);
-      document.getElementById('kR').innerHTML =
-        `<div class="res loss">Trafienia ${hits.length} · Los: ${d} · −${bet}</div>`;
-    }
-  };
-}
-
 /* ===== RPS ===== */
 function uiRps(root) {
   root.innerHTML = `
@@ -985,7 +918,6 @@ document.getElementById('btnBeg').onclick = () => {
 const SHOP = [
   { id:'vip', name:'VIP 7 dni', price:5000, desc:'+5 do daily' },
   { id:'rich', name:"I'm Rich", price:25000, desc:'Tytuł flex' },
-  { id:'boost', name:'Extra daily', price:800, desc:'+10 od razu' },
 ];
 function renderShop() {
   document.getElementById('shopGrid').innerHTML = SHOP.map(i => `
