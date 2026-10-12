@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduPopek</title>
+  <link rel="icon" href="image1.png" />
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ===== LOGIN ===== */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1e1b4b 0%, #0f172a 70%);
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+      text-align: center;
+    }
+
+    .login-card img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      margin-bottom: 16px;
+      border-radius: 20px;
+      background: #0f172a;
+      padding: 8px;
+    }
+
+    .login-card h1 {
+      font-size: 30px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .login-card .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 13px 16px;
+      background: #0f172a;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      color: white;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .api-url-box {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .api-url-box label { font-size: 12px; color: var(--muted); }
+    .api-url-box input {
+      font-size: 13px;
+      padding: 8px 12px;
+      margin-top: 4px;
+    }
+
+    /* ===== APP ===== */
+    #app { display: none; min-height: 100vh; }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .brand span {
+      font-weight: 800;
+      font-size: 20px;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    nav::-webkit-scrollbar { display: none; }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.25s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #c7d2fe;
+    }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .grade-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .grade-item:last-child { border-bottom: none; }
+
+    .grade-badge {
+      min-width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      background: #312e81;
+      color: #c7d2fe;
+    }
+
+    .grade-info { flex: 1; }
+    .grade-info .subject { font-weight: 600; }
+    .grade-info .meta { font-size: 12px; color: var(--muted); }
+
+    .lesson-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lesson-row:last-child { border-bottom: none; }
+    .lesson-time { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .lesson-subject { font-weight: 600; }
+    .lesson-room { font-size: 13px; color: var(--muted); }
+
+    .cancelled { text-decoration: line-through; opacity: 0.55; }
+    .flag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #7c2d12;
+      color: #fdba74;
+      margin-left: 8px;
+    }
+
+    .absence-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .absence-item:last-child { border-bottom: none; }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .badge-ok { background: #14532d; color: #86efac; }
+    .badge-warn { background: #78350f; color: #fcd34d; }
+    .badge-bad { background: #7f1d1d; color: #fca5a5; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .day-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: #a5b4fc;
+      margin: 18px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .event-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .event-item:last-child { border-bottom: none; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .user-info span:first-child { display: none; }
+      .lesson-row { grid-template-columns: 60px 1fr; }
+      .lesson-room { grid-column: 2; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <img src="image1.png" alt="EduPopek logo" onerror="this.style.display='none'" />
+      <h1>EduPopek</h1>
+      <p class="subtitle">Twój prywatny podgląd Librusa</p>
+
+      <div class="form-group">
+        <label for="login">Login (np. 7141932u)</label>
+        <input type="text" id="login" value="7141932u" autocomplete="username" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Hasło</label>
+        <input type="password" id="password" value="hasło123" autocomplete="current-password" />
+      </div>
+
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">
+        Zaloguj się
+      </button>
+
+      <p class="error-msg" id="login-error"></p>
+
+      <div class="api-url-box">
+        <label for="api-url">Adres backendu (Raspberry Pi)</label>
+        <input type="text" id="api-url" value="http://localhost:3000" placeholder="http://192.168.x.x:3000" />
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app">
+    <header>
+      <div class="brand">
+        <img src="image1.png" alt="logo" onerror="this.style.display='none'" />
+        <span>EduPopek</span>
+      </div>
+      <div class="user-info">
+        <span id="user-name">—</span>
+        <button class="btn btn-ghost" onclick="doLogout()" style="padding:8px 14px;font-size:13px;">
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <nav>
+      <button class="nav-btn active" data-section="oceny" onclick="showSection('oceny')">Oceny</button>
+      <button class="nav-btn" data-section="wydarzenia" onclick="showSection('wydarzenia')">Wydarzenia</button>
+      <button class="nav-btn" data-section="obecnosci" onclick="showSection('obecnosci')">Obecności</button>
+      <button class="nav-btn" data-section="terminarz" onclick="showSection('terminarz')">Terminarz</button>
+      <button class="nav-btn" data-section="plan" onclick="showSection('plan')">Plan lekcji</button>
+    </nav>
+
+    <main>
+      <section id="sec-oceny" class="section active">
+        <h2 class="section-title">📊 Oceny</h2>
+        <div id="content-oceny"><div class="loading"><div class="spinner"></div>Ładowanie ocen…</div></div>
+      </section>
+
+      <section id="sec-wydarzenia" class="section">
+        <h2 class="section-title">📅 Wydarzenia</h2>
+        <div id="content-wydarzenia"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+
+      <section id="sec-obecnosci" class="section">
+        <h2 class="section-title">✅ Obecności</h2>
+        <div id="content-obecnosci"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+
+      <section id="sec-terminarz" class="section">
+        <h2 class="section-title">🗓️ Terminarz</h2>
+        <div id="content-terminarz"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+
+      <section id="sec-plan" class="section">
+        <h2 class="section-title">📚 Plan lekcji</h2>
+        <div id="content-plan"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+    </main>
+
+    <footer>
+      EduPopek · prywatny frontend do Librusa · nieoficjalne
+    </footer>
+  </div>
+
+  <script>
+    // ====== KONFIG ======
+    let API_BASE = localStorage.getItem('edupopek_api') || 'http://localhost:3000';
+    let token = localStorage.getItem('edupopek_token') || null;
+
+    document.getElementById('api-url').value = API_BASE;
+
+    // ====== HELPERS ======
+    async function api(path, options = {}) {
+      const url = API_BASE.replace(/\/$/, '') + path;
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch(url, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const err = new Error(data.error || data.message || 'Błąd ' + res.status);
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('login-error').style.display = 'none';
+    }
+
+    // ====== AUTH ======
+    async function doLogin() {
+      hideError();
+      const login = document.getElementById('login').value.trim();
+      const password = document.getElementById('password').value;
+      API_BASE = document.getElementById('api-url').value.trim().replace(/\/$/, '');
+      localStorage.setItem('edupopek_api', API_BASE);
+
+      if (!login || !password) {
+        showError('Wpisz login i hasło');
+        return;
+      }
+
+      const btn = document.getElementById('btn-login');
+      btn.disabled = true;
+      btn.textContent = 'Logowanie…';
+
+      try {
+        const data = await api('/api/login', {
+          method: 'POST',
+          body: JSON.stringify({ login, password })
+        });
+
+        token = data.token;
+        localStorage.setItem('edupopek_token', token);
+        document.getElementById('user-name').textContent = data.name || login;
+
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+
+        // załaduj domyślną sekcję
+        loadSection('oceny');
+      } catch (e) {
+        console.error(e);
+        showError(e.message || 'Nie udało się zalogować. Sprawdź dane i adres backendu.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Zaloguj się';
+      }
+    }
+
+    async function doLogout() {
+      try {
+        await api('/api/logout', { method: 'POST' });
+      } catch (_) {}
+      token = null;
+      localStorage.removeItem('edupopek_token');
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      // wyczyść treści
+      ['oceny','wydarzenia','obecnosci','terminarz','plan'].forEach(s => {
+        document.getElementById('content-' + s).innerHTML =
+          '<div class="loading"><div class="spinner"></div>Ładowanie…</div>';
+      });
+    }
+
+    // auto-login jeśli mamy token
+    (async function init() {
+      if (!token) return;
+      try {
+        const me = await api('/api/me');
+        document.getElementById('user-name').textContent = me.name || 'Zalogowany';
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadSection('oceny');
+      } catch {
+        token = null;
+        localStorage.removeItem('edupopek_token');
+      }
+    })();
+
+    // ====== NAV ======
+    function showSection(name) {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === name));
+      document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + name));
+      loadSection(name);
+    }
+
+    const loaded = {};
+    async function loadSection(name) {
+      if (loaded[name]) return;
+      const el = document.getElementById('content-' + name);
+      el.innerHTML = '<div class="loading"><div class="spinner"></div>Ładowanie…</div>';
+
+      try {
+        if (name === 'oceny') await renderGrades(el);
+        else if (name === 'wydarzenia') await renderEvents(el);
+        else if (name === 'obecnosci') await renderAbsences(el);
+        else if (name === 'terminarz') await renderCalendar(el);
+        else if (name === 'plan') await renderTimetable(el);
+        loaded[name] = true;
+      } catch (e) {
+        console.error(e);
+        if (e.status === 401) {
+          doLogout();
+          return;
+        }
+        el.innerHTML = `<div class="empty">Nie udało się pobrać danych 😢<br><span class="muted">${e.message}</span></div>`;
+      }
+    }
+
+    // ====== RENDERERS ======
+    async function renderGrades(el) {
+      const data = await api('/api/grades');
+      // data oczekiwane: { [przedmiot]: [ { grade, category, date, teacher, comment, weight } ] }
+      const subjects = Object.keys(data || {});
+      if (!subjects.length) {
+        el.innerHTML = '<div class="empty">Brak ocen (albo inna struktura danych)</div>';
+        return;
+      }
+
+      let html = '';
+      for (const sub of subjects) {
+        const grades = data[sub] || [];
+        html += `<div class="card"><h3>${escapeHtml(sub)}</h3>`;
+        if (!grades.length) {
+          html += '<p class="muted">Brak ocen</p>';
+        } else {
+          grades.forEach(g => {
+            const val = g.grade ?? g.value ?? g.Grade ?? '?';
+            const cat = g.category ?? g.Category ?? '';
+            const date = g.date ?? g.Date ?? '';
+            const teacher = g.teacher ?? (g.Teacher ? `${g.Teacher.FirstName||''} ${g.Teacher.LastName||''}` : '') || '';
+            html += `
+              <div class="grade-item">
+                <div class="grade-badge">${escapeHtml(String(val))}</div>
+                <div class="grade-info">
+                  <div class="subject">${escapeHtml(cat || 'Ocena')}</div>
+                  <div class="meta">${escapeHtml(date)} ${teacher ? '· ' + escapeHtml(teacher) : ''}</div>
+                </div>
+              </div>`;
+          });
+        }
+        html += '</div>';
+      }
+      el.innerHTML = html;
+    }
+
+    async function renderEvents(el) {
+      // wydarzenia z kalendarza / powiadomienia
+      const data = await api('/api/events');
+      const list = Array.isArray(data) ? data : (data.events || data.items || []);
+      if (!list.length) {
+        el.innerHTML = '<div class="empty">Brak wydarzeń</div>';
+        return;
+      }
+      let html = '<div class="card">';
+      list.forEach(ev => {
+        const title = ev.title || ev.name || ev.Title || 'Wydarzenie';
+        const date = ev.date || ev.Date || ev.from || '';
+        const desc = ev.description || ev.desc || '';
+        html += `
+          <div class="event-item">
+            <div style="font-weight:600">${escapeHtml(title)}</div>
+            <div class="muted">${escapeHtml(date)}</div>
+            ${desc ? `<div style="margin-top:4px;font-size:14px">${escapeHtml(desc)}</div>` : ''}
+          </div>`;
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    async function renderAbsences(el) {
+      const data = await api('/api/absences');
+      // często: { semesters: { "1": { ... }, "2": ... } } albo płaska lista
+      let items = [];
+      if (Array.isArray(data)) items = data;
+      else if (data.semesters) {
+        Object.values(data.semesters).forEach(sem => {
+          if (Array.isArray(sem)) items.push(...sem);
+          else if (sem && typeof sem === 'object') {
+            Object.values(sem).forEach(day => {
+              if (Array.isArray(day)) items.push(...day);
+              else if (day) items.push(day);
+            });
+          }
+        });
+      } else if (data.absences) items = data.absences;
+
+      if (!items.length) {
+        el.innerHTML = '<div class="empty">Brak nieobecności 🎉</div>';
+        return;
+      }
+
+      let html = '<div class="card">';
+      items.slice(0, 80).forEach(a => {
+        const date = a.date || a.Date || a.day || '—';
+        const type = a.type || a.Type?.Name || a.Type || a.short || '—';
+        const lesson = a.lesson || a.LessonNo || a.lessonNo || '';
+        const subject = a.subject || a.Lesson?.Subject || '';
+        const isPresence = (a.Type && a.Type.IsPresenceKind) || /obec/i.test(String(type));
+        const badgeClass = isPresence ? 'badge-ok' : /spóźn/i.test(String(type)) ? 'badge-warn' : 'badge-bad';
+
+        html += `
+          <div class="absence-item">
+            <div>
+              <div style="font-weight:600">${escapeHtml(String(date))} ${lesson ? '· lekcja ' + escapeHtml(String(lesson)) : ''}</div>
+              <div class="muted">${escapeHtml(subject || '')}</div>
+            </div>
+            <span class="badge ${badgeClass}">${escapeHtml(String(type))}</span>
+          </div>`;
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    async function renderCalendar(el) {
+      // terminarz = kalendarz (sprawdziany, zadania itp.)
+      const data = await api('/api/calendar');
+      const days = data.days || data || {};
+      const keys = Object.keys(days).sort();
+
+      if (!keys.length) {
+        el.innerHTML = '<div class="empty">Pusty terminarz</div>';
+        return;
+      }
+
+      let html = '';
+      keys.forEach(day => {
+        const events = days[day];
+        if (!events || !events.length) return;
+        html += `<div class="day-header">${escapeHtml(day)}</div><div class="card">`;
+        events.forEach(ev => {
+          const title = ev.title || ev.name || ev.category || 'Wydarzenie';
+          const desc = ev.description || ev.desc || ev.teacher || '';
+          html += `
+            <div class="event-item">
+              <div style="font-weight:600">${escapeHtml(title)}</div>
+              ${desc ? `<div class="muted">${escapeHtml(desc)}</div>` : ''}
+            </div>`;
+        });
+        html += '</div>';
+      });
+      el.innerHTML = html || '<div class="empty">Brak wpisów w terminarzu</div>';
+    }
+
+    async function renderTimetable(el) {
+      const data = await api('/api/timetable');
+      // typowa struktura: { "Poniedziałek": [ {subject, teacher, room, time, cancelled, flag} ], ... }
+      const days = Object.keys(data || {});
+      if (!days.length) {
+        el.innerHTML = '<div class="empty">Brak planu lekcji</div>';
+        return;
+      }
+
+      let html = '';
+      days.forEach(day => {
+        const lessons = data[day] || [];
+        html += `<div class="day-header">${escapeHtml(day)}</div><div class="card">`;
+        if (!lessons.length) {
+          html += '<p class="muted">Brak lekcji</p>';
+        } else {
+          lessons.forEach(l => {
+            const cancelled = l.cancelled || l.flag === 'odwołane';
+            const flag = l.flag && l.flag !== 'odwołane' ? `<span class="flag">${escapeHtml(l.flag)}</span>` : '';
+            html += `
+              <div class="lesson-row ${cancelled ? 'cancelled' : ''}">
+                <div class="lesson-time">${escapeHtml(l.time || l.hour || '')}</div>
+                <div>
+                  <div class="lesson-subject">${escapeHtml(l.subject || l.name || '—')}${flag}</div>
+                  <div class="muted">${escapeHtml(l.teacher || '')}</div>
+                </div>
+                <div class="lesson-room">${escapeHtml(l.room || '')}</div>
+              </div>`;
+          });
+        }
+        html += '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Enter = login
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>
