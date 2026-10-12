@@ -10,7 +10,7 @@
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "https://pawelpopek.baby/image1.png",
+      "src": "http://pawelpopek.baby/EduPopek/image1.png",
       "isSquare": false,
       "isPng": true,
       "isWebp": false,
@@ -18,7 +18,7 @@
       "width": 0,
       "is512x512": false,
       "is256x256": false,
-      "is192x192": false
+      "is192x192": true
     }
   ],
   "description": "EduPopek to aplikacja, która zastępuje dziennik \"Librus\""
