@@ -243,14 +243,14 @@
     <div class="login-card">
       <img src="image1.png" alt="logo" onerror="this.style.display='none'" />
       <h1>EduPopek</h1>
-      <p class="sub">Twój Profesjonalny EduLibrus</p>
+      <p class="sub">Twój profesjonalny EduPopek</p>
       <div class="form-group">
         <label>Login</label>
-        <input type="text" id="login" value="login" autocomplete="username" />
+        <input type="text" id="login" value="" autocomplete="username" />
       </div>
       <div class="form-group">
         <label>Hasło</label>
-        <input type="password" id="password" value="hasło" autocomplete="current-password" />
+        <input type="password" id="password" value="" autocomplete="current-password" />
       </div>
       <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Zaloguj się</button>
       <p class="error-msg" id="login-error"></p>
@@ -529,9 +529,19 @@
 
   async function renderCalendar(el) {
     const data = await api('/api/calendar');
-    const list = Array.isArray(data) ? data : [];
+    let list = [];
+    if (Array.isArray(data)) list = data;
+    else if (data && typeof data === 'object') {
+      // czasem obiekt z dniami
+      Object.keys(data).forEach(function (k) {
+        const v = data[k];
+        if (Array.isArray(v)) list = list.concat(v);
+        else if (v && typeof v === 'object') list.push(Object.assign({ day: k }, v));
+      });
+    }
+    list = list.filter(Boolean);
     if (!list.length) {
-      el.innerHTML = '<div class="empty">Pusty terminarz</div>';
+      el.innerHTML = '<div class="empty">Pusty terminarz<br><span style="font-size:12px">Brak wydarzeń w kalendarzu Librusa (albo biblioteka nie sparsowała HTML)</span></div>';
       return;
     }
     const byDay = {};
@@ -545,9 +555,11 @@
     days.forEach(function (day) {
       html += '<div class="day-label">' + esc(day) + '</div><div class="card">';
       byDay[day].forEach(function (ev) {
+        const title = ev.title || ev.name || ev.category || 'Wydarzenie';
+        const info = ev.info || ev.description || ev.desc || '';
         html += '<div class="row-item"><div>';
-        html += '<div style="font-weight:600">' + esc(ev.title || 'Wydarzenie') + '</div>';
-        if (ev.info) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + esc(ev.info) + '</div>';
+        html += '<div style="font-weight:600">' + esc(title) + '</div>';
+        if (info && info !== title) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + esc(info) + '</div>';
         html += '</div></div>';
       });
       html += '</div>';
