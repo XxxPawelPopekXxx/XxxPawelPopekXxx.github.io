@@ -11,7 +11,7 @@
   "icons": [
     {
       "src": "http://pawelpopek.baby/EduPopek/image1.png",
-      "isSquare": false,
+      "isSquare": true,
       "isPng": true,
       "isWebp": false,
       "isJpg": false,
