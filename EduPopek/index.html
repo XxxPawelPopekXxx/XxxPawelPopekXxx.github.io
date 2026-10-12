@@ -638,10 +638,10 @@
           html += '<p class="muted">Brak ocen</p>';
         } else {
           grades.forEach(g => {
-            const val = g.grade ?? g.value ?? g.Grade ?? '?';
-            const cat = g.category ?? g.Category ?? '';
-            const date = g.date ?? g.Date ?? '';
-            const teacher = g.teacher ?? (g.Teacher ? `${g.Teacher.FirstName||''} ${g.Teacher.LastName||''}` : '') || '';
+            const val = g.grade || g.value || g.Grade || '?';
+            const cat = g.category || g.Category || '';
+            const date = g.date || g.Date || '';
+            const teacher = g.teacher || (g.Teacher ? ((g.Teacher.FirstName || '') + ' ' + (g.Teacher.LastName || '')).trim() : '') || '';
             html += `
               <div class="grade-item">
                 <div class="grade-badge">${escapeHtml(String(val))}</div>
