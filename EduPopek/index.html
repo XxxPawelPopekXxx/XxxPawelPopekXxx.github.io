@@ -326,6 +326,63 @@
       .nav-btn { padding: 0 11px; font-size: 12.5px; }
       .section-head h2 { font-size: 1.05rem; }
     }
+
+
+    .nav-btn .ni { display: none; font-size: 16px; line-height: 1; }
+    .nav-btn .nl { display: inline; }
+    @media (max-width: 767px) {
+      .nav-btn .ni { display: block; }
+      .nav-btn .nl { display: block; font-size: 10px; font-weight: 600; }
+    }
+
+    /* Mobile bottom navigation */
+    @media (max-width: 767px) {
+      nav.tabs {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        top: auto;
+        height: calc(56px + var(--safe-bottom));
+        padding: 0 4px var(--safe-bottom);
+        border-top: 1px solid var(--border);
+        border-bottom: none;
+        z-index: 50;
+        justify-content: space-around;
+        background: var(--bg2);
+      }
+      .nav-btn {
+        flex: 1 1 0;
+        padding: 0 4px;
+        font-size: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border-bottom: none;
+        border-top: 2px solid transparent;
+        min-width: 0;
+      }
+      .nav-btn.active {
+        border-bottom: none;
+        border-top-color: var(--primary);
+        color: var(--primary2);
+      }
+      main {
+        padding-bottom: calc(72px + var(--safe-bottom));
+      }
+      header {
+        height: 52px;
+      }
+      .icon-btn { width: 36px; height: 36px; }
+      .grade-pill { min-width: 48px; height: 48px; font-size: 17px; border-radius: 14px; }
+      .card { padding: 12px; border-radius: 16px; }
+      .login-card { padding: 24px 18px; border-radius: 20px; max-width: 100%; }
+      .login-card h1 { font-size: 1.45rem; }
+      .btn-primary { padding: 14px; font-size: 15px; border-radius: 14px; }
+      .form-group input { padding: 14px; font-size: 16px; border-radius: 12px; }
+      .section-head { margin-bottom: 10px; }
+      .user-bar .btn-ghost { padding: 6px 10px; }
+    }
   </style>
 </head>
 <body>
@@ -366,14 +423,14 @@
     </header>
 
     <nav class="tabs">
-      <button class="nav-btn active" data-s="nowe" onclick="go('nowe')">Nowe</button>
-      <button class="nav-btn" data-s="oceny" onclick="go('oceny')">Oceny</button>
-      <button class="nav-btn" data-s="plan" onclick="go('plan')">Plan</button>
-      <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')">Obecności</button>
-      <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')">Terminarz</button>
-      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')">Ogłoszenia</button>
-      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')">Wiadomości</button>
-      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')">Ustawienia</button>
+      <button class="nav-btn active" data-s="nowe" onclick="go('nowe')"><span class="ni">⚡</span><span class="nl">Nowe</span></button>
+      <button class="nav-btn" data-s="oceny" onclick="go('oceny')"><span class="ni">📊</span><span class="nl">Oceny</span></button>
+      <button class="nav-btn" data-s="plan" onclick="go('plan')"><span class="ni">📚</span><span class="nl">Plan</span></button>
+      <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')"><span class="ni">✅</span><span class="nl">Obec.</span></button>
+      <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')"><span class="ni">📅</span><span class="nl">Term.</span></button>
+      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')"><span class="ni">📢</span><span class="nl">Ogł.</span></button>
+      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')"><span class="ni">✉️</span><span class="nl">Wiad.</span></button>
+      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')"><span class="ni">⚙️</span><span class="nl">Więcej</span></button>
     </nav>
 
     <main>
@@ -657,8 +714,65 @@
   const typeLabel = { grade: 'Ocena', message: 'Wiadomość', announcement: 'Ogłoszenie', test: 'Kartkówka/Sprawdzian', event: 'Wydarzenie' };
   const typeBadge = { grade: 'b-grade', message: 'b-msg', announcement: 'b-ann', test: 'b-test', event: 'b-event' };
 
+  async function buildFeedClient() {
+    const items = [];
+    const parseDate = function (s) {
+      if (!s) return 0;
+      const str = String(s).trim();
+      let m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+      m = str.match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/);
+      if (m) return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+      const t = Date.parse(str);
+      return isNaN(t) ? 0 : t;
+    };
+    try {
+      const grades = await api('/api/grades');
+      (Array.isArray(grades) ? grades : []).forEach(function (sub) {
+        const subject = sub.name || '?';
+        (sub.semester || []).forEach(function (sem) {
+          (sem.grades || []).forEach(function (g) {
+            const info = String(g.info || '');
+            const dm = info.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/);
+            items.push({ type: 'grade', title: subject + ': ' + (g.value || '?'), subtitle: info.split('\n')[0] || '', date: dm ? dm[1] : '', ts: parseDate(dm ? dm[1] : '') });
+          });
+        });
+      });
+    } catch (e) {}
+    try {
+      const msgs = await api('/api/messages');
+      (Array.isArray(msgs) ? msgs : []).forEach(function (m) {
+        items.push({ type: 'message', title: m.title || 'Wiadomość', subtitle: m.user || '', date: m.date || '', ts: parseDate(m.date) });
+      });
+    } catch (e) {}
+    try {
+      const anns = await api('/api/announcements');
+      (Array.isArray(anns) ? anns : []).forEach(function (a) {
+        const d = a.date || a.startDate || '';
+        items.push({ type: 'announcement', title: a.title || a.subject || 'Ogłoszenie', subtitle: a.user || a.author || '', date: d, ts: parseDate(d) });
+      });
+    } catch (e) {}
+    try {
+      const cal = await api('/api/calendar');
+      (Array.isArray(cal) ? cal : []).forEach(function (ev) {
+        const title = String(ev.title || ev.info || 'Wydarzenie');
+        const low = title.toLowerCase();
+        const type = /kartk|sprawdz|test|egzamin/.test(low) ? 'test' : 'event';
+        items.push({ type: type, title: title, subtitle: String(ev.info || '').slice(0, 100), date: ev.day || '', ts: parseDate(ev.day) });
+      });
+    } catch (e) {}
+    items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    return items.slice(0, 120);
+  }
+
   async function renderFeed(el) {
-    const list = await api('/api/feed');
+    let list = [];
+    try {
+      list = await api('/api/feed');
+    } catch (e) {
+      // 404 / stary backend → składamy lokalnie
+      list = await buildFeedClient();
+    }
     if (!list || !list.length) {
       el.innerHTML = '<div class="empty">Brak nowych pozycji</div>';
       return;
