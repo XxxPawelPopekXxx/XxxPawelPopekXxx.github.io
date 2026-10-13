@@ -593,10 +593,20 @@
   function getToken() {
     const a = getActiveAccount();
     if (a && a.token) return a.token;
-    // migracja ze starego klucza
     const old = localStorage.getItem('ep_token');
     return old || null;
   }
+  // migracja: stary ep_token → lista kont
+  (function migrateToken() {
+    const old = localStorage.getItem('ep_token');
+    const s = loadStore();
+    if (old && (!s.list || !s.list.length)) {
+      const acc = { id: 'a_migrated', token: old, name: 'Konto', login: 'konto' };
+      s.list = [acc];
+      s.active = acc.id;
+      saveStore(s);
+    }
+  })();
   let token = getToken();
 
   function setActiveAccount(id) {
@@ -783,6 +793,7 @@
 
   async function api(path, opts) {
     opts = opts || {};
+    token = getToken(); // zawsze aktualny token aktywnego konta
     const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     if (token) headers['Authorization'] = 'Bearer ' + token;
     const res = await fetch(API.replace(/\/$/, '') + path, Object.assign({}, opts, { headers: headers }));
@@ -853,15 +864,30 @@
     if (!token) return;
     try {
       const me = await api('/api/me');
-      $('user-name').textContent = me.name || 'Zalogowany';
+      const acc = getActiveAccount();
+      if (acc && me.name) {
+        acc.name = me.name;
+        const s = loadStore();
+        s.list = (s.list || []).map(function (a) { return a.id === acc.id ? acc : a; });
+        saveStore(s);
+      }
+      $('user-name').textContent = me.name || (acc && acc.login) || 'Zalogowany';
       $('login-screen').style.display = 'none';
       $('app').classList.add('show');
       loadLucky();
       startNotifLoop();
       go('nowe');
     } catch (e) {
-      token = null;
-      localStorage.removeItem('ep_token');
+      console.warn('auto-login failed', e);
+      // sesja na serwerze padła – wymagaj ponownego logowania
+      const acc = getActiveAccount();
+      if (acc) removeAccount(acc.id);
+      token = getToken();
+      if (!token) {
+        localStorage.removeItem('ep_token');
+        $('login-screen').style.display = 'flex';
+        $('app').classList.remove('show');
+      }
     }
   })();
 
@@ -887,7 +913,6 @@
   };
 
   async function load(name) {
-    if (loaded[name]) return;
     const el = $('c-' + name);
     if (!el) return;
     el.innerHTML = '<div class="loading"><div class="spinner"></div>Ładowanie…</div>';
@@ -901,8 +926,27 @@
       else if (name === 'wiadomosci') await renderMessages(el);
       loaded[name] = true;
     } catch (e) {
-      if (e.status === 401) return doLogout();
-      el.innerHTML = '<div class="empty">Nie udało się pobrać danych<br><span style="font-size:12px">' + esc(e.message) + '</span></div>';
+      console.error('load', name, e);
+      if (e.status === 401) {
+        // martwa sesja – wróć na login, nie kasuj wszystkich kont od razu
+        const acc = getActiveAccount();
+        if (acc) removeAccount(acc.id);
+        const left = (loadStore().list || []).length;
+        if (!left) {
+          token = null;
+          localStorage.removeItem('ep_token');
+          $('app').classList.remove('show');
+          $('login-screen').style.display = 'flex';
+          showErr('Sesja wygasła – zaloguj się ponownie');
+        } else {
+          const a = getActiveAccount();
+          token = a ? a.token : null;
+          $('user-name').textContent = (a && (a.name || a.login)) || '—';
+          go('nowe');
+        }
+        return;
+      }
+      el.innerHTML = '<div class="empty">Nie udało się pobrać danych<br><span style="font-size:12px">' + esc(e.message || String(e)) + '</span><br><button class="btn-small" style="margin-top:12px" onclick="load(\'' + name + '\')">Spróbuj ponownie</button></div>';
     }
   }
 
@@ -1053,18 +1097,24 @@
   }
 
   async function renderFeed(el) {
+    // zawsze składamy lokalnie z /api/grades, messages, … (niezależne od /api/feed)
     let list = [];
     try {
-      list = await api('/api/feed');
-      // normalizuj + sortuj po stronie klienta (backend czasem źle parsuje daty)
-      list = (list || []).map(function (it) {
-        const ts = it.ts || parseAnyDate(it.date) || 0;
-        return Object.assign({}, it, { ts: ts, value: it.value || (it.type === 'grade' ? (it.title || '').split(':').pop().trim() : '') });
-      });
-    } catch (e) {
       list = await buildFeedClient();
+    } catch (e) {
+      console.error('buildFeedClient', e);
+      throw e;
     }
-    // zawsze sortuj od najnowszych
+    if ((!list || !list.length)) {
+      // spróbuj jeszcze backendowego feedu
+      try {
+        list = await api('/api/feed');
+        list = (list || []).map(function (it) {
+          const ts = it.ts || parseAnyDate(it.date) || 0;
+          return Object.assign({}, it, { ts: ts, value: it.value || '' });
+        });
+      } catch (e2) {}
+    }
     list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     if (!list.length) {
       el.innerHTML = '<div class="empty">Brak nowych pozycji</div>';
