@@ -383,6 +383,57 @@
       .section-head { margin-bottom: 10px; }
       .user-bar .btn-ghost { padding: 6px 10px; }
     }
+
+    /* Librus-like activity feed */
+    .feed-list { display: flex; flex-direction: column; gap: 8px; }
+    .feed-card {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 12px 14px;
+    }
+    .feed-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; flex-shrink: 0;
+    }
+    .feed-icon.grade { background: #2563eb; color: #fff; }
+    .feed-icon.message { background: #0ea5e9; color: #fff; font-size: 18px; }
+    .feed-icon.announcement { background: #f59e0b; color: #fff; font-size: 18px; }
+    .feed-icon.test { background: #ef4444; color: #fff; font-size: 15px; }
+    .feed-icon.event { background: #8b5cf6; color: #fff; font-size: 18px; }
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-title { font-weight: 650; font-size: 14px; line-height: 1.3; }
+    .feed-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-date { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; max-width: 72px; line-height: 1.25; }
+    .feed-day-sep {
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .04em;
+      margin: 12px 4px 6px;
+    }
+    .feed-day-sep:first-child { margin-top: 0; }
+
+    .acct-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .acct-row:last-child { border-bottom: none; }
+    .acct-row.active .acct-name { color: var(--primary2); font-weight: 700; }
+    .acct-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .acct-switch {
+      font-size: 12px; padding: 6px 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg2); color: var(--text); cursor: pointer;
+    }
+    .acct-out {
+      font-size: 12px; padding: 6px 10px; border-radius: 8px;
+      border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
+      background: transparent; color: var(--danger); cursor: pointer;
+    }
+    .acct-chip {
+      max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: 12px; font-weight: 600; color: var(--primary2);
+      border: 1px solid var(--border); background: var(--bg2);
+      padding: 5px 8px; border-radius: 999px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -417,8 +468,8 @@
         <a class="icon-btn" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
         <a class="icon-btn" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
         <a class="icon-btn" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
-        <span class="name" id="user-name">—</span>
-        <button class="btn btn-ghost" onclick="doLogout()">Wyloguj</button>
+        <button class="acct-chip name" id="user-name" onclick="go('konta')" title="Konta">—</button>
+        <button class="btn btn-ghost" onclick="go('konta')">Konta</button>
       </div>
     </header>
 
@@ -482,6 +533,18 @@
         </div>
         <div id="c-wiadomosci"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
       </section>
+      <section id="s-konta" class="section">
+        <div class="section-head"><h2>Konta</h2></div>
+        <div class="card">
+          <div class="card-title">Zapisane konta</div>
+          <div id="accounts-list"><p style="color:var(--muted);font-size:13px">Brak kont</p></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Dodaj kolejne konto</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Zaloguj się na inne konto bez wylogowywania obecnego.</p>
+          <button class="btn-small" onclick="addAnotherAccount()">+ Dodaj konto</button>
+        </div>
+      </section>
       <section id="s-ustawienia" class="section">
         <div class="section-head"><h2>Ustawienia</h2></div>
         <div class="card">
@@ -498,6 +561,10 @@
           <div class="card-title">Kolory <button class="btn-ghost" onclick="resetColors()" style="margin-left:auto">Reset</button></div>
           <div class="color-grid" id="color-grid"></div>
         </div>
+        <div class="card">
+          <div class="card-title">Konta</div>
+          <button class="btn-small" onclick="go('konta')">Zarządzaj kontami</button>
+        </div>
       </section>
     </main>
     <footer>EduPopek · Twój profesjonalny panel</footer>
@@ -510,9 +577,134 @@
 <script>
 (function () {
   const API = 'https://implementation-addressed-adventures-clan.trycloudflare.com';
-  let token = localStorage.getItem('ep_token') || null;
   const loaded = {};
   const $ = id => document.getElementById(id);
+
+  // ===== MULTI-ACCOUNT =====
+  function loadStore() {
+    try { return JSON.parse(localStorage.getItem('ep_accounts') || '{"list":[],"active":null}'); }
+    catch (e) { return { list: [], active: null }; }
+  }
+  function saveStore(s) { localStorage.setItem('ep_accounts', JSON.stringify(s)); }
+  function getActiveAccount() {
+    const s = loadStore();
+    return (s.list || []).find(function (a) { return a.id === s.active; }) || null;
+  }
+  function getToken() {
+    const a = getActiveAccount();
+    if (a && a.token) return a.token;
+    // migracja ze starego klucza
+    const old = localStorage.getItem('ep_token');
+    return old || null;
+  }
+  let token = getToken();
+
+  function setActiveAccount(id) {
+    const s = loadStore();
+    s.active = id;
+    saveStore(s);
+    const acc = getActiveAccount();
+    token = acc ? acc.token : null;
+    if (acc) localStorage.setItem('ep_token', acc.token);
+    Object.keys(loaded).forEach(function (k) { delete loaded[k]; });
+  }
+
+  function upsertAccount(tokenVal, name, login) {
+    const s = loadStore();
+    let acc = (s.list || []).find(function (a) { return a.login === login; });
+    if (acc) {
+      acc.token = tokenVal;
+      acc.name = name || login;
+    } else {
+      acc = { id: 'a_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), token: tokenVal, name: name || login, login: login };
+      s.list.push(acc);
+    }
+    s.active = acc.id;
+    saveStore(s);
+    token = tokenVal;
+    localStorage.setItem('ep_token', tokenVal);
+    return acc;
+  }
+
+  function removeAccount(id) {
+    const s = loadStore();
+    const acc = (s.list || []).find(function (a) { return a.id === id; });
+    if (acc && acc.token) {
+      // best-effort logout on server
+      fetch(API.replace(/\/$/, '') + '/api/logout', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + acc.token, 'Content-Type': 'application/json' }
+      }).catch(function () {});
+    }
+    s.list = (s.list || []).filter(function (a) { return a.id !== id; });
+    if (s.active === id) s.active = s.list.length ? s.list[0].id : null;
+    saveStore(s);
+    token = getToken();
+    if (token) localStorage.setItem('ep_token', token);
+    else localStorage.removeItem('ep_token');
+    Object.keys(loaded).forEach(function (k) { delete loaded[k]; });
+  }
+
+  window.renderAccounts = function () {
+    const box = $('accounts-list');
+    if (!box) return;
+    const s = loadStore();
+    if (!s.list || !s.list.length) {
+      box.innerHTML = '<p style="color:var(--muted);font-size:13px">Brak zapisanych kont</p>';
+      return;
+    }
+    let html = '';
+    s.list.forEach(function (a) {
+      const active = a.id === s.active;
+      html += '<div class="acct-row' + (active ? ' active' : '') + '">';
+      html += '<div><div class="acct-name">' + esc(a.name || a.login) + (active ? ' · aktywne' : '') + '</div>';
+      html += '<div style="font-size:12px;color:var(--muted)">' + esc(a.login) + '</div></div>';
+      html += '<div class="acct-actions">';
+      if (!active) html += '<button class="acct-switch" onclick="switchAccount(\'' + a.id + '\')">Przełącz</button>';
+      html += '<button class="acct-out" onclick="logoutAccount(\'' + a.id + '\')">Wyloguj</button>';
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
+  };
+
+  window.switchAccount = function (id) {
+    setActiveAccount(id);
+    const acc = getActiveAccount();
+    $('user-name').textContent = (acc && (acc.name || acc.login)) || '—';
+    go('nowe');
+    loadLucky();
+  };
+
+  window.logoutAccount = function (id) {
+    const s = loadStore();
+    const wasActive = s.active === id;
+    removeAccount(id);
+    const left = loadStore().list || [];
+    if (!left.length) {
+      token = null;
+      stopNotifLoop();
+      $('app').classList.remove('show');
+      $('login-screen').style.display = 'flex';
+      return;
+    }
+    if (wasActive) {
+      const acc = getActiveAccount();
+      $('user-name').textContent = (acc && (acc.name || acc.login)) || '—';
+      go('nowe');
+      loadLucky();
+    } else {
+      renderAccounts();
+    }
+  };
+
+  window.addAnotherAccount = function () {
+    // pokaż login bez kasowania sesji
+    $('login-screen').style.display = 'flex';
+    $('app').classList.remove('show');
+    $('login').value = '';
+    $('password').value = '';
+    $('login-error').style.display = 'none';
+  };
 
   const COLOR_KEYS = [
     ['--bg', 'Tło'], ['--bg2', 'Tło 2'], ['--card', 'Karty'],
@@ -619,8 +811,7 @@
     btn.disabled = true; btn.textContent = 'Logowanie…';
     try {
       const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ login: login, password: password }) });
-      token = data.token;
-      localStorage.setItem('ep_token', token);
+      upsertAccount(data.token, data.name || login, login);
       $('user-name').textContent = data.name || login;
       $('login-screen').style.display = 'none';
       $('app').classList.add('show');
@@ -635,13 +826,17 @@
   };
 
   window.doLogout = async function () {
-    try { await api('/api/logout', { method: 'POST' }); } catch (e) {}
-    token = null;
-    localStorage.removeItem('ep_token');
-    Object.keys(loaded).forEach(function (k) { delete loaded[k]; });
-    stopNotifLoop();
-    $('app').classList.remove('show');
-    $('login-screen').style.display = 'flex';
+    const acc = getActiveAccount();
+    if (acc) logoutAccount(acc.id);
+    else {
+      try { await api('/api/logout', { method: 'POST' }); } catch (e) {}
+      token = null;
+      localStorage.removeItem('ep_token');
+      Object.keys(loaded).forEach(function (k) { delete loaded[k]; });
+      stopNotifLoop();
+      $('app').classList.remove('show');
+      $('login-screen').style.display = 'flex';
+    }
   };
 
   async function loadLucky() {
@@ -683,6 +878,11 @@
       loaded.ustawienia = true;
       return;
     }
+    if (name === 'konta') {
+      renderAccounts();
+      loaded.konta = true;
+      return;
+    }
     load(name);
   };
 
@@ -714,18 +914,60 @@
   const typeLabel = { grade: 'Ocena', message: 'Wiadomość', announcement: 'Ogłoszenie', test: 'Kartkówka/Sprawdzian', event: 'Wydarzenie' };
   const typeBadge = { grade: 'b-grade', message: 'b-msg', announcement: 'b-ann', test: 'b-test', event: 'b-event' };
 
+  function parseAnyDate(s) {
+    if (!s) return 0;
+    const str = String(s).trim();
+    let m;
+    m = str.match(/(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime();
+    m = str.match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime();
+    const months = {
+      stycznia:0, lutego:1, marca:2, kwietnia:3, maja:4, czerwca:5,
+      lipca:6, sierpnia:7, wrzesnia:8, września:8, pazdziernika:9, października:9,
+      listopada:10, grudnia:11
+    };
+    m = str.toLowerCase().match(/(\d{1,2})\s+([a-ząęćłńóśźż]+)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m && months[m[2]] != null) {
+      return new Date(+m[3], months[m[2]], +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+    }
+    const t = Date.parse(str);
+    return isNaN(t) ? 0 : t;
+  }
+
+  function formatFeedDate(ts, raw) {
+    if (!ts) return raw || '';
+    const d = new Date(ts);
+    const now = new Date();
+    const pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    const sameDay = d.toDateString() === now.toDateString();
+    const yest = new Date(now); yest.setDate(now.getDate() - 1);
+    const hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    if (sameDay) return 'dzis|' + hm;
+    if (d.toDateString() === yest.toDateString()) return 'wczoraj|' + hm;
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '|' + d.getFullYear();
+  }
+
+  function dayKey(ts) {
+    if (!ts) return 'bez-daty';
+    const d = new Date(ts);
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function dayLabel(ts) {
+    if (!ts) return 'Bez daty';
+    const d = new Date(ts);
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) return 'Dzisiaj';
+    const y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return 'Wczoraj';
+    const names = ['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+    const pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return names[d.getDay()] + ', ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+  }
+
   async function buildFeedClient() {
     const items = [];
-    const parseDate = function (s) {
-      if (!s) return 0;
-      const str = String(s).trim();
-      let m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
-      if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
-      m = str.match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})/);
-      if (m) return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
-      const t = Date.parse(str);
-      return isNaN(t) ? 0 : t;
-    };
     try {
       const grades = await api('/api/grades');
       (Array.isArray(grades) ? grades : []).forEach(function (sub) {
@@ -733,8 +975,25 @@
         (sub.semester || []).forEach(function (sem) {
           (sem.grades || []).forEach(function (g) {
             const info = String(g.info || '');
-            const dm = info.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/);
-            items.push({ type: 'grade', title: subject + ': ' + (g.value || '?'), subtitle: info.split('\n')[0] || '', date: dm ? dm[1] : '', ts: parseDate(dm ? dm[1] : '') });
+            const dm = info.match(/(\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?|\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?)/);
+            const rawDate = dm ? dm[1] : '';
+            // czasem data jest w drugiej linii info
+            let ts = parseAnyDate(rawDate);
+            if (!ts) {
+              info.split(/\\n/).forEach(function (line) {
+                const t = parseAnyDate(line);
+                if (t > ts) ts = t;
+              });
+            }
+            items.push({
+              type: 'grade',
+              title: subject,
+              value: g.value || '?',
+              subtitle: (info.split('\\n').filter(Boolean)[0] || 'Nowa ocena'),
+              date: rawDate,
+              ts: ts,
+              meta: { id: g.id, info: info, subject: subject, value: g.value }
+            });
           });
         });
       });
@@ -742,14 +1001,30 @@
     try {
       const msgs = await api('/api/messages');
       (Array.isArray(msgs) ? msgs : []).forEach(function (m) {
-        items.push({ type: 'message', title: m.title || 'Wiadomość', subtitle: m.user || '', date: m.date || '', ts: parseDate(m.date) });
+        items.push({
+          type: 'message',
+          title: m.title || 'Wiadomość',
+          value: '✉️',
+          subtitle: m.user || '',
+          date: m.date || '',
+          ts: parseAnyDate(m.date),
+          meta: { id: m.id }
+        });
       });
     } catch (e) {}
     try {
       const anns = await api('/api/announcements');
       (Array.isArray(anns) ? anns : []).forEach(function (a) {
         const d = a.date || a.startDate || '';
-        items.push({ type: 'announcement', title: a.title || a.subject || 'Ogłoszenie', subtitle: a.user || a.author || '', date: d, ts: parseDate(d) });
+        items.push({
+          type: 'announcement',
+          title: a.title || a.subject || 'Ogłoszenie',
+          value: '📢',
+          subtitle: a.user || a.author || '',
+          date: d,
+          ts: parseAnyDate(d),
+          meta: {}
+        });
       });
     } catch (e) {}
     try {
@@ -757,32 +1032,66 @@
       (Array.isArray(cal) ? cal : []).forEach(function (ev) {
         const title = String(ev.title || ev.info || 'Wydarzenie');
         const low = title.toLowerCase();
-        const type = /kartk|sprawdz|test|egzamin/.test(low) ? 'test' : 'event';
-        items.push({ type: type, title: title, subtitle: String(ev.info || '').slice(0, 100), date: ev.day || '', ts: parseDate(ev.day) });
+        const type = /kartk|sprawdz|test|egzamin|quiz/.test(low) ? 'test' : 'event';
+        items.push({
+          type: type,
+          title: title,
+          value: type === 'test' ? '📝' : '📅',
+          subtitle: String(ev.info || '').slice(0, 100),
+          date: ev.day || '',
+          ts: parseAnyDate(ev.day),
+          meta: { id: ev.id }
+        });
       });
     } catch (e) {}
-    items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-    return items.slice(0, 120);
+    items.sort(function (a, b) {
+      const dt = (b.ts || 0) - (a.ts || 0);
+      if (dt !== 0) return dt;
+      return String(b.date || '').localeCompare(String(a.date || ''));
+    });
+    return items.slice(0, 150);
   }
 
   async function renderFeed(el) {
     let list = [];
     try {
       list = await api('/api/feed');
+      // normalizuj + sortuj po stronie klienta (backend czasem źle parsuje daty)
+      list = (list || []).map(function (it) {
+        const ts = it.ts || parseAnyDate(it.date) || 0;
+        return Object.assign({}, it, { ts: ts, value: it.value || (it.type === 'grade' ? (it.title || '').split(':').pop().trim() : '') });
+      });
     } catch (e) {
-      // 404 / stary backend → składamy lokalnie
       list = await buildFeedClient();
     }
-    if (!list || !list.length) {
+    // zawsze sortuj od najnowszych
+    list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    if (!list.length) {
       el.innerHTML = '<div class="empty">Brak nowych pozycji</div>';
       return;
     }
-    let html = '<div class="card">';
+
+    let html = '<div class="feed-list">';
+    let lastDay = null;
     list.forEach(function (it) {
-      html += '<div class="row-item feed-item">';
-      html += '<div><div class="ft">' + esc(it.title) + '</div>';
-      html += '<div class="fs">' + esc(it.subtitle || '') + (it.date ? ' · ' + esc(it.date) : '') + '</div></div>';
-      html += '<span class="badge ' + (typeBadge[it.type] || 'b-info') + '">' + esc(typeLabel[it.type] || it.type) + '</span>';
+      const dk = dayKey(it.ts);
+      if (dk !== lastDay) {
+        lastDay = dk;
+        html += '<div class="feed-day-sep">' + esc(dayLabel(it.ts)) + '</div>';
+      }
+      const isGrade = it.type === 'grade';
+      const iconInner = isGrade ? esc(it.value || (it.title || '?').split(':').pop().trim() || '?') : esc(it.value || '•');
+      html += '<div class="feed-card">';
+      html += '<div class="feed-icon ' + esc(it.type || 'event') + '">' + iconInner + '</div>';
+      html += '<div class="feed-body">';
+      html += '<div class="feed-title">' + esc(isGrade ? (it.title || '').replace(/:\\s*[^:]+$/, '') || it.title : it.title) + (isGrade ? '' : '') + '</div>';
+      if (isGrade && it.value) {
+        html += '<div class="feed-sub">Ocena: <b>' + esc(it.value) + '</b>' + (it.subtitle ? ' · ' + esc(it.subtitle) : '') + '</div>';
+      } else {
+        html += '<div class="feed-sub">' + esc(it.subtitle || typeLabel[it.type] || '') + '</div>';
+      }
+      html += '</div>';
+      html += '<div class="feed-date">' + formatFeedDate(it.ts, it.date).split('|').map(function(x){ return esc(x); }).join('<br>') + '</div>';
       html += '</div>';
     });
     html += '</div>';
