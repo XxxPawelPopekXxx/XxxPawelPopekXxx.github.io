@@ -2,7 +2,7 @@
 <html lang="pl" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
   <meta name="theme-color" content="#0b0f1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -12,11 +12,10 @@
   <link rel="apple-touch-icon" href="image1.png" />
   <title>EduPopek</title>
   <style>
-    :root, [data-theme="dark"] {
+    :root {
       --bg: #0b0f1a;
       --bg2: #111827;
       --card: #151c2c;
-      --card-hover: #1a2336;
       --border: #1f2a3f;
       --text: #e8eef9;
       --muted: #8b9bb8;
@@ -25,14 +24,17 @@
       --success: #34d399;
       --warn: #fbbf24;
       --danger: #f87171;
-      --input-bg: #0f172a;
-      --radius: 16px;
+      --grade-bg: #2e1065;
+      --grade-fg: #ddd6fe;
+      --radius: 14px;
+      --header-h: 56px;
+      --nav-h: 48px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     [data-theme="light"] {
-      --bg: #f4f6fb;
+      --bg: #f1f5f9;
       --bg2: #ffffff;
       --card: #ffffff;
-      --card-hover: #f8fafc;
       --border: #e2e8f0;
       --text: #0f172a;
       --muted: #64748b;
@@ -41,240 +43,288 @@
       --success: #059669;
       --warn: #d97706;
       --danger: #dc2626;
-      --input-bg: #f8fafc;
+      --grade-bg: #e0e7ff;
+      --grade-fg: #3730a3;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      line-height: 1.5;
+      line-height: 1.45;
       -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
     }
 
+    /* ===== LOGIN ===== */
     #login-screen {
-      min-height: 100vh;
+      min-height: 100%;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124,108,255,0.18), transparent), var(--bg);
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      background: radial-gradient(ellipse 90% 55% at 50% -10%, color-mix(in srgb, var(--primary) 28%, transparent), transparent), var(--bg);
     }
     .login-card {
-      width: 100%; max-width: 400px;
+      width: 100%;
+      max-width: 400px;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 36px 32px;
-      box-shadow: 0 30px 60px -20px rgba(0,0,0,0.25);
+      border-radius: 22px;
+      padding: 28px 22px;
       text-align: center;
     }
     .login-card img {
-      width: 88px; height: 88px; object-fit: contain;
-      border-radius: 20px; margin-bottom: 14px;
-      background: var(--bg2); padding: 8px;
+      width: 72px; height: 72px; object-fit: contain;
+      border-radius: 16px; margin-bottom: 10px;
+      background: var(--bg2); padding: 6px;
     }
     .login-card h1 {
-      font-size: 28px; font-weight: 800;
+      font-size: 1.6rem; font-weight: 800;
       background: linear-gradient(135deg, var(--primary2), var(--primary));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      margin-bottom: 4px;
     }
-    .login-card .sub { color: var(--muted); font-size: 14px; margin-bottom: 26px; }
-    .form-group { text-align: left; margin-bottom: 16px; }
+    .login-card .sub { color: var(--muted); font-size: 0.9rem; margin: 6px 0 22px; }
+    .form-group { text-align: left; margin-bottom: 14px; }
     .form-group label {
-      display: block; font-size: 12px; font-weight: 600;
-      color: var(--muted); margin-bottom: 6px;
-      text-transform: uppercase; letter-spacing: 0.04em;
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em;
     }
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 13px 14px;
-      background: var(--input-bg); border: 1px solid var(--border);
-      border-radius: 12px; color: var(--text); font-size: 15px;
-      font-family: inherit;
+      width: 100%; padding: 12px 13px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 11px; color: var(--text); font-size: 15px; font-family: inherit;
     }
-    .form-group textarea { min-height: 110px; resize: vertical; }
+    .form-group textarea { min-height: 100px; resize: vertical; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none; border-color: var(--primary);
     }
-
     .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 8px; border: none; border-radius: 12px;
-      font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: none; border-radius: 11px; font-size: 14px; font-weight: 600; cursor: pointer;
     }
     .btn-primary {
-      width: 100%; padding: 14px; margin-top: 8px;
-      background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white;
+      width: 100%; padding: 13px; margin-top: 6px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2)); color: #fff;
     }
-    .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary:disabled { opacity: .5; }
     .btn-ghost {
       background: transparent; border: 1px solid var(--border);
-      color: var(--muted); padding: 8px 14px; font-size: 13px;
+      color: var(--muted); padding: 7px 12px; font-size: 12px;
     }
-    .btn-ghost:hover { border-color: var(--primary); color: var(--primary2); }
     .btn-small {
-      padding: 8px 14px; font-size: 13px;
-      background: var(--primary); color: white; border: none; border-radius: 10px;
+      padding: 8px 12px; font-size: 12px;
+      background: var(--primary); color: #fff; border-radius: 10px;
     }
-    .error-msg { color: var(--danger); font-size: 13px; margin-top: 14px; display: none; }
+    .error-msg { color: var(--danger); font-size: 13px; margin-top: 12px; display: none; }
+    .ok-msg { color: var(--success); font-size: 13px; margin-top: 8px; display: none; }
 
-    #app { display: none; min-height: 100vh; }
+    /* ===== APP SHELL ===== */
+    #app { display: none; min-height: 100%; min-height: 100dvh; flex-direction: column; }
+    #app.show { display: flex; }
+
     header {
-      position: sticky; top: 0; z-index: 50;
-      background: color-mix(in srgb, var(--bg2) 88%, transparent);
+      position: sticky; top: 0; z-index: 40;
+      height: var(--header-h);
+      padding: 0 10px 0 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: color-mix(in srgb, var(--bg2) 90%, transparent);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 12px 14px;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 8px;
     }
-    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .brand img { width: 36px; height: 36px; border-radius: 10px; object-fit: contain; }
+    .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
     .brand span {
-      font-weight: 800; font-size: 18px;
+      font-weight: 800; font-size: 16px;
       background: linear-gradient(135deg, var(--primary2), var(--primary));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      white-space: nowrap;
     }
-    .user-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); flex-shrink: 0; }
+    .user-bar { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .lucky {
-      background: color-mix(in srgb, var(--warn) 15%, transparent);
-      border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
-      color: var(--warn);
-      padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 12px;
+      font-size: 11px; font-weight: 700; color: var(--warn);
+      border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+      padding: 3px 8px; border-radius: 999px; white-space: nowrap;
     }
     .icon-btn {
-      width: 34px; height: 34px;
+      width: 34px; height: 34px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg2); color: var(--text);
       display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 10px; border: 1px solid var(--border);
-      background: var(--bg2); color: var(--text);
-      text-decoration: none; font-size: 15px;
-      transition: all 0.15s; cursor: pointer;
+      text-decoration: none; font-size: 14px; cursor: pointer;
     }
-    .icon-btn:hover { border-color: var(--primary); background: var(--card); transform: translateY(-1px); }
-    .icon-btn img { width: 18px; height: 18px; object-fit: contain; border-radius: 4px; }
 
-    nav {
-      display: flex; gap: 2px; padding: 0 8px;
+    nav.tabs {
+      position: sticky; top: var(--header-h); z-index: 35;
+      display: flex; gap: 2px; padding: 0 6px;
+      height: var(--nav-h);
       background: var(--bg2); border-bottom: 1px solid var(--border);
       overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
-    nav::-webkit-scrollbar { display: none; }
+    nav.tabs::-webkit-scrollbar { display: none; }
     .nav-btn {
+      flex: 0 0 auto;
       background: none; border: none; color: var(--muted);
-      padding: 13px 12px; font-size: 13px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-      border-bottom: 2px solid transparent; transition: all 0.15s;
+      padding: 0 12px; height: 100%;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border-bottom: 2px solid transparent; white-space: nowrap;
     }
-    .nav-btn:hover { color: var(--text); }
     .nav-btn.active { color: var(--primary2); border-bottom-color: var(--primary); }
 
-    main { max-width: 920px; margin: 0 auto; padding: 20px 14px 50px; }
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 14px 12px calc(18px + var(--safe-bottom));
+    }
     .section { display: none; }
-    .section.active { display: block; animation: up 0.22s ease; }
-    @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .section.active { display: block; animation: fade .2s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
     .section-head {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px; gap: 10px; flex-wrap: wrap;
+      gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
     }
-    .section-head h2 { font-size: 20px; font-weight: 700; }
+    .section-head h2 { font-size: 1.15rem; font-weight: 700; }
 
     .card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+      border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
     }
     .card-title {
-      font-size: 14px; font-weight: 700; color: var(--primary2);
-      margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; font-weight: 700; color: var(--primary2);
+      margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
     }
-    .avg {
-      font-size: 12px; font-weight: 600; color: var(--muted);
-      background: var(--bg2); padding: 3px 8px; border-radius: 8px;
-    }
+    .avg { font-size: 11px; color: var(--muted); background: var(--bg2); padding: 2px 8px; border-radius: 8px; }
     .grades-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .grade-pill {
-      min-width: 40px; height: 40px;
+      min-width: 42px; height: 42px; padding: 0 6px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 12px; font-weight: 800; font-size: 16px;
-      background: color-mix(in srgb, var(--primary) 25%, var(--bg2));
-      color: var(--primary2); cursor: default; position: relative;
+      background: var(--grade-bg); color: var(--grade-fg);
+      border: none; cursor: pointer;
     }
-    .sem-label {
-      font-size: 11px; color: var(--muted); margin: 10px 0 6px;
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
+    .sem-label { font-size: 11px; color: var(--muted); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+
     .lesson {
-      display: grid; grid-template-columns: 72px 1fr auto;
-      gap: 10px; align-items: center; padding: 10px 0;
+      display: grid; grid-template-columns: 64px 1fr auto;
+      gap: 8px; align-items: center; padding: 9px 0;
       border-bottom: 1px solid var(--border);
     }
     .lesson:last-child { border-bottom: none; }
-    .lesson-time { font-size: 12px; color: var(--muted); font-weight: 600; }
-    .lesson-sub { font-weight: 600; font-size: 14px; }
-    .lesson-meta { font-size: 12px; color: var(--muted); }
-    .lesson-room { font-size: 12px; color: var(--muted); }
-    .cancelled { opacity: 0.45; text-decoration: line-through; }
+    .lesson-time { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .lesson-sub { font-weight: 600; font-size: 13px; }
+    .lesson-meta, .lesson-room { font-size: 11px; color: var(--muted); }
+    .cancelled { opacity: .45; text-decoration: line-through; }
     .flag {
-      display: inline-block; font-size: 10px; font-weight: 700;
-      padding: 2px 7px; border-radius: 999px;
-      background: color-mix(in srgb, var(--warn) 20%, transparent);
-      color: var(--warn); margin-left: 6px; vertical-align: middle;
+      font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px;
+      background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); margin-left: 4px;
     }
     .day-label {
-      font-size: 12px; font-weight: 700; color: var(--primary2);
-      text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px;
+      font-size: 11px; font-weight: 700; color: var(--primary2);
+      text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 6px;
     }
     .day-label:first-child { margin-top: 0; }
+
     .row-item {
       display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border);
+      gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border);
     }
     .row-item:last-child { border-bottom: none; }
-    .badge {
-      font-size: 11px; font-weight: 700; padding: 4px 9px;
-      border-radius: 999px; white-space: nowrap;
-    }
-    .b-ok { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); }
-    .b-warn { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
-    .b-bad { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
-    .b-info { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary2); }
-    .loading, .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+    .b-ok { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+    .b-warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+    .b-bad { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+    .b-info { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary2); }
+    .b-grade { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary2); }
+    .b-msg { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+    .b-ann { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+    .b-test { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+    .b-event { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary2); }
+
+    .feed-item { cursor: default; }
+    .feed-item .ft { font-weight: 600; font-size: 14px; }
+    .feed-item .fs { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .loading, .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 14px; }
     .spinner {
-      width: 32px; height: 32px; border: 3px solid var(--border);
+      width: 28px; height: 28px; border: 3px solid var(--border);
       border-top-color: var(--primary); border-radius: 50%;
-      animation: spin 0.7s linear infinite; margin: 0 auto 12px;
+      animation: spin .7s linear infinite; margin: 0 auto 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .msg-item, .ann-item {
-      padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer;
-    }
+
+    .msg-item, .ann-item { padding: 11px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
     .msg-item:last-child, .ann-item:last-child { border-bottom: none; }
     .msg-title, .ann-title { font-weight: 600; font-size: 14px; }
     .msg-meta, .ann-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .ann-body {
-      margin-top: 10px; padding: 12px;
-      background: var(--bg2); border-radius: 10px;
-      font-size: 13px; white-space: pre-wrap; line-height: 1.55;
-      display: none;
+      margin-top: 8px; padding: 10px; background: var(--bg2); border-radius: 10px;
+      font-size: 13px; white-space: pre-wrap; display: none;
     }
     .ann-body.open { display: block; }
     .back-btn {
       background: none; border: none; color: var(--primary2);
-      font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
+      font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 10px;
     }
-    .compose-box { margin-bottom: 14px; }
-    .compose-box .form-group { margin-bottom: 12px; }
-    .ok-msg { color: var(--success); font-size: 13px; margin-top: 8px; display: none; }
-    footer { text-align: center; padding: 16px; font-size: 11px; color: var(--muted); }
 
-    @media (max-width: 560px) {
+    /* Modal */
+    .modal-bg {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,.55);
+      display: none; align-items: flex-end; justify-content: center;
+      padding: 12px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 480px; max-height: 85vh; overflow: auto;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px 18px 14px 14px; padding: 18px 16px 16px;
+    }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
+    .modal .kv { display: grid; grid-template-columns: 100px 1fr; gap: 6px 10px; font-size: 13px; margin-bottom: 8px; }
+    .modal .kv span:first-child { color: var(--muted); }
+    .modal-close {
+      margin-top: 12px; width: 100%; padding: 11px;
+      border-radius: 11px; border: 1px solid var(--border);
+      background: var(--bg2); color: var(--text); font-weight: 600; cursor: pointer;
+    }
+
+    /* Settings colors */
+    .color-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .color-grid label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    .color-grid input[type=color] {
+      width: 100%; height: 38px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg2); padding: 2px; cursor: pointer;
+    }
+
+    footer { text-align: center; padding: 10px; font-size: 11px; color: var(--muted); }
+
+    /* ===== DESKTOP ===== */
+    @media (min-width: 768px) {
+      :root { --header-h: 60px; --nav-h: 46px; }
+      .login-card { padding: 36px 32px; }
+      .login-card h1 { font-size: 1.85rem; }
+      main { padding: 22px 20px 40px; }
+      .grade-pill { min-width: 46px; height: 46px; font-size: 17px; }
+      .modal-bg { align-items: center; }
+      .modal { border-radius: 16px; }
+      .user-bar .name { display: inline; }
+      nav.tabs { justify-content: flex-start; padding: 0 16px; }
+    }
+    @media (max-width: 767px) {
       .user-bar .name { display: none; }
       .lucky { display: none; }
-      .lesson { grid-template-columns: 60px 1fr; }
+      .lesson { grid-template-columns: 56px 1fr; }
       .lesson-room { grid-column: 2; }
+      header { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+      .nav-btn { padding: 0 11px; font-size: 12.5px; }
+      .section-head h2 { font-size: 1.05rem; }
     }
   </style>
 </head>
@@ -286,11 +336,11 @@
       <p class="sub">Twój profesjonalny EduPopek</p>
       <div class="form-group">
         <label>Login</label>
-        <input type="text" id="login" value="" autocomplete="username" />
+        <input type="text" id="login" autocomplete="username" />
       </div>
       <div class="form-group">
         <label>Hasło</label>
-        <input type="password" id="password" value="" autocomplete="current-password" />
+        <input type="password" id="password" autocomplete="current-password" />
       </div>
       <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Zaloguj się</button>
       <p class="error-msg" id="login-error"></p>
@@ -306,25 +356,32 @@
       <div class="user-bar">
         <span class="lucky" id="lucky-box" style="display:none"></span>
         <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Motyw">☾</button>
+        <button class="icon-btn" onclick="go('ustawienia')" title="Kolory i powiadomienia">🎨</button>
         <a class="icon-btn" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
-        <a class="icon-btn" href="https://chess.com" target="_blank" rel="noopener" title="Chess.com">♟️</a>
-        <a class="icon-btn" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">
-          <img src="image1.png" alt="portal" onerror="this.parentElement.textContent='🌐'" />
-        </a>
+        <a class="icon-btn" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
+        <a class="icon-btn" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
         <span class="name" id="user-name">—</span>
         <button class="btn btn-ghost" onclick="doLogout()">Wyloguj</button>
       </div>
     </header>
-    <nav>
-      <button class="nav-btn active" data-s="oceny" onclick="go('oceny')">Oceny</button>
+
+    <nav class="tabs">
+      <button class="nav-btn active" data-s="nowe" onclick="go('nowe')">Nowe</button>
+      <button class="nav-btn" data-s="oceny" onclick="go('oceny')">Oceny</button>
       <button class="nav-btn" data-s="plan" onclick="go('plan')">Plan</button>
       <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')">Obecności</button>
       <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')">Terminarz</button>
       <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')">Ogłoszenia</button>
       <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')">Wiadomości</button>
+      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')">Ustawienia</button>
     </nav>
+
     <main>
-      <section id="s-oceny" class="section active">
+      <section id="s-nowe" class="section active">
+        <div class="section-head"><h2>Nowe</h2><button class="btn-small" onclick="refreshFeed()">Odśwież</button></div>
+        <div id="c-nowe"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+      <section id="s-oceny" class="section">
         <div class="section-head"><h2>Oceny</h2></div>
         <div id="c-oceny"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
       </section>
@@ -349,18 +406,18 @@
           <h2>Wiadomości</h2>
           <button class="btn-small" onclick="showCompose()">Nowa wiadomość</button>
         </div>
-        <div id="compose-panel" class="card compose-box" style="display:none">
+        <div id="compose-panel" class="card" style="display:none">
           <div class="form-group">
             <label>Odbiorca</label>
-            <select id="msg-to"><option value="">Ładowanie listy…</option></select>
+            <select id="msg-to"><option value="">Ładowanie…</option></select>
           </div>
           <div class="form-group">
             <label>Temat</label>
-            <input type="text" id="msg-title" placeholder="Temat wiadomości" />
+            <input type="text" id="msg-title" placeholder="Temat" />
           </div>
           <div class="form-group">
             <label>Treść</label>
-            <textarea id="msg-body" placeholder="Napisz wiadomość…"></textarea>
+            <textarea id="msg-body" placeholder="Wiadomość…"></textarea>
           </div>
           <button class="btn btn-primary" id="btn-send" onclick="sendMessage()" style="margin-top:0">Wyślij</button>
           <p class="error-msg" id="send-error"></p>
@@ -368,8 +425,29 @@
         </div>
         <div id="c-wiadomosci"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
       </section>
+      <section id="s-ustawienia" class="section">
+        <div class="section-head"><h2>Ustawienia</h2></div>
+        <div class="card">
+          <div class="card-title">Motyw</div>
+          <button class="btn-small" onclick="toggleTheme()">Przełącz jasny / ciemny</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Powiadomienia</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Przeglądarka powiadomi o nowych ocenach, wiadomościach i wydarzeniach (gdy karta jest otwarta).</p>
+          <button class="btn-small" id="btn-notif" onclick="enableNotifications()">Włącz powiadomienia</button>
+          <p id="notif-status" style="font-size:12px;color:var(--muted);margin-top:8px"></p>
+        </div>
+        <div class="card">
+          <div class="card-title">Kolory <button class="btn-ghost" onclick="resetColors()" style="margin-left:auto">Reset</button></div>
+          <div class="color-grid" id="color-grid"></div>
+        </div>
+      </section>
     </main>
-    <footer>EduPopek · nieoficjalny klient Librusa · zainstaluj jako apkę z menu przeglądarki</footer>
+    <footer>EduPopek · Twój profesjonalny panel</footer>
+  </div>
+
+  <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal" id="modal-body"></div>
   </div>
 
 <script>
@@ -379,32 +457,86 @@
   const loaded = {};
   const $ = id => document.getElementById(id);
 
-  // ===== THEME =====
+  const COLOR_KEYS = [
+    ['--bg', 'Tło'], ['--bg2', 'Tło 2'], ['--card', 'Karty'],
+    ['--text', 'Tekst'], ['--muted', 'Tekst drugi'],
+    ['--primary', 'Akcent'], ['--primary2', 'Akcent 2'],
+    ['--grade-bg', 'Ocena tło'], ['--grade-fg', 'Ocena tekst'],
+    ['--success', 'Sukces'], ['--warn', 'Ostrzeżenie'], ['--danger', 'Błąd']
+  ];
+
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('ep_theme', t);
     const btn = $('theme-btn');
     if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = t === 'dark' ? '#0b0f1a' : '#f4f6fb';
+    if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || (t === 'dark' ? '#0b0f1a' : '#f1f5f9');
+    applyCustomColors();
   }
   applyTheme(localStorage.getItem('ep_theme') || 'dark');
   window.toggleTheme = function () {
-    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-    applyTheme(cur === 'dark' ? 'light' : 'dark');
+    applyTheme((document.documentElement.getAttribute('data-theme') || 'dark') === 'dark' ? 'light' : 'dark');
   };
 
-  // ===== PWA =====
+  function applyCustomColors() {
+    const saved = JSON.parse(localStorage.getItem('ep_colors') || '{}');
+    COLOR_KEYS.forEach(function (pair) {
+      const k = pair[0];
+      if (saved[k]) document.documentElement.style.setProperty(k, saved[k]);
+      else document.documentElement.style.removeProperty(k);
+    });
+  }
+  applyCustomColors();
+
+  function buildColorGrid() {
+    const grid = $('color-grid');
+    if (!grid) return;
+    const saved = JSON.parse(localStorage.getItem('ep_colors') || '{}');
+    grid.innerHTML = '';
+    COLOR_KEYS.forEach(function (pair) {
+      const k = pair[0], label = pair[1];
+      const wrap = document.createElement('div');
+      const lab = document.createElement('label');
+      lab.textContent = label;
+      const inp = document.createElement('input');
+      inp.type = 'color';
+      const cur = saved[k] || getComputedStyle(document.documentElement).getPropertyValue(k).trim() || '#888888';
+      inp.value = toHex(cur);
+      inp.addEventListener('input', function () {
+        const s = JSON.parse(localStorage.getItem('ep_colors') || '{}');
+        s[k] = inp.value;
+        localStorage.setItem('ep_colors', JSON.stringify(s));
+        document.documentElement.style.setProperty(k, inp.value);
+      });
+      wrap.appendChild(lab);
+      wrap.appendChild(inp);
+      grid.appendChild(wrap);
+    });
+  }
+  function toHex(c) {
+    c = (c || '').trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(c)) return c;
+    if (/^#[0-9a-fA-F]{3}$/.test(c)) return '#' + c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+    const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (m) return '#' + [m[1],m[2],m[3]].map(function (x) { return ('0'+Number(x).toString(16)).slice(-2); }).join('');
+    return '#888888';
+  }
+  window.resetColors = function () {
+    localStorage.removeItem('ep_colors');
+    COLOR_KEYS.forEach(function (p) { document.documentElement.style.removeProperty(p[0]); });
+    buildColorGrid();
+  };
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(function () {});
   }
 
   async function api(path, opts) {
     opts = opts || {};
-    const url = API.replace(/\/$/, '') + path;
     const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch(url, Object.assign({}, opts, { headers: headers }));
+    const res = await fetch(API.replace(/\/$/, '') + path, Object.assign({}, opts, { headers: headers }));
     let data = null;
     try { data = await res.json(); } catch (e) {}
     if (!res.ok) {
@@ -427,22 +559,21 @@
     const password = $('password').value;
     if (!login || !password) return showErr('Podaj login i hasło');
     const btn = $('btn-login');
-    btn.disabled = true;
-    btn.textContent = 'Logowanie…';
+    btn.disabled = true; btn.textContent = 'Logowanie…';
     try {
       const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ login: login, password: password }) });
       token = data.token;
       localStorage.setItem('ep_token', token);
       $('user-name').textContent = data.name || login;
       $('login-screen').style.display = 'none';
-      $('app').style.display = 'block';
+      $('app').classList.add('show');
       loadLucky();
-      go('oceny');
+      startNotifLoop();
+      go('nowe');
     } catch (e) {
       showErr(e.message || 'Błąd logowania');
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Zaloguj się';
+      btn.disabled = false; btn.textContent = 'Zaloguj się';
     }
   };
 
@@ -451,7 +582,8 @@
     token = null;
     localStorage.removeItem('ep_token');
     Object.keys(loaded).forEach(function (k) { delete loaded[k]; });
-    $('app').style.display = 'none';
+    stopNotifLoop();
+    $('app').classList.remove('show');
     $('login-screen').style.display = 'flex';
   };
 
@@ -459,9 +591,8 @@
     try {
       const n = await api('/api/lucky');
       if (n != null && n !== '') {
-        const box = $('lucky-box');
-        box.style.display = 'inline';
-        box.textContent = 'Szczęśliwy: ' + n;
+        $('lucky-box').style.display = 'inline';
+        $('lucky-box').textContent = 'Szczęśliwy: ' + n;
       }
     } catch (e) {}
   }
@@ -472,9 +603,10 @@
       const me = await api('/api/me');
       $('user-name').textContent = me.name || 'Zalogowany';
       $('login-screen').style.display = 'none';
-      $('app').style.display = 'block';
+      $('app').classList.add('show');
       loadLucky();
-      go('oceny');
+      startNotifLoop();
+      go('nowe');
     } catch (e) {
       token = null;
       localStorage.removeItem('ep_token');
@@ -488,6 +620,12 @@
     document.querySelectorAll('.section').forEach(function (s) {
       s.classList.toggle('active', s.id === 's-' + name);
     });
+    if (name === 'ustawienia') {
+      buildColorGrid();
+      updateNotifStatus();
+      loaded.ustawienia = true;
+      return;
+    }
     load(name);
   };
 
@@ -497,7 +635,8 @@
     if (!el) return;
     el.innerHTML = '<div class="loading"><div class="spinner"></div>Ładowanie…</div>';
     try {
-      if (name === 'oceny') await renderGrades(el);
+      if (name === 'nowe') await renderFeed(el);
+      else if (name === 'oceny') await renderGrades(el);
       else if (name === 'plan') await renderPlan(el);
       else if (name === 'obecnosci') await renderAbsences(el);
       else if (name === 'terminarz') await renderCalendar(el);
@@ -510,7 +649,192 @@
     }
   }
 
-  // ===== MESSAGES SEND =====
+  window.refreshFeed = function () {
+    delete loaded.nowe;
+    load('nowe');
+  };
+
+  const typeLabel = { grade: 'Ocena', message: 'Wiadomość', announcement: 'Ogłoszenie', test: 'Kartkówka/Sprawdzian', event: 'Wydarzenie' };
+  const typeBadge = { grade: 'b-grade', message: 'b-msg', announcement: 'b-ann', test: 'b-test', event: 'b-event' };
+
+  async function renderFeed(el) {
+    const list = await api('/api/feed');
+    if (!list || !list.length) {
+      el.innerHTML = '<div class="empty">Brak nowych pozycji</div>';
+      return;
+    }
+    let html = '<div class="card">';
+    list.forEach(function (it) {
+      html += '<div class="row-item feed-item">';
+      html += '<div><div class="ft">' + esc(it.title) + '</div>';
+      html += '<div class="fs">' + esc(it.subtitle || '') + (it.date ? ' · ' + esc(it.date) : '') + '</div></div>';
+      html += '<span class="badge ' + (typeBadge[it.type] || 'b-info') + '">' + esc(typeLabel[it.type] || it.type) + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
+  async function renderGrades(el) {
+    const data = await api('/api/grades');
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty">Brak ocen</div>';
+      return;
+    }
+    let html = '';
+    list.forEach(function (sub) {
+      const name = sub.name || '?';
+      const avg = sub.average || sub.tempAverage;
+      html += '<div class="card"><div class="card-title">' + esc(name);
+      if (avg != null && !isNaN(avg)) html += '<span class="avg">śr. ' + Number(avg).toFixed(2) + '</span>';
+      html += '</div>';
+      let hasAny = false;
+      (sub.semester || []).forEach(function (sem, i) {
+        const grades = (sem && sem.grades) || [];
+        if (!grades.length) return;
+        hasAny = true;
+        html += '<div class="sem-label">Semestr ' + (i + 1);
+        if (sem.average != null && !isNaN(sem.average)) html += ' · śr. ' + Number(sem.average).toFixed(2);
+        html += '</div><div class="grades-row">';
+        grades.forEach(function (g) {
+          const val = g.value || '?';
+          const id = g.id || '';
+          const info = (g.info || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+          html += '<button type="button" class="grade-pill" data-id="' + esc(String(id)) + '" data-info="' + info + '" data-subject="' + esc(name) + '" data-value="' + esc(val) + '" onclick="openGrade(this)">' + esc(val) + '</button>';
+        });
+        html += '</div>';
+      });
+      if (!hasAny) html += '<p style="color:var(--muted);font-size:13px">Brak ocen</p>';
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  }
+
+  window.openGrade = async function (btn) {
+    const id = btn.getAttribute('data-id');
+    const info = (btn.getAttribute('data-info') || '').replace(/&#39;/g, "'");
+    const subject = btn.getAttribute('data-subject') || '';
+    const value = btn.getAttribute('data-value') || '';
+    let detail = null;
+    if (id && id !== 'NaN' && id !== 'undefined') {
+      try { detail = await api('/api/grade/' + id); } catch (e) {}
+    }
+    const lines = info.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    let html = '<h3>Ocena: ' + esc(value) + '</h3>';
+    html += '<div class="kv"><span>Przedmiot</span><span>' + esc(subject) + '</span></div>';
+    if (detail) {
+      if (detail.grade) html += '<div class="kv"><span>Ocena</span><span>' + esc(detail.grade) + '</span></div>';
+      if (detail.category) html += '<div class="kv"><span>Kategoria</span><span>' + esc(detail.category) + '</span></div>';
+      if (detail.date) html += '<div class="kv"><span>Data</span><span>' + esc(detail.date) + '</span></div>';
+      if (detail.teacher) html += '<div class="kv"><span>Nauczyciel</span><span>' + esc(detail.teacher) + '</span></div>';
+      if (detail.lesson) html += '<div class="kv"><span>Lekcja</span><span>' + esc(detail.lesson) + '</span></div>';
+      if (detail.comment) html += '<div class="kv"><span>Komentarz</span><span>' + esc(detail.comment) + '</span></div>';
+      if (detail.multiplier != null) html += '<div class="kv"><span>Waga</span><span>' + esc(detail.multiplier) + '</span></div>';
+    } else if (lines.length) {
+      lines.forEach(function (ln) {
+        html += '<div class="kv"><span>•</span><span>' + esc(ln) + '</span></div>';
+      });
+    } else {
+      html += '<p style="color:var(--muted);font-size:13px">Brak dodatkowych szczegółów</p>';
+    }
+    html += '<button class="modal-close" onclick="closeModal()">Zamknij</button>';
+    $('modal-body').innerHTML = html;
+    $('modal-bg').classList.add('open');
+  };
+  window.closeModal = function () { $('modal-bg').classList.remove('open'); };
+
+  async function renderPlan(el) {
+    const data = await api('/api/timetable');
+    const table = (data && data.table) || data || {};
+    const dayNames = { Monday:'Poniedziałek',Tuesday:'Wtorek',Wednesday:'Środa',Thursday:'Czwartek',Friday:'Piątek',Saturday:'Sobota',Sunday:'Niedziela' };
+    const order = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    let html = '', any = false;
+    order.forEach(function (day) {
+      const lessons = table[day];
+      if (!lessons || !lessons.length) return;
+      if (!lessons.some(function (l) { return l && l.subject; })) return;
+      any = true;
+      html += '<div class="day-label">' + dayNames[day] + '</div><div class="card">';
+      lessons.forEach(function (l) {
+        if (!l || !l.subject) return;
+        const flag = l.flag && l.flag !== 'odwołane' ? '<span class="flag">' + esc(l.flag) + '</span>' : '';
+        html += '<div class="lesson ' + (l.cancelled ? 'cancelled' : '') + '">';
+        html += '<div class="lesson-time">' + esc(l.time || '') + '</div>';
+        html += '<div><div class="lesson-sub">' + esc(l.subject) + flag + '</div><div class="lesson-meta">' + esc(l.teacher || '') + '</div></div>';
+        html += '<div class="lesson-room">' + esc(l.room || '') + '</div></div>';
+      });
+      html += '</div>';
+    });
+    el.innerHTML = any ? html : '<div class="empty">Brak planu na ten tydzień</div>';
+  }
+
+  async function renderAbsences(el) {
+    const data = await api('/api/absences');
+    let items = [];
+    if (Array.isArray(data)) items = data;
+    else if (data && typeof data === 'object') {
+      Object.keys(data).forEach(function (k) { if (Array.isArray(data[k])) items = items.concat(data[k]); });
+    }
+    if (!items.length) { el.innerHTML = '<div class="empty">Brak nieobecności 🎉</div>'; return; }
+    let html = '<div class="card">';
+    items.slice(0, 100).forEach(function (a) {
+      const types = (a.table || []).filter(Boolean).map(function (t) { return t.type || t; }).join(', ') || '—';
+      const low = types.toLowerCase();
+      let cls = 'b-bad';
+      if (/obecn|\\bob\\b/.test(low)) cls = 'b-ok';
+      else if (/spóźn|\\bsp\\b/.test(low)) cls = 'b-warn';
+      html += '<div class="row-item"><div style="font-weight:600">' + esc(a.date || '—') + '</div>';
+      html += '<span class="badge ' + cls + '">' + esc(types) + '</span></div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
+  async function renderCalendar(el) {
+    const data = await api('/api/calendar');
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length) { el.innerHTML = '<div class="empty">Pusty terminarz</div>'; return; }
+    const byDay = {};
+    list.forEach(function (ev) {
+      const d = ev.day || 'Inne';
+      if (!byDay[d]) byDay[d] = [];
+      byDay[d].push(ev);
+    });
+    let html = '';
+    Object.keys(byDay).sort().forEach(function (day) {
+      html += '<div class="day-label">' + esc(day) + '</div><div class="card">';
+      byDay[day].forEach(function (ev) {
+        html += '<div class="row-item"><div><div style="font-weight:600">' + esc(ev.title || 'Wydarzenie') + '</div>';
+        if (ev.info && ev.info !== ev.title) html += '<div style="font-size:12px;color:var(--muted)">' + esc(ev.info) + '</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  }
+
+  async function renderAnnouncements(el) {
+    const data = await api('/api/announcements');
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length) { el.innerHTML = '<div class="empty">Brak ogłoszeń</div>'; return; }
+    let html = '<div class="card">';
+    list.forEach(function (a, i) {
+      const body = a.content || a.body || a.description || a.text || '';
+      html += '<div class="ann-item" onclick="toggleAnn(' + i + ')">';
+      html += '<div class="ann-title">' + esc(a.title || a.subject || 'Ogłoszenie') + '</div>';
+      html += '<div class="ann-meta">' + esc(a.user || a.author || '') + (a.date ? ' · ' + esc(a.date) : '') + '</div>';
+      if (body) html += '<div class="ann-body" id="ann-body-' + i + '">' + esc(body) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+  window.toggleAnn = function (i) {
+    const el = document.getElementById('ann-body-' + i);
+    if (el) el.classList.toggle('open');
+  };
+
   window.showCompose = async function () {
     const panel = $('compose-panel');
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
@@ -521,15 +845,12 @@
     sel.innerHTML = '<option value="">Ładowanie…</option>';
     try {
       const list = await api('/api/receivers');
-      if (!list || !list.length) {
-        sel.innerHTML = '<option value="">Brak odbiorców</option>';
-        return;
-      }
-      sel.innerHTML = '<option value="">— wybierz —</option>';
+      if (!list || !list.length) { sel.innerHTML = '<option value="">Brak odbiorców</option>'; return; }
+      sel.innerHTML = '<option value="">— wybierz nauczyciela —</option>';
       list.forEach(function (r) {
         const opt = document.createElement('option');
         opt.value = r.id;
-        opt.textContent = (r.name || r.id) + (r.type ? ' (' + r.type + ')' : '');
+        opt.textContent = (r.name || ('#' + r.id)) + (r.type ? ' · ' + r.type : '');
         sel.appendChild(opt);
       });
     } catch (e) {
@@ -541,206 +862,32 @@
     const userId = $('msg-to').value;
     const title = $('msg-title').value.trim();
     const body = $('msg-body').value.trim();
-    const err = $('send-error');
-    const ok = $('send-ok');
-    err.style.display = 'none';
-    ok.style.display = 'none';
-    if (!userId || !title || !body) {
-      err.textContent = 'Uzupełnij odbiorcę, temat i treść';
-      err.style.display = 'block';
-      return;
-    }
+    const err = $('send-error'); const ok = $('send-ok');
+    err.style.display = 'none'; ok.style.display = 'none';
+    if (!userId || !title || !body) { err.textContent = 'Uzupełnij wszystko'; err.style.display = 'block'; return; }
     const btn = $('btn-send');
-    btn.disabled = true;
-    btn.textContent = 'Wysyłanie…';
+    btn.disabled = true; btn.textContent = 'Wysyłanie…';
     try {
-      await api('/api/messages/send', {
-        method: 'POST',
-        body: JSON.stringify({ userId: userId, title: title, body: body })
-      });
+      await api('/api/messages/send', { method: 'POST', body: JSON.stringify({ userId: userId, title: title, body: body }) });
       ok.style.display = 'block';
-      $('msg-title').value = '';
-      $('msg-body').value = '';
-      delete loaded['wiadomosci'];
+      $('msg-title').value = ''; $('msg-body').value = '';
+      delete loaded.wiadomosci;
     } catch (e) {
-      err.textContent = e.message || 'Błąd wysyłania';
-      err.style.display = 'block';
+      err.textContent = e.message || 'Błąd'; err.style.display = 'block';
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Wyślij';
+      btn.disabled = false; btn.textContent = 'Wyślij';
     }
-  };
-
-  async function renderGrades(el) {
-    const data = await api('/api/grades');
-    const list = Array.isArray(data) ? data : [];
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Brak ocen</div>';
-      return;
-    }
-    let html = '';
-    list.forEach(function (sub) {
-      const name = sub.name || sub.Name || '?';
-      const avg = sub.average || sub.tempAverage;
-      html += '<div class="card"><div class="card-title">' + esc(name);
-      if (avg != null && !isNaN(avg)) html += '<span class="avg">śr. ' + Number(avg).toFixed(2) + '</span>';
-      html += '</div>';
-      const semesters = sub.semester || [];
-      let hasAny = false;
-      semesters.forEach(function (sem, i) {
-        const grades = (sem && sem.grades) || [];
-        if (!grades.length) return;
-        hasAny = true;
-        html += '<div class="sem-label">Semestr ' + (i + 1);
-        if (sem.average != null && !isNaN(sem.average)) html += ' · śr. ' + Number(sem.average).toFixed(2);
-        html += '</div><div class="grades-row">';
-        grades.forEach(function (g) {
-          const val = g.value || g.grade || '?';
-          const tip = (g.info || '').replace(/"/g, '&quot;');
-          html += '<div class="grade-pill" title="' + tip + '">' + esc(val) + '</div>';
-        });
-        html += '</div>';
-      });
-      if (!hasAny) html += '<p style="color:var(--muted);font-size:13px">Brak ocen</p>';
-      html += '</div>';
-    });
-    el.innerHTML = html;
-  }
-
-  async function renderPlan(el) {
-    const data = await api('/api/timetable');
-    const table = (data && data.table) || data || {};
-    const dayNames = {
-      Monday: 'Poniedziałek', Tuesday: 'Wtorek', Wednesday: 'Środa',
-      Thursday: 'Czwartek', Friday: 'Piątek', Saturday: 'Sobota', Sunday: 'Niedziela'
-    };
-    const order = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    let html = '';
-    let any = false;
-    order.forEach(function (day) {
-      const lessons = table[day];
-      if (!lessons || !lessons.length) return;
-      const filled = lessons.filter(function (l) { return l && l.subject; });
-      if (!filled.length) return;
-      any = true;
-      html += '<div class="day-label">' + (dayNames[day] || day) + '</div><div class="card">';
-      lessons.forEach(function (l) {
-        if (!l || !l.subject) return;
-        const cancelled = l.cancelled;
-        const flag = l.flag && l.flag !== 'odwołane' ? '<span class="flag">' + esc(l.flag) + '</span>' : '';
-        html += '<div class="lesson ' + (cancelled ? 'cancelled' : '') + '">';
-        html += '<div class="lesson-time">' + esc(l.time || '') + '</div>';
-        html += '<div><div class="lesson-sub">' + esc(l.subject) + flag + '</div>';
-        html += '<div class="lesson-meta">' + esc(l.teacher || '') + '</div></div>';
-        html += '<div class="lesson-room">' + esc(l.room || '') + '</div></div>';
-      });
-      html += '</div>';
-    });
-    el.innerHTML = any ? html : '<div class="empty">Brak planu lekcji na ten tydzień</div>';
-  }
-
-  async function renderAbsences(el) {
-    const data = await api('/api/absences');
-    let items = [];
-    if (Array.isArray(data)) items = data;
-    else if (data && typeof data === 'object') {
-      Object.keys(data).forEach(function (k) {
-        if (Array.isArray(data[k])) items = items.concat(data[k]);
-      });
-    }
-    if (!items.length) {
-      el.innerHTML = '<div class="empty">Brak nieobecności 🎉</div>';
-      return;
-    }
-    let html = '<div class="card">';
-    items.slice(0, 100).forEach(function (a) {
-      const date = a.date || '—';
-      const types = (a.table || []).filter(Boolean).map(function (t) { return t.type || t; }).join(', ') || '—';
-      const low = types.toLowerCase();
-      let cls = 'b-bad';
-      if (/obecn|ob\\b/.test(low)) cls = 'b-ok';
-      else if (/spóźn|sp\\b/.test(low)) cls = 'b-warn';
-      else if (/uspr|uspraw/.test(low)) cls = 'b-info';
-      html += '<div class="row-item"><div><div style="font-weight:600">' + esc(date) + '</div></div>';
-      html += '<span class="badge ' + cls + '">' + esc(types) + '</span></div>';
-    });
-    html += '</div>';
-    el.innerHTML = html;
-  }
-
-  async function renderCalendar(el) {
-    const data = await api('/api/calendar');
-    let list = Array.isArray(data) ? data : [];
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Pusty terminarz</div>';
-      return;
-    }
-    const byDay = {};
-    list.forEach(function (ev) {
-      const d = ev.day || ev.date || 'Inne';
-      if (!byDay[d]) byDay[d] = [];
-      byDay[d].push(ev);
-    });
-    const days = Object.keys(byDay).sort();
-    let html = '';
-    days.forEach(function (day) {
-      html += '<div class="day-label">' + esc(day) + '</div><div class="card">';
-      byDay[day].forEach(function (ev) {
-        html += '<div class="row-item"><div>';
-        html += '<div style="font-weight:600">' + esc(ev.title || 'Wydarzenie') + '</div>';
-        if (ev.info && ev.info !== ev.title) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + esc(ev.info) + '</div>';
-        html += '</div></div>';
-      });
-      html += '</div>';
-    });
-    el.innerHTML = html;
-  }
-
-  async function renderAnnouncements(el) {
-    const data = await api('/api/announcements');
-    const list = Array.isArray(data) ? data : [];
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Brak ogłoszeń</div>';
-      return;
-    }
-    let html = '<div class="card">';
-    list.forEach(function (a, i) {
-      const title = a.title || a.subject || 'Ogłoszenie';
-      const author = a.user || a.author || a.teacher || '';
-      const date = a.date || a.startDate || '';
-      const body = a.content || a.body || a.description || a.text || '';
-      html += '<div class="ann-item" onclick="toggleAnn(' + i + ')">';
-      html += '<div class="ann-title">' + esc(title) + '</div>';
-      html += '<div class="ann-meta">' + esc(author) + (date ? ' · ' + esc(date) : '') + '</div>';
-      if (body) html += '<div class="ann-body" id="ann-body-' + i + '">' + esc(body) + '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-    el.innerHTML = html;
-  }
-
-  window.toggleAnn = function (i) {
-    const el = document.getElementById('ann-body-' + i);
-    if (el) el.classList.toggle('open');
   };
 
   async function renderMessages(el) {
     const data = await api('/api/messages');
-    const list = Array.isArray(data) ? data : (data.messages || data.items || []);
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Brak wiadomości</div>';
-      return;
-    }
-    let html = '<div class="card" id="msg-list">';
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length) { el.innerHTML = '<div class="empty">Brak wiadomości</div>'; return; }
+    let html = '<div class="card">';
     list.slice(0, 50).forEach(function (m) {
-      const title = m.title || m.subject || 'Wiadomość';
-      const from = m.user || m.sender || m.from || m.userName || '';
-      const date = m.date || m.sendDate || '';
-      const id = m.id || m.messageId || m.Id || null;
-      const folder = m.folder || 5;
-      html += '<div class="msg-item" data-id="' + esc(String(id || '')) + '" data-folder="' + esc(String(folder)) + '" onclick="openMessage(this)">';
-      html += '<div class="msg-title">' + esc(title) + '</div>';
-      html += '<div class="msg-meta">' + esc(from) + (date ? ' · ' + esc(date) : '') + '</div></div>';
+      html += '<div class="msg-item" data-id="' + esc(String(m.id || '')) + '" data-folder="5" onclick="openMessage(this)">';
+      html += '<div class="msg-title">' + esc(m.title || 'Wiadomość') + '</div>';
+      html += '<div class="msg-meta">' + esc(m.user || '') + (m.date ? ' · ' + esc(m.date) : '') + '</div></div>';
     });
     html += '</div>';
     el.innerHTML = html;
@@ -748,35 +895,71 @@
 
   window.openMessage = async function (node) {
     const id = node.getAttribute('data-id');
-    const folder = node.getAttribute('data-folder') || '5';
     const el = $('c-wiadomosci');
-    if (!id || id === 'null' || id === 'undefined') {
-      el.innerHTML = '<button class="back-btn" onclick="reloadMessages()">← Wróć</button><div class="card"><p style="color:var(--muted)">Brak ID wiadomości</p></div>';
+    if (!id || id === 'null') {
+      el.innerHTML = '<button class="back-btn" onclick="reloadMessages()">← Wróć</button><div class="card">Brak ID</div>';
       return;
     }
     el.innerHTML = '<div class="loading"><div class="spinner"></div>Wczytywanie…</div>';
     try {
-      const msg = await api('/api/message/' + folder + '/' + id);
-      const title = msg.title || msg.subject || 'Wiadomość';
-      const from = msg.user || msg.sender || msg.from || '';
-      const date = msg.date || msg.sendDate || '';
-      const body = msg.content || msg.body || msg.html || msg.text || msg.message || '';
-      let html = '<button class="back-btn" onclick="reloadMessages()">← Wróć do listy</button>';
-      html += '<div class="card">';
-      html += '<div style="font-weight:700;font-size:16px;margin-bottom:6px">' + esc(title) + '</div>';
-      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">' + esc(from) + (date ? ' · ' + esc(date) : '') + '</div>';
-      html += '<div style="font-size:14px;white-space:pre-wrap;line-height:1.6">' + (typeof body === 'string' ? body : esc(String(body))) + '</div>';
-      html += '</div>';
+      const msg = await api('/api/message/5/' + id);
+      let html = '<button class="back-btn" onclick="reloadMessages()">← Wróć</button><div class="card">';
+      html += '<div style="font-weight:700;font-size:16px;margin-bottom:6px">' + esc(msg.title || 'Wiadomość') + '</div>';
+      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">' + esc(msg.user || '') + (msg.date ? ' · ' + esc(msg.date) : '') + '</div>';
+      html += '<div style="white-space:pre-wrap;font-size:14px">' + (msg.html || esc(msg.content || msg.body || '')) + '</div></div>';
       el.innerHTML = html;
     } catch (e) {
       el.innerHTML = '<button class="back-btn" onclick="reloadMessages()">← Wróć</button><div class="empty">' + esc(e.message) + '</div>';
     }
   };
+  window.reloadMessages = function () { delete loaded.wiadomosci; load('wiadomosci'); };
 
-  window.reloadMessages = function () {
-    delete loaded['wiadomosci'];
-    load('wiadomosci');
+  // ===== NOTIFICATIONS =====
+  let notifTimer = null;
+  function updateNotifStatus() {
+    const st = $('notif-status');
+    if (!st) return;
+    if (!('Notification' in window)) { st.textContent = 'Ta przeglądarka nie wspiera powiadomień'; return; }
+    st.textContent = 'Status: ' + Notification.permission;
+  }
+  window.enableNotifications = async function () {
+    if (!('Notification' in window)) return alert('Brak wsparcia powiadomień');
+    const p = await Notification.requestPermission();
+    updateNotifStatus();
+    if (p === 'granted') {
+      localStorage.setItem('ep_notif', '1');
+      startNotifLoop();
+      new Notification('EduPopek', { body: 'Powiadomienia włączone', icon: 'image1.png' });
+    }
   };
+  function startNotifLoop() {
+    stopNotifLoop();
+    if (localStorage.getItem('ep_notif') !== '1') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    checkFeedNotif();
+    notifTimer = setInterval(checkFeedNotif, 5 * 60 * 1000);
+  }
+  function stopNotifLoop() {
+    if (notifTimer) clearInterval(notifTimer);
+    notifTimer = null;
+  }
+  async function checkFeedNotif() {
+    if (!token) return;
+    try {
+      const list = await api('/api/feed');
+      if (!list || !list.length) return;
+      const last = localStorage.getItem('ep_feed_ts') || '0';
+      const newest = String(list[0].ts || 0);
+      if (newest > last && last !== '0') {
+        const n = list.filter(function (x) { return String(x.ts || 0) > last; }).length;
+        new Notification('EduPopek', {
+          body: n === 1 ? list[0].title : ('Nowych pozycji: ' + n),
+          icon: 'image1.png'
+        });
+      }
+      if (newest !== '0') localStorage.setItem('ep_feed_ts', newest);
+    } catch (e) {}
+  }
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -784,9 +967,7 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  $('password').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') doLogin();
-  });
+  $('password').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 })();
 </script>
 </body>
