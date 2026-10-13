@@ -10,7 +10,7 @@
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/image1.png",
+      "src": "EduPopek/image1.png",
       "isSquare": true,
       "isPng": true,
       "isWebp": false,
