@@ -317,42 +317,57 @@
       .user-bar .name { display: inline; }
       nav.tabs { justify-content: flex-start; padding: 0 16px; }
     }
-    @media (max-width: 767px) {
-      .user-bar .name { display: none; }
-      .lucky { display: none; }
-      .lesson { grid-template-columns: 56px 1fr; }
-      .lesson-room { grid-column: 2; }
-      header { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
-      .nav-btn { padding: 0 11px; font-size: 12.5px; }
-      .section-head h2 { font-size: 1.05rem; }
-    }
-
-
     .nav-btn .ni { display: none; font-size: 16px; line-height: 1; }
     .nav-btn .nl { display: inline; }
-    @media (max-width: 767px) {
-      .nav-btn .ni { display: block; }
-      .nav-btn .nl { display: block; font-size: 10px; font-weight: 600; }
+    .desk-only { display: inline-flex; }
+    .lucky {
+      font-size: 11px; font-weight: 700; color: var(--warn);
+      margin-left: 6px; white-space: nowrap;
     }
 
-    /* Mobile bottom navigation */
+    /* Mobile */
     @media (max-width: 767px) {
+      .desk-only { display: none !important; }
+      .user-bar .name { display: none; }
+      .lesson { grid-template-columns: 56px 1fr; }
+      .lesson-room { grid-column: 2; }
+      header {
+        height: 52px;
+        padding: 0 max(8px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
+      }
+      .brand span:not(.lucky) { font-size: 15px; }
+      .lucky {
+        font-size: 10px;
+        max-width: 48px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn { width: 34px; height: 34px; }
+      .user-bar { gap: 4px; }
+      .user-bar .btn-ghost { padding: 6px 10px; font-size: 12px; }
+
       nav.tabs {
         position: fixed;
         left: 0; right: 0; bottom: 0;
         top: auto;
-        height: calc(56px + var(--safe-bottom));
-        padding: 0 4px var(--safe-bottom);
+        height: calc(58px + var(--safe-bottom));
+        padding: 4px 2px var(--safe-bottom);
         border-top: 1px solid var(--border);
         border-bottom: none;
         z-index: 50;
-        justify-content: space-around;
+        justify-content: flex-start;
         background: var(--bg2);
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
+      nav.tabs::-webkit-scrollbar { display: none; }
       .nav-btn {
-        flex: 1 1 0;
-        padding: 0 4px;
-        font-size: 10px;
+        flex: 0 0 auto;
+        width: 58px;
+        padding: 0;
+        font-size: 9px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -360,7 +375,18 @@
         gap: 2px;
         border-bottom: none;
         border-top: 2px solid transparent;
-        min-width: 0;
+        min-width: 58px;
+      }
+      .nav-btn .ni { display: block; font-size: 18px; line-height: 1; }
+      .nav-btn .nl {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        max-width: 56px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
       }
       .nav-btn.active {
         border-bottom: none;
@@ -368,12 +394,9 @@
         color: var(--primary2);
       }
       main {
-        padding-bottom: calc(72px + var(--safe-bottom));
+        padding: 12px 12px calc(78px + var(--safe-bottom));
       }
-      header {
-        height: 52px;
-      }
-      .icon-btn { width: 36px; height: 36px; }
+      .section-head h2 { font-size: 1.05rem; }
       .grade-pill { min-width: 48px; height: 48px; font-size: 17px; border-radius: 14px; }
       .card { padding: 12px; border-radius: 16px; }
       .login-card { padding: 24px 18px; border-radius: 20px; max-width: 100%; }
@@ -381,59 +404,10 @@
       .btn-primary { padding: 14px; font-size: 15px; border-radius: 14px; }
       .form-group input { padding: 14px; font-size: 16px; border-radius: 12px; }
       .section-head { margin-bottom: 10px; }
-      .user-bar .btn-ghost { padding: 6px 10px; }
+      .feed-title { font-size: 13px; }
+      .feed-sub { font-size: 11px; }
     }
 
-    /* Librus-like activity feed */
-    .feed-list { display: flex; flex-direction: column; gap: 8px; }
-    .feed-card {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 12px 14px;
-    }
-    .feed-icon {
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 16px; flex-shrink: 0;
-    }
-    .feed-icon.grade { background: #2563eb; color: #fff; }
-    .feed-icon.message { background: #0ea5e9; color: #fff; font-size: 18px; }
-    .feed-icon.announcement { background: #f59e0b; color: #fff; font-size: 18px; }
-    .feed-icon.test { background: #ef4444; color: #fff; font-size: 15px; }
-    .feed-icon.event { background: #8b5cf6; color: #fff; font-size: 18px; }
-    .feed-body { flex: 1; min-width: 0; }
-    .feed-title { font-weight: 650; font-size: 14px; line-height: 1.3; }
-    .feed-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .feed-date { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; max-width: 72px; line-height: 1.25; }
-    .feed-day-sep {
-      font-size: 12px; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .04em;
-      margin: 12px 4px 6px;
-    }
-    .feed-day-sep:first-child { margin-top: 0; }
-
-    .acct-row {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border);
-    }
-    .acct-row:last-child { border-bottom: none; }
-    .acct-row.active .acct-name { color: var(--primary2); font-weight: 700; }
-    .acct-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .acct-switch {
-      font-size: 12px; padding: 6px 10px; border-radius: 8px;
-      border: 1px solid var(--border); background: var(--bg2); color: var(--text); cursor: pointer;
-    }
-    .acct-out {
-      font-size: 12px; padding: 6px 10px; border-radius: 8px;
-      border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
-      background: transparent; color: var(--danger); cursor: pointer;
-    }
-    .acct-chip {
-      max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      font-size: 12px; font-weight: 600; color: var(--primary2);
-      border: 1px solid var(--border); background: var(--bg2);
-      padding: 5px 8px; border-radius: 999px; cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -460,29 +434,28 @@
       <div class="brand">
         <img src="image1.png" alt="" onerror="this.style.display='none'" />
         <span>EduPopek</span>
+        <span class="lucky" id="lucky-box" hidden></span>
       </div>
       <div class="user-bar">
-        <span class="lucky" id="lucky-box" style="display:none"></span>
         <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Motyw">☾</button>
-        <button class="icon-btn" onclick="go('ustawienia')" title="Kolory i powiadomienia">🎨</button>
-        <a class="icon-btn" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
-        <a class="icon-btn" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
-        <a class="icon-btn" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
-        <button class="acct-chip name" id="user-name" onclick="go('konta')" title="Konta">—</button>
+        <button class="icon-btn desk-only" onclick="go('ustawienia')" title="Kolory">🎨</button>
+        <a class="icon-btn desk-only" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
+        <a class="icon-btn desk-only" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
+        <a class="icon-btn desk-only" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
         <button class="btn btn-ghost" onclick="go('konta')">Konta</button>
       </div>
     </header>
 
     <nav class="tabs">
-      <button class="nav-btn active" data-s="sprawdziany" onclick="go('sprawdziany')"><span class="ni">📝</span><span class="nl">Sprawdziany i inne</span></button>
+      <button class="nav-btn active" data-s="sprawdziany" onclick="go('sprawdziany')"><span class="ni">📝</span><span class="nl">Testy</span></button>
       <button class="nav-btn" data-s="oceny" onclick="go('oceny')"><span class="ni">📊</span><span class="nl">Oceny</span></button>
-      <button class="nav-btn" data-s="plan" onclick="go('plan')"><span class="ni">📚</span><span class="nl">Plan lekcyjny</span></button>
-      <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')"><span class="ni">✅</span><span class="nl">Obecność</span></button>
-      <button class="nav-btn" data-s="nauczyciele" onclick="go('nauczyciele')"><span class="ni">👤</span><span class="nl">Nieobecnośni nauczycieli</span></button>
-      <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')"><span class="ni">📅</span><span class="nl">Terminarz</span></button>
-      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')"><span class="ni">📢</span><span class="nl">Ogłoszenia</span></button>
-      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')"><span class="ni">✉️</span><span class="nl">Wiadomości</span></button>
-      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')"><span class="ni">⚙️</span><span class="nl">Ustawienia</span></button>
+      <button class="nav-btn" data-s="plan" onclick="go('plan')"><span class="ni">📚</span><span class="nl">Plan</span></button>
+      <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')"><span class="ni">✅</span><span class="nl">Obec.</span></button>
+      <button class="nav-btn" data-s="nauczyciele" onclick="go('nauczyciele')"><span class="ni">👤</span><span class="nl">Naucz.</span></button>
+      <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')"><span class="ni">📅</span><span class="nl">Term.</span></button>
+      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')"><span class="ni">📢</span><span class="nl">Ogłosz.</span></button>
+      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')"><span class="ni">✉️</span><span class="nl">Wiad.</span></button>
+      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')"><span class="ni">⚙️</span><span class="nl">Ustaw.</span></button>
     </nav>
 
     <main>
@@ -555,6 +528,14 @@
         <div class="card">
           <div class="card-title">Motyw</div>
           <button class="btn-small" onclick="toggleTheme()">Przełącz jasny / ciemny</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Szybkie linki</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <a class="btn-small" href="https://instaling.pl/" target="_blank" rel="noopener">Instaling</a>
+            <a class="btn-small" href="https://chess.com" target="_blank" rel="noopener">Chess</a>
+            <a class="btn-small" href="https://pawelpopek.baby" target="_blank" rel="noopener">Portal</a>
+          </div>
         </div>
         <div class="card">
           <div class="card-title">Powiadomienia</div>
@@ -859,8 +840,10 @@
     try {
       const n = await api('/api/lucky');
       if (n != null && n !== '') {
-        $('lucky-box').style.display = 'inline';
-        $('lucky-box').textContent = 'Szczęśliwy: ' + n;
+        const box = $('lucky-box');
+        box.hidden = false;
+        box.textContent = '· ' + n;
+        box.title = 'Szczęśliwy numerek: ' + n;
       }
     } catch (e) {}
   }
