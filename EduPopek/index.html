@@ -474,20 +474,25 @@
     </header>
 
     <nav class="tabs">
-      <button class="nav-btn active" data-s="nowe" onclick="go('nowe')"><span class="ni">⚡</span><span class="nl">Nowe</span></button>
+      <button class="nav-btn active" data-s="sprawdziany" onclick="go('sprawdziany')"><span class="ni">📝</span><span class="nl">Sprawdz.</span></button>
       <button class="nav-btn" data-s="oceny" onclick="go('oceny')"><span class="ni">📊</span><span class="nl">Oceny</span></button>
       <button class="nav-btn" data-s="plan" onclick="go('plan')"><span class="ni">📚</span><span class="nl">Plan</span></button>
       <button class="nav-btn" data-s="obecnosci" onclick="go('obecnosci')"><span class="ni">✅</span><span class="nl">Obec.</span></button>
+      <button class="nav-btn" data-s="nauczyciele" onclick="go('nauczyciele')"><span class="ni">👤</span><span class="nl">Naucz.</span></button>
       <button class="nav-btn" data-s="terminarz" onclick="go('terminarz')"><span class="ni">📅</span><span class="nl">Term.</span></button>
-      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')"><span class="ni">📢</span><span class="nl">Ogł.</span></button>
-      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')"><span class="ni">✉️</span><span class="nl">Wiad.</span></button>
-      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')"><span class="ni">⚙️</span><span class="nl">Więcej</span></button>
+      <button class="nav-btn" data-s="ogloszenia" onclick="go('ogloszenia')"><span class="ni">📢</span><span class="nl">Ogłoszenia</span></button>
+      <button class="nav-btn" data-s="wiadomosci" onclick="go('wiadomosci')"><span class="ni">✉️</span><span class="nl">Wiadomości</span></button>
+      <button class="nav-btn" data-s="ustawienia" onclick="go('ustawienia')"><span class="ni">⚙️</span><span class="nl">Ustawienia</span></button>
     </nav>
 
     <main>
-      <section id="s-nowe" class="section active">
-        <div class="section-head"><h2>Nowe</h2><button class="btn-small" onclick="refreshFeed()">Odśwież</button></div>
-        <div id="c-nowe"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      <section id="s-sprawdziany" class="section active">
+        <div class="section-head"><h2>Sprawdziany i kartkówki</h2><button class="btn-small" onclick="refreshExams()">Odśwież</button></div>
+        <div id="c-sprawdziany"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
+      </section>
+      <section id="s-nauczyciele" class="section">
+        <div class="section-head"><h2>Nieobecni nauczyciele</h2><button class="btn-small" onclick="refreshTeachers()">Odśwież</button></div>
+        <div id="c-nauczyciele"><div class="loading"><div class="spinner"></div>Ładowanie…</div></div>
       </section>
       <section id="s-oceny" class="section">
         <div class="section-head"><h2>Oceny</h2></div>
@@ -681,7 +686,7 @@
     setActiveAccount(id);
     const acc = getActiveAccount();
     $('user-name').textContent = (acc && (acc.name || acc.login)) || '—';
-    go('nowe');
+    go('sprawdziany');
     loadLucky();
   };
 
@@ -700,7 +705,7 @@
     if (wasActive) {
       const acc = getActiveAccount();
       $('user-name').textContent = (acc && (acc.name || acc.login)) || '—';
-      go('nowe');
+      go('sprawdziany');
       loadLucky();
     } else {
       renderAccounts();
@@ -828,7 +833,7 @@
       $('app').classList.add('show');
       loadLucky();
       startNotifLoop();
-      go('nowe');
+      go('sprawdziany');
     } catch (e) {
       showErr(e.message || 'Błąd logowania');
     } finally {
@@ -876,7 +881,7 @@
       $('app').classList.add('show');
       loadLucky();
       startNotifLoop();
-      go('nowe');
+      go('sprawdziany');
     } catch (e) {
       console.warn('auto-login failed', e);
       // sesja na serwerze padła – wymagaj ponownego logowania
@@ -917,7 +922,8 @@
     if (!el) return;
     el.innerHTML = '<div class="loading"><div class="spinner"></div>Ładowanie…</div>';
     try {
-      if (name === 'nowe') await renderFeed(el);
+      if (name === 'sprawdziany') await renderExams(el);
+      else if (name === 'nauczyciele') await renderTeacherAbsences(el);
       else if (name === 'oceny') await renderGrades(el);
       else if (name === 'plan') await renderPlan(el);
       else if (name === 'obecnosci') await renderAbsences(el);
@@ -942,7 +948,7 @@
           const a = getActiveAccount();
           token = a ? a.token : null;
           $('user-name').textContent = (a && (a.name || a.login)) || '—';
-          go('nowe');
+          go('sprawdziany');
         }
         return;
       }
@@ -950,9 +956,13 @@
     }
   }
 
-  window.refreshFeed = function () {
-    delete loaded.nowe;
-    load('nowe');
+  window.refreshExams = function () {
+    delete loaded.sprawdziany;
+    load('sprawdziany');
+  };
+  window.refreshTeachers = function () {
+    delete loaded.nauczyciele;
+    load('nauczyciele');
   };
 
   const typeLabel = { grade: 'Ocena', message: 'Wiadomość', announcement: 'Ogłoszenie', test: 'Kartkówka/Sprawdzian', event: 'Wydarzenie' };
@@ -1096,55 +1106,162 @@
     return items.slice(0, 150);
   }
 
-  async function renderFeed(el) {
-    // zawsze składamy lokalnie z /api/grades, messages, … (niezależne od /api/feed)
+  function isExamEvent(title, info) {
+    const t = (String(title || '') + ' ' + String(info || '')).toLowerCase();
+    return /kartk[oó]w|sprawdzian|sprawdz\.|test\b|egzamin|recytac|powt[oó]rzen|odpowied[zź]|praca klasowa|wypracowan|dyktand|quiz|klas[oó]wka/.test(t);
+  }
+
+  function isTeacherAbsence(title, info) {
+    const t = (String(title || '') + ' ' + String(info || '')).toLowerCase();
+    return /nieobec|absenc|zwolnion|urlop|l4|chorob|wyjazd|szkolen|opieka|zastępstw|zastepstw|wolne nauczyc|nie ma nauczyc/.test(t);
+  }
+
+  function extractTeacherName(title, info) {
+    const raw = String(title || '') + ' ' + String(info || '');
+    // typowe: "Nieobecność: Jan Kowalski" / "jn. Kowalski"
+    let m = raw.match(/(?:nieobecno[sś][cć]|absencja|urlop|zwolnieni[ea]|zastępstwo|zastepstwo)\s*[:\-]?\s*(.+)/i);
+    if (m) return m[1].split(/[\n|]/)[0].trim().slice(0, 80);
+    m = raw.match(/([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)/);
+    if (m) return m[1];
+    return (title || info || 'Nauczyciel').toString().trim().slice(0, 80);
+  }
+
+  async function fetchCalendarAll() {
+    const cal = await api('/api/calendar');
+    return Array.isArray(cal) ? cal : [];
+  }
+
+  async function renderExams(el) {
     let list = [];
     try {
-      list = await buildFeedClient();
-    } catch (e) {
-      console.error('buildFeedClient', e);
-      throw e;
-    }
-    if ((!list || !list.length)) {
-      // spróbuj jeszcze backendowego feedu
-      try {
-        list = await api('/api/feed');
-        list = (list || []).map(function (it) {
-          const ts = it.ts || parseAnyDate(it.date) || 0;
-          return Object.assign({}, it, { ts: ts, value: it.value || '' });
+      const cal = await fetchCalendarAll();
+      cal.forEach(function (ev) {
+        const title = ev.title || ev.info || 'Wydarzenie';
+        const info = ev.info || '';
+        if (!isExamEvent(title, info)) return;
+        const low = (title + ' ' + info).toLowerCase();
+        let kind = 'Inne';
+        if (/kartk/.test(low)) kind = 'Kartkówka';
+        else if (/sprawdzian|praca klasowa|klas[oó]wka/.test(low)) kind = 'Sprawdzian';
+        else if (/recytac/.test(low)) kind = 'Recytacja';
+        else if (/powt[oó]rzen/.test(low)) kind = 'Powtórzenie';
+        else if (/egzamin|test/.test(low)) kind = 'Test / egzamin';
+        else if (/odpowied/.test(low)) kind = 'Odpowiedź ustna';
+        else if (/dyktand|wypracowan/.test(low)) kind = 'Praca pisemna';
+        list.push({
+          title: title,
+          subtitle: info,
+          kind: kind,
+          date: ev.day || '',
+          ts: parseAnyDate(ev.day)
         });
-      } catch (e2) {}
-    }
-    list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Brak nowych pozycji</div>';
+      });
+    } catch (e) {
+      el.innerHTML = '<div class="empty">Nie udało się pobrać terminarza<br><span style="font-size:12px">' + esc(e.message) + '</span></div>';
       return;
     }
-
+    list.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); }); // nadchodzące od najbliższych; bez dat na końcu
+    // elementy bez daty na koniec
+    list.sort(function (a, b) {
+      if (!a.ts && !b.ts) return 0;
+      if (!a.ts) return 1;
+      if (!b.ts) return -1;
+      return a.ts - b.ts;
+    });
+    if (!list.length) {
+      el.innerHTML = '<div class="empty">Brak sprawdzianów, kartkówek i podobnych w terminarzu</div>';
+      return;
+    }
     let html = '<div class="feed-list">';
     let lastDay = null;
+    const now = Date.now();
     list.forEach(function (it) {
       const dk = dayKey(it.ts);
       if (dk !== lastDay) {
         lastDay = dk;
-        html += '<div class="feed-day-sep">' + esc(dayLabel(it.ts)) + '</div>';
+        html += '<div class="feed-day-sep">' + esc(dayLabel(it.ts)) + (it.ts && it.ts < now - 86400000 ? ' · minione' : '') + '</div>';
       }
-      const isGrade = it.type === 'grade';
-      const iconInner = isGrade ? esc(it.value || (it.title || '?').split(':').pop().trim() || '?') : esc(it.value || '•');
+      const icon = it.kind === 'Kartkówka' ? '📝' : it.kind === 'Sprawdzian' ? '📋' : it.kind === 'Recytacja' ? '🎤' : it.kind === 'Powtórzenie' ? '🔁' : '📌';
       html += '<div class="feed-card">';
-      html += '<div class="feed-icon ' + esc(it.type || 'event') + '">' + iconInner + '</div>';
+      html += '<div class="feed-icon test">' + icon + '</div>';
       html += '<div class="feed-body">';
-      html += '<div class="feed-title">' + esc(isGrade ? (it.title || '').replace(/:\\s*[^:]+$/, '') || it.title : it.title) + (isGrade ? '' : '') + '</div>';
-      if (isGrade && it.value) {
-        html += '<div class="feed-sub">Ocena: <b>' + esc(it.value) + '</b>' + (it.subtitle ? ' · ' + esc(it.subtitle) : '') + '</div>';
-      } else {
-        html += '<div class="feed-sub">' + esc(it.subtitle || typeLabel[it.type] || '') + '</div>';
-      }
+      html += '<div class="feed-title">' + esc(it.title) + '</div>';
+      html += '<div class="feed-sub"><b>' + esc(it.kind) + '</b>' + (it.subtitle && it.subtitle !== it.title ? ' · ' + esc(it.subtitle).slice(0, 100) : '') + '</div>';
       html += '</div>';
-      html += '<div class="feed-date">' + formatFeedDate(it.ts, it.date).split('|').map(function(x){ return esc(x); }).join('<br>') + '</div>';
+      html += '<div class="feed-date">' + formatFeedDate(it.ts, it.date).split('|').map(function (x) { return esc(x); }).join('<br>') + '</div>';
       html += '</div>';
     });
     html += '</div>';
+    el.innerHTML = html;
+  }
+
+  async function renderTeacherAbsences(el) {
+    const byDay = {};
+    try {
+      const cal = await fetchCalendarAll();
+      cal.forEach(function (ev) {
+        const title = ev.title || '';
+        const info = ev.info || '';
+        if (!isTeacherAbsence(title, info)) return;
+        const day = ev.day || 'Bez daty';
+        if (!byDay[day]) byDay[day] = [];
+        byDay[day].push({
+          teacher: extractTeacherName(title, info),
+          title: title,
+          info: info,
+          ts: parseAnyDate(ev.day)
+        });
+      });
+      // dodatkowo: odwołane / zastępstwa z planu
+      try {
+        const plan = await api('/api/timetable');
+        const table = (plan && plan.table) || {};
+        const dayNames = { Monday:'Poniedziałek',Tuesday:'Wtorek',Wednesday:'Środa',Thursday:'Czwartek',Friday:'Piątek' };
+        Object.keys(table).forEach(function (day) {
+          (table[day] || []).forEach(function (l) {
+            if (!l) return;
+            const flag = String(l.flag || '').toLowerCase();
+            if (l.cancelled || /zastęp|zastep|odwoł|odwol/.test(flag)) {
+              const label = dayNames[day] || day;
+              if (!byDay[label]) byDay[label] = [];
+              byDay[label].push({
+                teacher: l.teacher || l.original && l.original.teacher || '—',
+                title: (l.cancelled ? 'Odwołane: ' : 'Zastępstwo: ') + (l.subject || ''),
+                info: flag || '',
+                ts: 0
+              });
+            }
+          });
+        });
+      } catch (e2) {}
+    } catch (e) {
+      el.innerHTML = '<div class="empty">Nie udało się pobrać danych<br><span style="font-size:12px">' + esc(e.message) + '</span></div>';
+      return;
+    }
+    const days = Object.keys(byDay).sort(function (a, b) {
+      const ta = parseAnyDate(a) || 0, tb = parseAnyDate(b) || 0;
+      if (ta && tb) return ta - tb;
+      return String(a).localeCompare(String(b), 'pl');
+    });
+    if (!days.length) {
+      el.innerHTML = '<div class="empty">Brak zgłoszonych nieobecności nauczycieli</div>';
+      return;
+    }
+    let html = '';
+    days.forEach(function (day) {
+      const items = byDay[day];
+      const ts = items[0] && items[0].ts;
+      html += '<div class="day-label">' + esc(dayLabel(ts) !== 'Bez daty' && ts ? dayLabel(ts) : day) + '</div>';
+      html += '<div class="card">';
+      items.forEach(function (it) {
+        html += '<div class="row-item">';
+        html += '<div><div style="font-weight:600">' + esc(it.teacher) + '</div>';
+        html += '<div style="font-size:12px;color:var(--muted)">' + esc(it.title) + (it.info && it.info !== it.title ? ' · ' + esc(it.info).slice(0, 80) : '') + '</div></div>';
+        html += '<span class="badge b-warn">nieobecny</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
     el.innerHTML = html;
   }
 
