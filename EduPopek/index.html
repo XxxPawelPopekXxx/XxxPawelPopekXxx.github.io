@@ -327,7 +327,6 @@
 
     /* Mobile */
     @media (max-width: 767px) {
-      .desk-only { display: none !important; }
       .user-bar .name { display: none; }
       .lesson { grid-template-columns: 56px 1fr; }
       .lesson-room { grid-column: 2; }
@@ -335,13 +334,21 @@
         height: 52px;
         padding: 0 max(8px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
       }
-      .brand span:not(.lucky) { font-size: 15px; }
+      .brand .brand-name { font-size: 15px; }
       .lucky {
-        font-size: 10px;
-        max-width: 48px;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: inline !important;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 15%, transparent);
+        border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+        padding: 2px 7px;
+        border-radius: 999px;
+        max-width: none;
       }
+      .brand-name { display: none; }
+      .user-bar .icon-btn { width: 32px; height: 32px; font-size: 13px; }
+
       .icon-btn { width: 34px; height: 34px; }
       .user-bar { gap: 4px; }
       .user-bar .btn-ghost { padding: 6px 10px; font-size: 12px; }
@@ -404,10 +411,49 @@
       .btn-primary { padding: 14px; font-size: 15px; border-radius: 14px; }
       .form-group input { padding: 14px; font-size: 16px; border-radius: 12px; }
       .section-head { margin-bottom: 10px; }
-      .feed-title { font-size: 13px; }
       .feed-sub { font-size: 11px; }
     }
 
+
+    /* Exam / activity cards */
+    .feed-list { display: flex; flex-direction: column; gap: 10px; }
+    .feed-day-sep {
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .04em;
+      margin: 10px 2px 2px;
+    }
+    .feed-day-sep:first-child { margin-top: 0; }
+    .feed-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 12px 14px;
+    }
+    .feed-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+      background: color-mix(in srgb, var(--danger) 22%, var(--bg2));
+    }
+    .feed-icon.test { background: #ef4444; color: #fff; }
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-title {
+      font-weight: 650; font-size: 14px; line-height: 1.35;
+      word-break: break-word;
+    }
+    .feed-sub {
+      font-size: 12px; color: var(--muted); margin-top: 4px;
+      line-height: 1.35; word-break: break-word;
+    }
+    .feed-date {
+      font-size: 11px; color: var(--muted); text-align: right;
+      flex-shrink: 0; min-width: 52px; line-height: 1.3; padding-top: 2px;
+    }
+    .feed-kind {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px; margin-bottom: 4px;
+      background: color-mix(in srgb, var(--danger) 18%, transparent);
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
@@ -433,15 +479,14 @@
     <header>
       <div class="brand">
         <img src="image1.png" alt="" onerror="this.style.display='none'" />
-        <span>EduPopek</span>
+        <span class="brand-name">EduPopek</span>
         <span class="lucky" id="lucky-box" hidden></span>
       </div>
       <div class="user-bar">
         <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Motyw">☾</button>
-        <button class="icon-btn desk-only" onclick="go('ustawienia')" title="Kolory">🎨</button>
-        <a class="icon-btn desk-only" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
-        <a class="icon-btn desk-only" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
-        <a class="icon-btn desk-only" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
+        <a class="icon-btn" href="https://instaling.pl/" target="_blank" rel="noopener" title="Instaling">🔤</a>
+        <a class="icon-btn" href="https://chess.com" target="_blank" rel="noopener" title="Chess">♟️</a>
+        <a class="icon-btn" href="https://pawelpopek.baby" target="_blank" rel="noopener" title="Portal">🌐</a>
         <span class="name" id="user-name" style="display:none">—</span>
         <button class="btn btn-ghost" onclick="go('konta')">Konta</button>
       </div>
@@ -846,9 +891,13 @@
       const n = await api('/api/lucky');
       if (n != null && n !== '') {
         const box = $('lucky-box');
-        box.hidden = false;
-        box.textContent = '· ' + n;
-        box.title = 'Szczęśliwy numerek: ' + n;
+        if (box) {
+          box.hidden = false;
+          box.removeAttribute('hidden');
+          box.textContent = '⭐ ' + n;
+          box.title = 'Szczęśliwy numerek: ' + n;
+          box.style.display = 'inline-flex';
+        }
       }
     } catch (e) {}
   }
@@ -1170,13 +1219,36 @@
         html += '<div class="feed-day-sep">' + esc(dayLabel(it.ts)) + (it.ts && it.ts < now - 86400000 ? ' · minione' : '') + '</div>';
       }
       const icon = it.kind === 'Kartkówka' ? '📝' : it.kind === 'Sprawdzian' ? '📋' : it.kind === 'Recytacja' ? '🎤' : it.kind === 'Powtórzenie' ? '🔁' : '📌';
+      // ładniejszy tytuł: wyciągnij przedmiot z "Nr lekcji: X Przedmiot, Kartkówka..."
+      let niceTitle = it.title || '';
+      let m = niceTitle.match(/Nr lekcji:\s*\d+\s+(.+)/i);
+      if (m) niceTitle = m[1].replace(/,\s*(Kartkówka|Sprawdzian|Powtórzenie|Recytacja).*$/i, '').trim() || m[1];
+      // nauczyciel z info
+      let teacher = '';
+      let opis = '';
+      const sub = String(it.subtitle || '');
+      let tm = sub.match(/Nauczyciel:\s*([^\n]+)/i);
+      if (tm) teacher = tm[1].replace(/\s*Opis:.*$/i, '').trim();
+      let om = sub.match(/Opis:\s*([^\n]+)/i);
+      if (om) opis = om[1].replace(/\s*Data dodania:.*$/i, '').trim();
+      const dateStr = it.date || (it.ts ? (function () {
+        const d = new Date(it.ts);
+        const p = function (n) { return (n < 10 ? '0' : '') + n; };
+        return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear();
+      })() : '');
+
       html += '<div class="feed-card">';
       html += '<div class="feed-icon test">' + icon + '</div>';
       html += '<div class="feed-body">';
-      html += '<div class="feed-title">' + esc(it.title) + '</div>';
-      html += '<div class="feed-sub"><b>' + esc(it.kind) + '</b>' + (it.subtitle && it.subtitle !== it.title ? ' · ' + esc(it.subtitle).slice(0, 100) : '') + '</div>';
-      html += '</div>';
-      html += '<div class="feed-date">' + formatFeedDate(it.ts, it.date).split('|').map(function (x) { return esc(x); }).join('<br>') + '</div>';
+      html += '<span class="feed-kind">' + esc(it.kind) + '</span>';
+      html += '<div class="feed-title">' + esc(niceTitle) + '</div>';
+      html += '<div class="feed-sub">';
+      if (teacher) html += esc(teacher);
+      if (teacher && opis) html += ' · ';
+      if (opis) html += esc(opis.slice(0, 120));
+      if (!teacher && !opis && sub && sub !== it.title) html += esc(sub.slice(0, 120));
+      html += '</div></div>';
+      html += '<div class="feed-date">' + esc(dateStr) + '</div>';
       html += '</div>';
     });
     html += '</div>';
