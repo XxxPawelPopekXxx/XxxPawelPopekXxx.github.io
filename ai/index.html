@@ -60,7 +60,6 @@
     }
     .new-chat:hover { background: #2f2f2f; }
 
-    /* ===== MUSIC PLAYER ===== */
     .player {
       background: #2a2a2a;
       border-radius: 12px;
@@ -157,7 +156,6 @@
     .track-item:hover { background: #333; color: #fff; }
     .track-item.active { background: #10a37f33; color: #10a37f; }
 
-    /* ===== MAIN ===== */
     .main {
       flex: 1;
       display: flex;
@@ -315,7 +313,6 @@
     </div>
     <button class="new-chat" onclick="clearChat()">+ Nowa rozmowa</button>
 
-    <!-- MUSIC PLAYER -->
     <div class="player">
       <div class="player-title">Music Player</div>
       <div class="now-playing" id="nowPlaying">—</div>
@@ -348,7 +345,7 @@
 
   <div class="main">
     <div class="chat-header">
-      PopekAI • powered by Groq
+      PopekAI
     </div>
 
     <div class="messages" id="messages"></div>
@@ -367,8 +364,9 @@
   </div>
 
   <script>
-    // ========== GROQ API ==========
+    // ========== KLUCZE ==========
     const GROQ_API_KEY = "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";
+    const CORS_PROXY_KEY = "20e92fc0";   // ← tutaj wklej klucz z console.corsproxy.io
     const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
     const MODEL = "openai/gpt-oss-120b";
 
@@ -384,7 +382,7 @@
       'https://xxxpawelpopekxxx.github.io/music8.mp3'
     ];
 
-    const trackNames = musicFiles.map((url, i) => `Track ${i + 1}`);
+    const trackNames = musicFiles.map((_, i) => `Track ${i + 1}`);
     let currentTrack = 0;
     let audio = new Audio();
     audio.volume = 0.5;
@@ -435,11 +433,9 @@
 
     function updatePlayIcon(playing) {
       const icon = document.getElementById('playIcon');
-      if (playing) {
-        icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-      } else {
-        icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-      }
+      icon.innerHTML = playing
+        ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'
+        : '<path d="M8 5v14l11-7z"/>';
     }
 
     function nextTrack() {
@@ -515,7 +511,6 @@
 
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
-      return div;
     }
 
     function showTyping() {
@@ -553,8 +548,7 @@
       conversation.push({ role: "user", content: text });
 
       try {
-        // corsproxy.org – bez klucza, obsługuje POST
-        const proxyUrl = "https://corsproxy.org/?" + encodeURIComponent(GROQ_URL);
+        const proxyUrl = `https://corsproxy.io/?key=${CORS_PROXY_KEY}&url=${encodeURIComponent(GROQ_URL)}`;
 
         const res = await fetch(proxyUrl, {
           method: "POST",
@@ -612,7 +606,6 @@
       this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
-    // start
     initPlayer();
     setTimeout(() => {
       addMessage("Cześć, jestem PopekAI. O co chcesz zapytać?", false, false);
