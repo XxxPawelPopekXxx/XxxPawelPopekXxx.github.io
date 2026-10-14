@@ -485,7 +485,6 @@
         .replace(/'/g, "&#039;");
     }
 
-    // losuje photo1.png … photo20.png
     function getRandomPhoto() {
       const num = Math.floor(Math.random() * 20) + 1;
       return `photo${num}.png`;
@@ -554,8 +553,8 @@
       conversation.push({ role: "user", content: text });
 
       try {
-        // proxy omija CORS
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(GROQ_URL);
+        // corsproxy.org – bez klucza, obsługuje POST
+        const proxyUrl = "https://corsproxy.org/?" + encodeURIComponent(GROQ_URL);
 
         const res = await fetch(proxyUrl, {
           method: "POST",
@@ -581,7 +580,7 @@
 
         conversation.push({ role: "assistant", content: reply });
         removeTyping();
-        addMessage(reply, false, true); // + losowe photo1–20
+        addMessage(reply, false, true);
       } catch (err) {
         removeTyping();
         addMessage("Coś poszło nie tak: " + err.message, false, false);
