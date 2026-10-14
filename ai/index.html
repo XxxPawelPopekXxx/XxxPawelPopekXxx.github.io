@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PopekAI</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
       background: #212121;
       color: #ececec;
       height: 100vh;
@@ -20,7 +16,6 @@
       overflow: hidden;
     }
 
-    /* Sidebar */
     .sidebar {
       width: 260px;
       background: #171717;
@@ -28,6 +23,7 @@
       flex-direction: column;
       padding: 12px;
       border-right: 1px solid #2f2f2f;
+      flex-shrink: 0;
     }
 
     .logo-area {
@@ -35,7 +31,7 @@
       align-items: center;
       gap: 10px;
       padding: 10px 8px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .logo-area img {
@@ -59,28 +55,114 @@
       cursor: pointer;
       text-align: left;
       font-size: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       transition: background 0.15s;
     }
+    .new-chat:hover { background: #2f2f2f; }
 
-    .new-chat:hover {
-      background: #2f2f2f;
+    /* ===== MUSIC PLAYER ===== */
+    .player {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: auto;
     }
 
-    .history {
-      flex: 1;
-      overflow-y: auto;
-      font-size: 13px;
+    .player-title {
+      font-size: 12px;
       color: #8e8e8e;
-      padding: 8px 4px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    /* Main chat */
+    .now-playing {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .progress-wrap { margin-bottom: 10px; }
+
+    .progress-bar {
+      height: 4px;
+      background: #444;
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #10a37f;
+      border-radius: 2px;
+      width: 0%;
+    }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #8e8e8e;
+      margin-top: 4px;
+    }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .player-btn {
+      background: transparent;
+      border: none;
+      color: #ececec;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .player-btn:hover { background: #3a3a3a; }
+    .player-btn.play {
+      background: #10a37f;
+      width: 42px;
+      height: 42px;
+    }
+    .player-btn.play:hover { background: #0d8c6c; }
+
+    .track-list {
+      margin-top: 12px;
+      max-height: 140px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    .track-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #b0b0b0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-item:hover { background: #333; color: #fff; }
+    .track-item.active { background: #10a37f33; color: #10a37f; }
+
+    /* ===== MAIN ===== */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
-      position: relative;
+      min-width: 0;
     }
 
     .chat-header {
@@ -133,9 +215,11 @@
       flex: 1;
       line-height: 1.6;
       font-size: 15px;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
-    .content img {
+    .content img.reply-img {
       max-width: 320px;
       border-radius: 12px;
       margin-top: 12px;
@@ -143,7 +227,6 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
 
-    /* Input area */
     .input-area {
       padding: 16px 24px 24px;
       max-width: 768px;
@@ -188,16 +271,8 @@
       flex-shrink: 0;
       transition: opacity 0.15s;
     }
-
-    .send-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .send-btn svg {
-      width: 16px;
-      height: 16px;
-    }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .send-btn svg { width: 16px; height: 16px; }
 
     .footer {
       text-align: center;
@@ -206,13 +281,11 @@
       padding: 8px;
     }
 
-    /* Typing indicator */
     .typing {
       display: flex;
       gap: 4px;
       padding: 8px 0;
     }
-
     .typing span {
       width: 8px;
       height: 8px;
@@ -220,7 +293,6 @@
       border-radius: 50%;
       animation: bounce 1.4s infinite ease-in-out both;
     }
-
     .typing span:nth-child(1) { animation-delay: -0.32s; }
     .typing span:nth-child(2) { animation-delay: -0.16s; }
 
@@ -229,7 +301,6 @@
       40% { transform: scale(1); }
     }
 
-    /* Mobile */
     @media (max-width: 768px) {
       .sidebar { display: none; }
     }
@@ -239,39 +310,68 @@
 
   <div class="sidebar">
     <div class="logo-area">
-      <img src="image21.png" alt="Logo">
+      <img src="photo21.png" alt="Logo">
       <span>PopekAI</span>
     </div>
     <button class="new-chat" onclick="clearChat()">+ Nowa rozmowa</button>
-    <div class="history">
-      Twoje rozmowy pojawią się tutaj...<br><br>
-      (ale coś tu nie pasuje?)
+
+    <!-- MUSIC PLAYER -->
+    <div class="player">
+      <div class="player-title">Music Player</div>
+      <div class="now-playing" id="nowPlaying">—</div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar" onclick="seek(event)">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="time-row">
+          <span id="currentTime">0:00</span>
+          <span id="duration">0:00</span>
+        </div>
+      </div>
+
+      <div class="player-controls">
+        <button class="player-btn" onclick="prevTrack()" title="Poprzedni">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        </button>
+        <button class="player-btn play" id="playBtn" onclick="togglePlay()" title="Play/Pause">
+          <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="player-btn" onclick="nextTrack()" title="Następny">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+      </div>
+
+      <div class="track-list" id="trackList"></div>
     </div>
   </div>
 
   <div class="main">
     <div class="chat-header">
-      PopekAI • model 67-ai-v676767
+      PopekAI • powered by Puter
     </div>
 
-    <div class="messages" id="messages">
-      <!-- wiadomości będą tu -->
-    </div>
+    <div class="messages" id="messages"></div>
 
     <div class="input-area">
       <div class="input-box">
-        <textarea id="input" rows="1" placeholder="Wyślij wiadomość do ChatGPT..." onkeydown="handleKey(event)"></textarea>
+        <textarea id="input" rows="1" placeholder="Napisz wiadomość do PopekAI..." onkeydown="handleKey(event)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
       <div class="footer">
-        PopekAI nie może popełniać błędów. Sprawdź ważne informacje. (albo nie)
+        PopekAI może popełniać błędy. Sprawdź ważne informacje.
       </div>
     </div>
   </div>
 
   <script>
+    // ========== PUTER API ==========
+    const PUTER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InYyIn0.eyJ0IjoidCIsInYiOiIyIiwidG9rZW5fdWlkIjoiOWRmMzAxYjEtNjVkZS00YmI1LTgzNTEtOGM0ZTFiMTUwMzZjIiwidXUiOiJLN05rMFZhMlNmbTJFckQ2blZuZVRBPT0iLCJzdSI6IlNZOFZ4YzVKUWVPYXVNSDR5VU96SlE9PSIsImFpIjoiSzdOazBWYTJTZm0yRXJENm5WbmVUQT09IiwiZnVsbF9hY2Nlc3MiOnRydWUsImlhdCI6MTc5MTk5MDE3NH0.SRxlB_DvTzCSsSpWliwkfStSEGib4RsCXEgWVp-DHBQ";
+    const PUTER_URL = "https://api.puter.com/puterai/openai/v1/chat/completions";
+
+    // ========== MUSIC ==========
     const musicFiles = [
       'https://xxxpawelpopekxxx.github.io/music.mp3',
       'https://xxxpawelpopekxxx.github.io/music2.mp3',
@@ -283,17 +383,111 @@
       'https://xxxpawelpopekxxx.github.io/music8.mp3'
     ];
 
-    let currentAudio = null;
+    const trackNames = musicFiles.map((url, i) => `Track ${i + 1}`);
+    let currentTrack = 0;
+    let audio = new Audio();
+    audio.volume = 0.5;
 
-    function playRandomMusic() {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
+    function initPlayer() {
+      const list = document.getElementById('trackList');
+      trackNames.forEach((name, i) => {
+        const div = document.createElement('div');
+        div.className = 'track-item' + (i === 0 ? ' active' : '');
+        div.textContent = name;
+        div.onclick = () => playTrack(i);
+        list.appendChild(div);
+      });
+      loadTrack(0);
+      audio.addEventListener('timeupdate', updateProgress);
+      audio.addEventListener('ended', nextTrack);
+      audio.addEventListener('loadedmetadata', () => {
+        document.getElementById('duration').textContent = formatTime(audio.duration);
+      });
+    }
+
+    function loadTrack(index) {
+      currentTrack = index;
+      audio.src = musicFiles[index];
+      document.getElementById('nowPlaying').textContent = trackNames[index];
+      document.querySelectorAll('.track-item').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('currentTime').textContent = '0:00';
+    }
+
+    function playTrack(index) {
+      loadTrack(index);
+      audio.play().catch(() => {});
+      updatePlayIcon(true);
+    }
+
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play().catch(() => {});
+        updatePlayIcon(true);
+      } else {
+        audio.pause();
+        updatePlayIcon(false);
       }
-      const track = musicFiles[Math.floor(Math.random() * musicFiles.length)];
-      currentAudio = new Audio(track);
-      currentAudio.volume = 0.35;
-      currentAudio.play().catch(() => {}); // przeglądarka czasem blokuje autoplay
+    }
+
+    function updatePlayIcon(playing) {
+      const icon = document.getElementById('playIcon');
+      if (playing) {
+        icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      } else {
+        icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      }
+    }
+
+    function nextTrack() {
+      playTrack((currentTrack + 1) % musicFiles.length);
+    }
+
+    function prevTrack() {
+      playTrack((currentTrack - 1 + musicFiles.length) % musicFiles.length);
+    }
+
+    function updateProgress() {
+      if (!audio.duration) return;
+      const pct = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+    }
+
+    function seek(e) {
+      const bar = document.getElementById('progressBar');
+      const rect = bar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) audio.currentTime = pct * audio.duration;
+    }
+
+    function formatTime(s) {
+      if (!s || isNaN(s)) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    // ========== CHAT ==========
+    let conversation = [
+      { role: "system", content: "Jesteś PopekAI – luźny, wyluzowany asystent. Odpowiadaj po polsku, krótko i naturalnie." }
+    ];
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // losuje photo1.png … photo20.png
+    function getRandomPhoto() {
+      const num = Math.floor(Math.random() * 20) + 1; // 1–20
+      return `photo${num}.png`;
     }
 
     function addMessage(text, isUser = false, showImage = false) {
@@ -307,7 +501,9 @@
           <div class="content">${escapeHtml(text)}</div>
         `;
       } else {
-        let imgHtml = showImage ? `<img src="photo-photo20.png" alt="odpowiedź AI">` : '';
+        const imgHtml = showImage
+          ? `<img class="reply-img" src="${getRandomPhoto()}" alt="odpowiedź">`
+          : '';
         div.innerHTML = `
           <img class="avatar" src="photo21.png" alt="AI">
           <div class="content">
@@ -319,6 +515,7 @@
 
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
+      return div;
     }
 
     function showTyping() {
@@ -327,11 +524,9 @@
       div.className = 'message';
       div.id = 'typing';
       div.innerHTML = `
-        <img class="avatar" src="image21.png" alt="AI">
+        <img class="avatar" src="photo21.png" alt="AI">
         <div class="content">
-          <div class="typing">
-            <span></span><span></span><span></span>
-          </div>
+          <div class="typing"><span></span><span></span><span></span></div>
         </div>
       `;
       messages.appendChild(div);
@@ -343,16 +538,7 @@
       if (t) t.remove();
     }
 
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function sendMessage() {
+    async function sendMessage() {
       const input = document.getElementById('input');
       const text = input.value.trim();
       if (!text) return;
@@ -364,14 +550,40 @@
       document.getElementById('sendBtn').disabled = true;
       showTyping();
 
-      // trochę delayu jak prawdziwy AI
-      setTimeout(() => {
+      conversation.push({ role: "user", content: text });
+
+      try {
+        const res = await fetch(PUTER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + PUTER_TOKEN
+          },
+          body: JSON.stringify({
+            model: "gpt-5.4-nano",
+            messages: conversation
+          })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error("API error " + res.status + ": " + errText);
+        }
+
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || "Nie dostałem odpowiedzi.";
+
+        conversation.push({ role: "assistant", content: reply });
         removeTyping();
-        const answer = Math.random() > 0.5 ? "Tak" : "Nie";
-        addMessage(answer, false, true);
-        playRandomMusic();
-        document.getElementById('sendBtn').disabled = false;
-      }, 800 + Math.random() * 1200);
+        // losuje i dokleja photo1–photo20
+        addMessage(reply, false, true);
+      } catch (err) {
+        removeTyping();
+        addMessage("Coś poszło nie tak: " + err.message, false, false);
+        console.error(err);
+      }
+
+      document.getElementById('sendBtn').disabled = false;
     }
 
     function handleKey(e) {
@@ -383,22 +595,24 @@
 
     function clearChat() {
       document.getElementById('messages').innerHTML = '';
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-      }
+      conversation = [
+        { role: "system", content: "Jesteś PopekAI – luźny, wyluzowany asystent. Odpowiadaj po polsku, krótko i naturalnie." }
+      ];
+      setTimeout(() => {
+        addMessage("Cześć, jestem PopekAI. O co chcesz zapytać?", false, false);
+      }, 200);
     }
 
-    // auto-resize textarea
     document.getElementById('input').addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
-    // powitanie
+    // start
+    initPlayer();
     setTimeout(() => {
-      addMessage("Cześć. Zadaj pytanie. Odpowiem Ci na twoje pytanie!", false, false);
-    }, 400);
+      addMessage("Cześć, jestem PopekAI. O co chcesz zapytać?", false, false);
+    }, 300);
   </script>
 </body>
 </html>
