@@ -348,7 +348,7 @@
 
   <div class="main">
     <div class="chat-header">
-      PopekAI • powered by Puter
+      PopekAI • powered by Groq
     </div>
 
     <div class="messages" id="messages"></div>
@@ -367,9 +367,10 @@
   </div>
 
   <script>
-    // ========== PUTER API ==========
-    const PUTER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InYyIn0.eyJ0IjoidCIsInYiOiIyIiwidG9rZW5fdWlkIjoiOWRmMzAxYjEtNjVkZS00YmI1LTgzNTEtOGM0ZTFiMTUwMzZjIiwidXUiOiJLN05rMFZhMlNmbTJFckQ2blZuZVRBPT0iLCJzdSI6IlNZOFZ4YzVKUWVPYXVNSDR5VU96SlE9PSIsImFpIjoiSzdOazBWYTJTZm0yRXJENm5WbmVUQT09IiwiZnVsbF9hY2Nlc3MiOnRydWUsImlhdCI6MTc5MTk5MDE3NH0.SRxlB_DvTzCSsSpWliwkfStSEGib4RsCXEgWVp-DHBQ";
-    const PUTER_URL = "https://api.puter.com/puterai/openai/v1/chat/completions";
+    // ========== GROQ API ==========
+    const GROQ_API_KEY = "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";
+    const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const MODEL = "openai/gpt-oss-120b";
 
     // ========== MUSIC ==========
     const musicFiles = [
@@ -486,7 +487,7 @@
 
     // losuje photo1.png … photo20.png
     function getRandomPhoto() {
-      const num = Math.floor(Math.random() * 20) + 1; // 1–20
+      const num = Math.floor(Math.random() * 20) + 1;
       return `photo${num}.png`;
     }
 
@@ -553,21 +554,23 @@
       conversation.push({ role: "user", content: text });
 
       try {
-        const res = await fetch(PUTER_URL, {
+        const res = await fetch(GROQ_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + PUTER_TOKEN
+            "Authorization": "Bearer " + GROQ_API_KEY
           },
           body: JSON.stringify({
-            model: "gpt-5.4-nano",
-            messages: conversation
+            model: MODEL,
+            messages: conversation,
+            temperature: 0.7,
+            max_tokens: 2048
           })
         });
 
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error("API error " + res.status + ": " + errText);
+          throw new Error("Groq API error " + res.status + ": " + errText);
         }
 
         const data = await res.json();
@@ -575,8 +578,7 @@
 
         conversation.push({ role: "assistant", content: reply });
         removeTyping();
-        // losuje i dokleja photo1–photo20
-        addMessage(reply, false, true);
+        addMessage(reply, false, true); // + losowe photo1–20
       } catch (err) {
         removeTyping();
         addMessage("Coś poszło nie tak: " + err.message, false, false);
