@@ -1,0 +1,524 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BP CLUB KOWALA – Sklep</title>
+<meta name="theme-color" content="#000">
+<link rel="icon" href="logo.png">
+<style>
+:root{--g:#39ff14;--bg:#000;--t1:#f5f5f7;--t2:#86868b;--tile:#141414;--tile2:#1d1d1f;--line:rgba(255,255,255,.12);--ease:cubic-bezier(.22,.61,.36,1)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;scroll-padding-top:60px}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.hide{display:none!important}
+.wrap{max-width:1180px;margin:auto;padding:0 22px}
+ 
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:40;height:52px;background:rgba(0,0,0,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
+nav .in{max-width:1024px;margin:auto;height:100%;padding:0 22px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+nav a,nav button{font-size:.8rem;color:#d2d2d7;opacity:.9;transition:.2s;white-space:nowrap}
+nav a:hover,nav button:hover{color:#fff;opacity:1}
+nav .logo img{width:26px;height:26px;border-radius:50%;display:block}
+.links{display:flex;gap:clamp(12px,3vw,34px);align-items:center}
+#cartBtn{position:relative;display:flex;align-items:center}
+#cartBtn svg{width:18px;height:18px}
+#cartN{position:absolute;top:-8px;right:-10px;background:var(--g);color:#000;font-size:.65rem;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px}
+#cartN.on{display:flex;animation:pop .3s var(--ease)}
+@keyframes pop{50%{transform:scale(1.5)}}
+ 
+/* HERO */
+.hero{min-height:100vh;padding-top:90px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center}
+.hero:before{content:"";position:absolute;left:50%;top:48%;width:900px;height:900px;transform:translate(-50%,-30%);background:radial-gradient(circle,rgba(57,255,20,.22),transparent 62%);filter:blur(10px);pointer-events:none}
+.eyebrow{color:var(--g);font-weight:600;font-size:1.05rem;letter-spacing:.02em}
+.hero h1{font-size:clamp(2.8rem,9vw,6.4rem);line-height:1.02;font-weight:700;letter-spacing:-.04em;margin:10px 0 14px}
+.grad{background:linear-gradient(90deg,#39ff14,#b6ff00 60%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.sub{font-size:clamp(1.1rem,2.4vw,1.6rem);color:var(--t2);font-weight:500;max-width:640px;padding:0 18px}
+.cta{display:flex;gap:22px;justify-content:center;align-items:center;margin-top:26px;flex-wrap:wrap}
+.pill{background:var(--g);color:#000;font-weight:600;border-radius:980px;padding:12px 24px;font-size:1rem;transition:.25s var(--ease);display:inline-block}
+.pill:hover{transform:scale(1.04);box-shadow:0 0 36px rgba(57,255,20,.5)}
+.pill.sm{padding:8px 18px;font-size:.9rem}
+.pill:disabled{opacity:.5}
+.lnk{color:var(--g);font-size:1.05rem}.lnk:hover{text-decoration:underline}
+.lnk:after{content:" ›"}
+.hero-logo{margin-top:44px;width:min(70vw,470px);aspect-ratio:1;border-radius:50%;will-change:transform;box-shadow:0 0 120px rgba(57,255,20,.35)}
+.hero-logo img{width:100%;height:100%;border-radius:50%;display:block}
+ 
+/* REVEAL */
+.rv{opacity:0;transform:translateY(46px) scale(.98);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}
+ 
+/* STATEMENT */
+.statement{padding:150px 0 110px}
+.statement p{font-size:clamp(1.8rem,5vw,3.6rem);font-weight:700;line-height:1.12;letter-spacing:-.035em;max-width:980px}
+.statement .w{color:#3a3a3c;transition:color .35s}.statement .w.lit{color:var(--t1)}
+.statement .w.lit.gr{color:var(--g)}
+ 
+/* HEADINGS */
+.sec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:26px}
+.sec-h h2{font-size:clamp(2rem,5vw,3.4rem);font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.sec-h h2 span{color:var(--t2)}
+.arrows{display:flex;gap:10px}
+.arrows button{width:42px;height:42px;border-radius:50%;background:var(--tile2);font-size:1.1rem;transition:.2s}.arrows button:hover{background:#333}
+ 
+/* CAROUSEL */
+.rail{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 22px 40px;scrollbar-width:none;margin:0 -22px}
+.rail::-webkit-scrollbar{display:none}
+.tile{flex:0 0 min(80vw,372px);height:540px;scroll-snap-align:start;background:var(--tile);border-radius:28px;padding:30px 28px;position:relative;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .5s var(--ease),box-shadow .5s}
+.tile:hover{transform:scale(1.025);box-shadow:0 20px 60px rgba(57,255,20,.12)}
+.tile .tag{color:#ff9f0a;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.tile .tag.new{color:var(--g)}
+.tile h3{font-size:1.7rem;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.tile .ds{color:var(--t2);font-size:.98rem;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile .im{flex:1;margin:18px -10px 14px;border-radius:20px;background:#0b0b0b center/cover no-repeat;display:flex;align-items:center;justify-content:center;transition:transform .8s var(--ease);overflow:hidden}
+.tile:hover .im{transform:scale(1.04)}
+.tile .im img.ph{width:46%;opacity:.35;border-radius:50%;filter:grayscale(.2)}
+.tile .bt{display:flex;justify-content:space-between;align-items:center}
+.price{font-size:1.15rem;font-weight:600}
+.empty{background:var(--tile);border-radius:28px;padding:70px 20px;text-align:center;color:var(--t2);font-size:1.1rem;flex:1}
+ 
+/* BENTO */
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+.b{background:var(--tile);border-radius:28px;padding:36px 30px;min-height:300px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.b .n{font-size:5rem;font-weight:700;letter-spacing:-.05em;color:var(--g);line-height:1;text-shadow:0 0 40px rgba(57,255,20,.4)}
+.b h3{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.b p{color:var(--t2);margin-top:10px;font-size:1.02rem}
+.b.wide{grid-column:span 3;min-height:340px;background:linear-gradient(135deg,#0a2d05,#000 70%);border:1px solid rgba(57,255,20,.25);flex-direction:row;align-items:center;gap:30px}
+.b.wide h3{font-size:clamp(2rem,5vw,3.4rem)}
+.b.wide img{width:210px;height:210px;border-radius:50%;box-shadow:0 0 70px rgba(57,255,20,.4)}
+ 
+/* ADMIN */
+#admin{padding-top:110px}
+.panel{background:var(--tile);border-radius:28px;padding:30px;margin-bottom:20px}
+.panel h3{font-size:1.5rem;letter-spacing:-.02em;margin-bottom:6px}
+label{display:block;font-size:.82rem;color:var(--t2);margin:14px 0 6px;font-weight:500}
+input,textarea,select{width:100%;background:#000;border:1px solid #2c2c2e;color:var(--t1);border-radius:12px;padding:13px 14px;font:inherit;transition:.2s}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--g);box-shadow:0 0 0 4px rgba(57,255,20,.15)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ord{border-top:1px solid var(--line);padding:16px 0}
+.ord .h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:600}
+.ord small{color:var(--t2)}
+.st{font-size:.72rem;padding:3px 10px;border-radius:99px;background:#3a2f00;color:#ffd60a;font-weight:600}.st.ok{background:#06300a;color:var(--g)}
+.ghost{border:1px solid #333;border-radius:980px;padding:7px 14px;font-size:.85rem;color:var(--t1);transition:.2s;margin:8px 8px 0 0}.ghost:hover{border-color:var(--g);color:var(--g)}.ghost.r{color:#ff453a}.ghost.r:hover{border-color:#ff453a}
+ 
+/* ADMIN+ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{background:var(--tile);border-radius:22px;padding:22px}.stat b{display:block;font-size:2rem;letter-spacing:-.03em;color:var(--g)}.stat span{color:var(--t2);font-size:.85rem}
+.atabs{display:flex;gap:6px;background:var(--tile);border-radius:14px;padding:4px;margin-bottom:20px;overflow-x:auto}
+.atabs button{flex:1;padding:11px 14px;border-radius:11px;color:var(--t2);font-weight:600;white-space:nowrap;transition:.25s}.atabs .on{background:#2c2c2e;color:#fff}
+.arow{display:flex;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.arow .th{width:64px;height:64px;border-radius:14px;background:#000 center/cover;flex:none;display:flex;align-items:center;justify-content:center}.arow .th img{width:55%;opacity:.4;border-radius:50%}
+.arow .inf{flex:1;min-width:160px;font-weight:600}.arow small{display:block;color:var(--t2);font-weight:400}
+.drop{border:2px dashed #3a3a3c;border-radius:16px;padding:20px;text-align:center;color:var(--t2);cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.drop:hover{border-color:var(--g);color:var(--g)}
+.drop .pv{display:none;width:100%;max-height:220px;object-fit:contain;border-radius:10px;margin-bottom:8px}
+.drop.has .pv{display:block}
+.chk{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--t1);font-size:.95rem}.chk input{width:auto}
+.tag.so{color:#ff453a}
+.tile.sold .im{filter:grayscale(1) brightness(.6)}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}}
+/* OVERLAYS */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:.35s}
+.ov.on{opacity:1;visibility:visible}
+.modal{background:#1c1c1e;border-radius:28px;padding:34px;width:100%;max-width:440px;max-height:92vh;overflow:auto;transform:translateY(30px) scale(.96);transition:transform .45s var(--ease);position:relative;border:1px solid rgba(255,255,255,.08)}
+.ov.on .modal{transform:none}
+.modal h3{font-size:1.8rem;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.x{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:#3a3a3c;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.seg{display:flex;background:#000;border-radius:12px;padding:3px;margin:16px 0 4px}
+.seg button{flex:1;padding:9px;border-radius:10px;color:var(--t2);font-weight:600;font-size:.92rem;transition:.25s}.seg .on{background:#2c2c2e;color:#fff}
+.gbtn{width:100%;background:#fff;color:#1d1d1f;display:flex;gap:10px;justify-content:center;align-items:center;margin-top:14px;padding:13px;border-radius:12px;font-weight:600}
+.or{text-align:center;color:var(--t2);font-size:.8rem;margin:16px 0 0}
+.full{width:100%;margin-top:18px;padding:14px;font-size:1rem}
+#cartOv{justify-content:flex-end;align-items:stretch;padding:0}
+.drawer{background:#1c1c1e;width:100%;max-width:460px;height:100%;overflow:auto;padding:34px 28px;transform:translateX(100%);transition:transform .55s var(--ease)}
+#cartOv.on .drawer{transform:none}
+.drawer h3{font-size:2rem;font-weight:700;letter-spacing:-.03em;margin-bottom:10px}
+.ci{display:flex;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.ci .th{width:64px;height:64px;border-radius:14px;background:#000 center/cover;flex:none;display:flex;align-items:center;justify-content:center}
+.ci .th img{width:60%;opacity:.4;border-radius:50%}
+.ci .inf{flex:1;font-weight:600}.ci small{color:var(--t2);font-weight:400;display:block}
+.q{display:inline-flex;align-items:center;gap:10px;background:#000;border-radius:99px;padding:3px 4px;margin-top:6px}
+.q button{width:26px;height:26px;border-radius:50%;background:#2c2c2e;line-height:1}.q b{min-width:14px;text-align:center;font-size:.9rem}
+.tot{display:flex;justify-content:space-between;font-size:1.3rem;font-weight:700;margin:20px 0 6px}
+.note{background:rgba(57,255,20,.08);border:1px solid rgba(57,255,20,.25);border-radius:14px;padding:12px 14px;font-size:.9rem;margin-top:16px;color:#cfe;line-height:1.4}
+.pd{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:860px}
+.pd .big{aspect-ratio:1;border-radius:20px;background:#000 center/cover;display:flex;align-items:center;justify-content:center}
+.pd .big img{width:50%;opacity:.35;border-radius:50%}
+.pd h3{font-size:2.2rem}.pd .price{font-size:1.6rem;margin:12px 0}.pd p{color:var(--t2);line-height:1.5}
+ 
+/* FOOTER */
+footer{background:#0b0b0c;margin-top:110px;padding:30px 0 40px;color:var(--t2);font-size:.78rem;line-height:1.6}
+footer .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:18px 0}
+footer h4{color:var(--t1);font-size:.78rem;margin-bottom:6px}
+footer a{display:block}footer a:hover{color:#fff;text-decoration:underline}
+#toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,120px);background:rgba(40,40,42,.92);backdrop-filter:blur(20px);color:#fff;border:1px solid rgba(255,255,255,.12);padding:14px 22px;border-radius:99px;font-weight:600;font-size:.92rem;z-index:99;transition:transform .5s var(--ease);max-width:92vw;text-align:center}
+#toast.on{transform:translate(-50%,0)}#toast.err{background:#5a1210}
+@media(max-width:800px){.bento{grid-template-columns:1fr}.b.wide{grid-column:auto;flex-direction:column;align-items:flex-start}.row,.pd,footer .cols{grid-template-columns:1fr}.tile{height:500px}.hero-logo{margin-top:34px}.statement{padding:90px 0 60px}.hide-m{display:none}.sec-h .arrows{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+ 
+<nav><div class="in">
+  <a href="#top" class="logo" aria-label="BP CLUB KOWALA"><img src="logo.png" alt=""></a>
+  <div class="links">
+    <a href="#produkty">Sklep</a>
+    <a href="#jak" class="hide-m">Jak kupować</a>
+    <a href="#admin" id="adminLink" class="hide">Admin</a>
+    <span id="userBox" class="hide hide-m" style="font-size:.8rem;color:var(--t2)"></span>
+    <button id="loginBtn">Zaloguj się</button>
+    <button id="logoutBtn" class="hide">Wyloguj</button>
+    <button id="cartBtn" aria-label="Koszyk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span id="cartN">0</span></button>
+  </div>
+</div></nav>
+ 
+<header class="hero" id="top">
+  <p class="eyebrow rv">BP CLUB KOWALA</p>
+  <h1 class="rv d1"><span id="h1a">Wyglądaj lepiej.</span><br><span class="grad" id="h1b">Razem.</span></h1>
+  <p class="sub rv d2" id="hSub">Oficjalny sklep BP CLUB KOWALA.</p>
+  <div class="cta rv d2"><a href="#produkty" class="pill">Kup teraz</a><a href="#jak" class="lnk">Jak to działa</a></div>
+  <div class="hero-logo" id="heroLogo"><img src="logo.png" alt="Logo BP CLUB KOWALA"></div>
+</header>
+ 
+<section class="statement"><div class="wrap"><p id="stmt"></p></div></section>
+ 
+<section id="produkty"><div class="wrap">
+  <div class="sec-h rv"><h2>Sklep. <span>Najlepsze rzeczy<br>od klubu.</span></h2>
+    <div class="arrows"><button id="prev" aria-label="Poprzednie">‹</button><button id="next" aria-label="Następne">›</button></div></div>
+  <div class="rail" id="rail"><div class="empty">Ładowanie produktów…</div></div>
+</div></section>
+ 
+<section id="jak" style="padding-top:70px"><div class="wrap">
+  <div class="sec-h rv"><h2>Zakupy w trzech krokach. <span>Prościej się nie da.</span></h2></div>
+  <div class="bento">
+    <div class="b rv"><div class="n">01</div><div><h3>Wybierz</h3><p>Przeglądaj produkty i dodaj ulubione do koszyka.</p></div></div>
+    <div class="b rv d1"><div class="n">02</div><div><h3>Podaj dane</h3><p>Imię i nazwisko oraz klasa. Konto nie jest potrzebne.</p></div></div>
+    <div class="b rv d2"><div class="n">03</div><div><h3>Zapłać w szkole</h3><p>Odbierz zamówienie i zapłać na miejscu. Bez kart i przelewów.</p></div></div>
+    <div class="b wide rv"><div><div class="eyebrow">Dołącz do nas</div><h3 style="margin-top:8px">Załóż konto<br>i zamawiaj szybciej.</h3><p>Zaloguj się przez Google w jedno kliknięcie.</p><button class="pill" style="margin-top:20px" onclick="openAuth()">Zaloguj się</button></div><img src="logo.png" alt="" class="hide-m" style="margin-left:auto"></div>
+  </div>
+</div></section>
+ 
+<section id="admin" class="hide"><div class="wrap">
+  <div class="sec-h"><h2>Panel <span>administratora</span></h2></div>
+  <div class="stats"><div class="stat"><b id="sP">0</b><span>Produkty</span></div><div class="stat"><b id="sO">0</b><span>Nowe zamówienia</span></div><div class="stat"><b id="sR">0 zł</b><span>Suma zamówień</span></div><div class="stat"><b id="sU">0</b><span>Konta</span></div></div>
+  <div class="atabs" id="atabs"><button class="on" data-t="tProd">Produkty</button><button data-t="tOrd">Zamówienia</button><button data-t="tUsr">Konta</button><button data-t="tSet">Strona</button></div>
+ 
+  <div class="tabp" id="tProd">
+    <div class="panel"><h3 id="fTitle">Dodaj produkt</h3>
+      <form id="addForm">
+        <div class="row"><div><label>Tytuł produktu *</label><input id="pName" required maxlength="80"></div>
+        <div><label>Cena (zł) *</label><input id="pPrice" type="number" min="0" step="0.01" required></div></div>
+        <label>Opis</label><textarea id="pDesc" rows="3" maxlength="400"></textarea>
+        <label>Zdjęcie</label>
+        <div class="drop" id="drop"><img class="pv" id="pv" alt=""><span id="dropTxt">📷 Kliknij, aby wgrać zdjęcie z telefonu / komputera</span><input type="file" id="pFile" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer"></div>
+        <button type="button" class="ghost hide" id="rmImg">Usuń zdjęcie</button>
+        <label class="chk"><input type="checkbox" id="pSold"> Wyprzedane (nie można kupić)</label>
+        <button class="pill" style="margin-top:20px" type="submit" id="fBtn">Dodaj produkt</button>
+        <button type="button" class="ghost hide" id="fCancel">Anuluj edycję</button>
+      </form></div>
+    <div class="panel"><h3>Twoje produkty</h3><div id="aProds"></div></div>
+  </div>
+ 
+  <div class="tabp hide" id="tOrd"><div class="panel"><h3>Zamówienia</h3><div id="orders"></div></div></div>
+ 
+  <div class="tabp hide" id="tUsr"><div class="panel"><h3>Konta</h3>
+    <p style="color:var(--t2);font-size:.9rem;margin-top:4px">Konta pojawiają się tu po pierwszym zalogowaniu na stronie. Zablokowany użytkownik jest od razu wylogowywany.</p>
+    <form id="admForm" style="display:flex;gap:10px;margin:16px 0;flex-wrap:wrap"><input id="admMail" type="email" placeholder="Dodaj admina po e-mailu (Google)" required style="flex:1;min-width:220px"><button class="pill sm">Nadaj admina</button></form>
+    <div id="aUsers"></div></div></div>
+ 
+  <div class="tabp hide" id="tSet"><div class="panel"><h3>Teksty na stronie</h3>
+    <form id="setForm">
+      <label>Nagłówek – linia 1</label><input id="sH1" maxlength="60">
+      <label>Nagłówek – linia 2 (zielona)</label><input id="sH2" maxlength="60">
+      <label>Podtytuł</label><input id="sSub" maxlength="160">
+      <label>Tekst przewijany (sekcja pod hero)</label><textarea id="sStmt" rows="4" maxlength="500"></textarea>
+      <button class="pill" style="margin-top:20px">Zapisz zmiany</button>
+    </form></div></div>
+</div></section>
+ 
+<footer><div class="wrap">
+  <p>Wszystkie zamówienia płatne wyłącznie w szkole przy odbiorze.</p>
+  <div class="cols"><div><h4>Sklep</h4><a href="#produkty">Produkty</a><a href="#jak">Jak kupować</a></div><div><h4>Konto</h4><a href="#" onclick="openAuth();return false">Zaloguj się</a><a href="#" onclick="openAuth(true);return false">Zarejestruj się</a></div><div><h4>BP CLUB KOWALA</h4><a href="#top">Do góry</a></div></div>
+  <p>© <span id="yr"></span> BP CLUB KOWALA. Wszelkie prawa zastrzeżone.</p>
+</div></footer>
+ 
+<!-- Logowanie -->
+<div class="ov" id="authOv"><div class="modal">
+  <button class="x" onclick="closeAll()" aria-label="Zamknij">✕</button>
+  <h3>Konto BP CLUB</h3><p style="color:var(--t2)">Konto jest opcjonalne przy zakupach.</p>
+  <div class="seg"><button class="on" id="tLog">Logowanie</button><button id="tReg">Rejestracja</button></div>
+  <form id="authForm">
+    <div id="nameBox" class="hide"><label>Imię i nazwisko</label><input id="aName" maxlength="80"></div>
+    <label>E-mail</label><input id="aMail" type="email" required autocomplete="email">
+    <label>Hasło</label><input id="aPass" type="password" minlength="6" required autocomplete="current-password">
+    <button class="pill full" id="authSubmit">Zaloguj się</button>
+  </form>
+  <p class="or">lub</p>
+  <button class="gbtn" id="gBtn"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 010-9.4l-7.9-6.1a24 24 0 000 21.6l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Kontynuuj z Google</button>
+</div></div>
+ 
+<!-- Koszyk -->
+<div class="ov" id="cartOv"><div class="drawer">
+  <button class="x" style="position:absolute;top:20px;right:20px" onclick="closeAll()" aria-label="Zamknij">✕</button>
+  <h3>Koszyk</h3>
+  <div id="cartItems"></div>
+  <div id="checkout">
+    <div class="tot"><span>Razem</span><span id="cartTot">0,00 zł</span></div>
+    <form id="orderForm">
+      <label>Imię i nazwisko *</label><input id="oName" required maxlength="80" autocomplete="name">
+      <label>Klasa *</label><input id="oClass" required maxlength="20" placeholder="np. 2B">
+      <label>Płatność</label><select id="oPay"><option>Płatność w szkole</option></select>
+      <div class="note">💵 Zapłacisz przy odbiorze w szkole. Podaj dokładnie imię, nazwisko i klasę, abyśmy mogli Cię znaleźć.</div>
+      <button class="pill full" id="orderBtn">Złóż zamówienie</button>
+    </form>
+  </div>
+</div></div>
+ 
+<!-- Produkt -->
+<div class="ov" id="prodOv"><div class="modal pd" id="prodBox"></div></div>
+<div id="toast"></div>
+ 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script>
+/* ===== KONFIGURACJA ===== */
+// Wpisz e-mail(e) administratora (te same musisz wpisać w regułach Firestore!)
+const ADMIN_EMAILS=["its4ikocontactemail@gmail.com"];
+firebase.initializeApp({
+  apiKey:"AIzaSyBvzkQ5e7EKh8bqJazA39T2khg9wPJioNY",
+  authDomain:"bp-club-kowala.firebaseapp.com",
+  projectId:"bp-club-kowala",
+  storageBucket:"bp-club-kowala.firebasestorage.app",
+  messagingSenderId:"560143183146",
+  appId:"1:560143183146:web:4e6fb13a144c997b5a0253",
+  measurementId:"G-NW46PYWN7K"
+});
+const auth=firebase.auth(),db=firebase.firestore();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const zl=n=>Number(n).toFixed(2).replace(".",",")+" zł";
+const imgStyle=u=>u?`style="background-image:url('${esc(u).replace(/'/g,"%27")}')"`:"";
+let products=[],cart=[],user=null,isAdmin=false,regMode=false,unsubOrders=null;
+try{cart=JSON.parse(localStorage.getItem("bpcart")||"[]")}catch(e){}
+$("yr").textContent=new Date().getFullYear();
+ 
+function toast(m,err){const t=$("toast");t.textContent=m;t.className="on"+(err?" err":"");clearTimeout(t._t);t._t=setTimeout(()=>t.className="",3500)}
+function closeAll(){document.querySelectorAll(".ov").forEach(o=>o.classList.remove("on"))}
+document.querySelectorAll(".ov").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)closeAll()}));
+document.addEventListener("keydown",e=>e.key==="Escape"&&closeAll());
+const errPL=e=>({"auth/email-already-in-use":"Ten e-mail jest już zarejestrowany.","auth/invalid-credential":"Nieprawidłowy e-mail lub hasło.","auth/wrong-password":"Nieprawidłowe hasło.","auth/user-not-found":"Nie znaleziono konta.","auth/weak-password":"Hasło musi mieć min. 6 znaków.","auth/invalid-email":"Nieprawidłowy adres e-mail.","auth/popup-closed-by-user":"Zamknięto okno logowania.","auth/unauthorized-domain":"Domena niedozwolona – dodaj ją w Firebase › Authentication › Settings.","permission-denied":"Brak uprawnień."}[e.code]||("Błąd: "+(e.message||e.code)));
+ 
+/* ===== EFEKTY PRZEWIJANIA (styl Apple) ===== */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
+const observe=()=>document.querySelectorAll(".rv:not(.in)").forEach(el=>io.observe(el));observe();
+// zdanie rozjaśniane słowo po słowie
+const stmt=$("stmt"),logo=$("heroLogo");let words=[];
+let tick=false;
+function onScroll(){
+  const y=scrollY,vh=innerHeight;
+  const p=Math.min(1,y/(vh*.9));
+  logo.style.transform=`translateY(${y*.18}px) scale(${1+p*.35})`;logo.style.opacity=1-p*.9;
+  const r=stmt.getBoundingClientRect();
+  const prog=Math.min(1,Math.max(0,(vh*.85-r.top)/(vh*.6+r.height*.6)));
+  const n=Math.round(prog*words.length);
+  words.forEach((w,i)=>w.classList.toggle("lit",i<n));
+  tick=false;
+}
+addEventListener("scroll",()=>{if(!tick){tick=true;requestAnimationFrame(onScroll)}},{passive:true});onScroll();
+$("prev").onclick=()=>$("rail").scrollBy({left:-390,behavior:"smooth"});
+$("next").onclick=()=>$("rail").scrollBy({left:390,behavior:"smooth"});
+ 
+/* ===== USTAWIENIA STRONY ===== */
+const DEF={h1:"Wyglądaj lepiej.",h2:"Razem.",sub:"Oficjalny sklep BP CLUB KOWALA. Zamów bez konta, zapłać w szkole.",stmt:"Tu nie ma przypadków. Młotkowanie, woda kokosowa i Muszynianka to nasz codzienny rytuał. BP CLUB KOWALA to miejsce dla tych, którzy chcą wyglądać lepiej, żyć lepiej i robić to razem."};
+let SET={...DEF};
+function setStatement(t){stmt.innerHTML=t.split(" ").map(w=>`<span class="w${/BP|CLUB|KOWALA/.test(w)?" gr":""}">${esc(w)}</span>`).join(" ");words=[...stmt.querySelectorAll(".w")];onScroll()}
+function applySettings(){$("h1a").textContent=SET.h1;$("h1b").textContent=SET.h2;$("hSub").textContent=SET.sub;setStatement(SET.stmt);$("sH1").value=SET.h1;$("sH2").value=SET.h2;$("sSub").value=SET.sub;$("sStmt").value=SET.stmt}
+applySettings();
+db.collection("settings").doc("site").onSnapshot(d=>{SET={...DEF,...(d.exists?d.data():{})};applySettings()},()=>{});
+$("setForm").onsubmit=async e=>{e.preventDefault();
+  try{await db.collection("settings").doc("site").set({h1:$("sH1").value.trim(),h2:$("sH2").value.trim(),sub:$("sSub").value.trim(),stmt:$("sStmt").value.trim()});toast("Zapisano ✔")}catch(err){toast(errPL(err),1)}};
+ 
+/* ===== PRODUKTY ===== */
+db.collection("products").orderBy("createdAt","desc").onSnapshot(s=>{
+  products=s.docs.map(d=>({id:d.id,...d.data()}));renderProducts();renderCart();renderAdminProducts();
+},e=>{$("rail").innerHTML='<div class="empty">Nie udało się wczytać produktów. Sprawdź reguły Firestore.</div>';console.error(e)});
+ 
+function renderProducts(){
+  if(!products.length){$("rail").innerHTML='<div class="empty">Produkty pojawią się tu wkrótce. ✨</div>';return}
+  $("rail").innerHTML=products.map((p,i)=>`<article class="tile rv ${p.soldOut?"sold":""}" style="transition-delay:${Math.min(i,4)*.08}s" onclick="openProduct('${p.id}')">
+    <div><div class="tag ${p.soldOut?"so":i<2?"new":""}">${p.soldOut?"Wyprzedane":i<2?"Nowość":"Z oferty klubu"}</div><h3>${esc(p.name)}</h3><div class="ds">${esc(p.desc)}</div></div>
+    <div class="im" ${imgStyle(p.image)}>${p.image?"":'<img class="ph" src="logo.png" alt="">'}</div>
+    <div class="bt"><span class="price">${zl(p.price)}</span>${p.soldOut?"":`<button class="pill sm" onclick="event.stopPropagation();addCart('${p.id}')">Kup</button>`}</div>
+  </article>`).join("");
+  observe();
+}
+function openProduct(id){
+  const p=products.find(x=>x.id===id);if(!p)return;
+  $("prodBox").innerHTML=`<button class="x" onclick="closeAll()">✕</button>
+   <div class="big" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
+   <div style="display:flex;flex-direction:column;justify-content:center"><div class="eyebrow" style="font-size:.85rem">BP CLUB KOWALA</div><h3>${esc(p.name)}</h3><div class="price">${zl(p.price)}</div><p>${esc(p.desc)||"Produkt z oferty klubu."}</p>
+   ${p.soldOut?'<p style="color:#ff453a;margin-top:14px;font-weight:600">Wyprzedane</p>':`<button class="pill full" onclick="addCart('${p.id}');closeAll()">Dodaj do koszyka</button>`}</div>`;
+  $("prodOv").classList.add("on");
+}
+ 
+/* ===== KOSZYK ===== */
+function saveCart(){localStorage.setItem("bpcart",JSON.stringify(cart));renderCart()}
+function addCart(id){const pp=products.find(x=>x.id===id);if(pp&&pp.soldOut)return toast('Ten produkt jest wyprzedany',1);const i=cart.find(c=>c.id===id);i?i.qty++:cart.push({id,qty:1});saveCart();toast("Dodano do koszyka ✔")}
+function chg(id,d){const i=cart.find(c=>c.id===id);if(!i)return;i.qty+=d;if(i.qty<1)cart=cart.filter(c=>c.id!==id);saveCart()}
+function lines(){return cart.map(c=>{const p=products.find(x=>x.id===c.id);return p&&!p.soldOut?{id:c.id,name:p.name,price:p.price,qty:c.qty,image:p.image||""}:null}).filter(Boolean)}
+function renderCart(){
+  const L=lines(),n=L.reduce((a,l)=>a+l.qty,0);
+  $("cartN").textContent=n;$("cartN").classList.toggle("on",n>0);
+  $("cartItems").innerHTML=L.length?L.map(l=>`<div class="ci"><div class="th" ${imgStyle(l.image)}>${l.image?"":'<img src="logo.png" alt="">'}</div>
+   <div class="inf">${esc(l.name)}<small>${zl(l.price)}</small><div class="q"><button onclick="chg('${l.id}',-1)">−</button><b>${l.qty}</b><button onclick="chg('${l.id}',1)">+</button></div></div><b>${zl(l.price*l.qty)}</b></div>`).join(""):'<p style="color:var(--t2);padding:30px 0;font-size:1.1rem">Twój koszyk jest pusty.</p>';
+  $("cartTot").textContent=zl(L.reduce((a,l)=>a+l.price*l.qty,0));
+  $("checkout").classList.toggle("hide",!L.length);
+}
+$("cartBtn").onclick=()=>{renderCart();$("cartOv").classList.add("on")};
+ 
+$("orderForm").onsubmit=async e=>{
+  e.preventDefault();const L=lines();if(!L.length)return;
+  const btn=$("orderBtn");btn.disabled=true;
+  try{
+    await db.collection("orders").add({
+      name:$("oName").value.trim(),klasa:$("oClass").value.trim(),payment:"Płatność w szkole",
+      items:L.map(({id,name,price,qty})=>({id,name,price,qty})),total:L.reduce((a,l)=>a+l.price*l.qty,0),status:"nowe",
+      uid:user?user.uid:null,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    cart=[];saveCart();closeAll();$("orderForm").reset();if(user)$("oName").value=user.displayName||"";
+    toast("Zamówienie złożone! Zapłać w szkole przy odbiorze 🎉");
+  }catch(err){toast(errPL(err),1)}
+  btn.disabled=false;
+};
+ 
+/* ===== LOGOWANIE ===== */
+function openAuth(reg){setMode(!!reg);$("authOv").classList.add("on")}
+$("loginBtn").onclick=()=>openAuth();
+function setMode(r){regMode=r;$("tReg").classList.toggle("on",r);$("tLog").classList.toggle("on",!r);$("nameBox").classList.toggle("hide",!r);$("authSubmit").textContent=r?"Zarejestruj się":"Zaloguj się"}
+$("tLog").onclick=()=>setMode(false);$("tReg").onclick=()=>setMode(true);
+$("authForm").onsubmit=async e=>{
+  e.preventDefault();
+  try{
+    if(regMode){const c=await auth.createUserWithEmailAndPassword($("aMail").value,$("aPass").value);
+      const n=$("aName").value.trim();if(n)await c.user.updateProfile({displayName:n});toast("Konto utworzone!")}
+    else{await auth.signInWithEmailAndPassword($("aMail").value,$("aPass").value);toast("Zalogowano!")}
+    closeAll();
+  }catch(err){toast(errPL(err),1)}
+};
+$("gBtn").onclick=async()=>{try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());closeAll();toast("Zalogowano przez Google!")}catch(err){toast(errPL(err),1)}};
+$("logoutBtn").onclick=()=>auth.signOut().then(()=>toast("Wylogowano"));
+ 
+let adminDoc=false,unsubUsers=null,unsubAdm=null,orderDocs=[],userDocs=[];
+const isSuper=u=>!!u&&ADMIN_EMAILS.map(x=>x.toLowerCase()).includes((u.email||"").toLowerCase());
+function refreshAdmin(){
+  isAdmin=isSuper(user)||adminDoc;
+  $("adminLink").classList.toggle("hide",!isAdmin);$("admin").classList.toggle("hide",!isAdmin);
+}
+auth.onAuthStateChanged(async u=>{
+  user=u;adminDoc=false;
+  [unsubOrders,unsubUsers].forEach(f=>f&&f());unsubOrders=unsubUsers=null;
+  $("loginBtn").classList.toggle("hide",!!u);$("logoutBtn").classList.toggle("hide",!u);
+  $("userBox").classList.toggle("hide",!u);$("userBox").textContent=u?(u.displayName||u.email):"";
+  if(u){
+    if(!$("oName").value)$("oName").value=u.displayName||"";
+    try{ // blokada konta + zapis profilu
+      const ref=db.collection("users").doc(u.uid),snap=await ref.get();
+      if(snap.exists&&snap.data().blocked){await auth.signOut();toast("To konto zostało zablokowane.",1);return}
+      await ref.set({email:u.email||"",name:u.displayName||"",photo:u.photoURL||"",createdAt:u.metadata.creationTime||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    }catch(e){console.warn(e)}
+    try{const a=await db.collection("admins").doc((u.email||"").toLowerCase()).get();adminDoc=a.exists}catch(e){}
+  }
+  refreshAdmin();
+  if(isAdmin){ // baza odblokowana tylko dla zalogowanego admina
+    unsubOrders=db.collection("orders").orderBy("createdAt","desc").onSnapshot(s=>{orderDocs=s.docs;renderOrders();renderStats()},e=>toast(errPL(e),1));
+    unsubUsers=db.collection("users").onSnapshot(s=>{userDocs=s.docs;renderUsers();renderStats()},e=>toast(errPL(e),1));
+  }else{orderDocs=[];userDocs=[]}
+  renderProducts();
+});
+ 
+/* ===== PANEL ADMINA ===== */
+document.querySelectorAll("#atabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#atabs button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".tabp").forEach(p=>p.classList.toggle("hide",p.id!==b.dataset.t));
+});
+function renderStats(){
+  $("sP").textContent=products.length;
+  $("sO").textContent=orderDocs.filter(d=>d.data().status==="nowe").length;
+  $("sR").textContent=zl(orderDocs.reduce((a,d)=>a+(d.data().total||0),0));
+  $("sU").textContent=userDocs.length;
+}
+/* zdjęcia: kompresja w przeglądarce i zapis w Firestore (bez płatnego Storage) */
+let imgData="",editId=null;
+function compress(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
+  const sc=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+  const x=c.getContext("2d");x.fillStyle="#0b0b0b";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+  let q=.85,o=c.toDataURL("image/jpeg",q);while(o.length>600000&&q>.35){q-=.1;o=c.toDataURL("image/jpeg",q)}res(o)};im.src=r.result};r.readAsDataURL(file)})}
+function showImg(){$("pv").src=imgData;$("drop").classList.toggle("has",!!imgData);$("rmImg").classList.toggle("hide",!imgData);$("dropTxt").textContent=imgData?"Kliknij, aby zmienić zdjęcie":"📷 Kliknij, aby wgrać zdjęcie z telefonu / komputera"}
+$("pFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=await compress(f);showImg()}catch(err){toast("Nie udało się wczytać zdjęcia",1)}e.target.value=""};
+$("rmImg").onclick=()=>{imgData="";showImg()};
+function resetForm(){editId=null;imgData="";$("addForm").reset();showImg();$("fTitle").textContent="Dodaj produkt";$("fBtn").textContent="Dodaj produkt";$("fCancel").classList.add("hide")}
+$("fCancel").onclick=resetForm;
+$("addForm").onsubmit=async e=>{
+  e.preventDefault();$("fBtn").disabled=true;
+  const data={name:$("pName").value.trim(),price:parseFloat($("pPrice").value),desc:$("pDesc").value.trim(),image:imgData,soldOut:$("pSold").checked};
+  try{
+    if(editId)await db.collection("products").doc(editId).update(data);
+    else await db.collection("products").add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast(editId?"Zapisano zmiany ✔":"Produkt dodany ✔");resetForm();
+  }catch(err){toast(errPL(err),1)}
+  $("fBtn").disabled=false;
+};
+function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;
+  editId=id;$("pName").value=p.name;$("pPrice").value=p.price;$("pDesc").value=p.desc||"";$("pSold").checked=!!p.soldOut;imgData=p.image||"";showImg();
+  $("fTitle").textContent="Edytuj produkt";$("fBtn").textContent="Zapisz zmiany";$("fCancel").classList.remove("hide");
+  document.querySelector('#atabs button[data-t="tProd"]').click();$("fTitle").scrollIntoView({behavior:"smooth",block:"center"})}
+function renderAdminProducts(){
+  $("aProds").innerHTML=products.length?products.map(p=>`<div class="arow"><div class="th" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
+   <div class="inf">${esc(p.name)}<small>${zl(p.price)}${p.soldOut?" · wyprzedane":""}</small></div>
+   <button class="ghost" onclick="editProduct('${p.id}')">Edytuj</button>
+   <button class="ghost" onclick="toggleSold('${p.id}',${!p.soldOut})">${p.soldOut?"Przywróć":"Wyprzedane"}</button>
+   <button class="ghost r" onclick="delProduct('${p.id}')">Usuń</button></div>`).join(""):'<p style="color:var(--t2);padding:14px 0">Brak produktów.</p>';
+  renderStats();
+}
+const toggleSold=(id,v)=>db.collection("products").doc(id).update({soldOut:v}).catch(e=>toast(errPL(e),1));
+async function delProduct(id){if(confirm("Usunąć ten produkt?"))try{await db.collection("products").doc(id).delete();toast("Usunięto")}catch(e){toast(errPL(e),1)}}
+function renderOrders(){
+  $("orders").innerHTML=orderDocs.length?orderDocs.map(d=>{const o=d.data(),ok=o.status==="zrealizowane";
+    const dt=o.createdAt?o.createdAt.toDate().toLocaleString("pl-PL"):"";
+    return `<div class="ord"><div class="h"><span>${esc(o.name)} · klasa ${esc(o.klasa)}</span><span class="st ${ok?"ok":""}">${esc(o.status)}</span></div>
+    <small>${dt} · ${esc(o.payment)}</small>
+    <ul style="margin:8px 0 8px 18px;color:var(--t2)">${(o.items||[]).map(i=>`<li>${esc(i.name)} × ${i.qty}</li>`).join("")}</ul>
+    <b style="color:var(--g)">${zl(o.total)}</b><br>
+    <button class="ghost" onclick="setStatus('${d.id}','${ok?"nowe":"zrealizowane"}')">${ok?"Oznacz jako nowe":"Oznacz jako zrealizowane"}</button>
+    <button class="ghost r" onclick="delOrder('${d.id}')">Usuń</button></div>`}).join(""):'<p style="color:var(--t2);padding:14px 0">Brak zamówień.</p>';
+}
+const setStatus=(id,s)=>db.collection("orders").doc(id).update({status:s}).catch(e=>toast(errPL(e),1));
+const delOrder=id=>confirm("Usunąć zamówienie?")&&db.collection("orders").doc(id).delete().catch(e=>toast(errPL(e),1));
+ 
+/* konta */
+let adminMails=[];
+function renderUsers(){
+  $("aUsers").innerHTML=userDocs.length?userDocs.map(d=>{const u=d.data(),mail=(u.email||"").toLowerCase(),sup=ADMIN_EMAILS.map(x=>x.toLowerCase()).includes(mail),adm=sup||adminMails.includes(mail);
+    const dt=u.lastLogin?u.lastLogin.toDate().toLocaleString("pl-PL"):"–";
+    return `<div class="arow"><div class="th" ${imgStyle(u.photo)}>${u.photo?"":"👤"}</div>
+    <div class="inf">${esc(u.name||"Bez nazwy")} ${adm?'<span class="st ok">admin</span>':""} ${u.blocked?'<span class="st" style="background:#3a1210;color:#ff453a">zablokowany</span>':""}<small>${esc(u.email)} · ostatnio: ${dt}</small></div>
+    ${sup?"":`<button class="ghost" onclick="setBlock('${d.id}',${!u.blocked})">${u.blocked?"Odblokuj":"Zablokuj"}</button>
+    <button class="ghost" onclick="${adm?`remAdmin('${mail}')`:`addAdmin('${mail}')`}">${adm?"Odbierz admina":"Nadaj admina"}</button>
+    <button class="ghost r" onclick="delUser('${d.id}')">Usuń wpis</button>`}</div>`}).join(""):'<p style="color:var(--t2);padding:14px 0">Brak kont.</p>';
+}
+db.collection("admins").onSnapshot(s=>{adminMails=s.docs.map(d=>d.id);renderUsers()},()=>{});
+const setBlock=(id,v)=>db.collection("users").doc(id).update({blocked:v}).then(()=>toast(v?"Zablokowano":"Odblokowano")).catch(e=>toast(errPL(e),1));
+const addAdmin=m=>db.collection("admins").doc(m.toLowerCase()).set({addedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>toast("Nadano admina ✔")).catch(e=>toast(errPL(e),1));
+const remAdmin=m=>confirm("Odebrać uprawnienia admina?")&&db.collection("admins").doc(m).delete().then(()=>toast("Odebrano")).catch(e=>toast(errPL(e),1));
+const delUser=id=>confirm("Usunąć wpis konta? (samo konto Google/e-mail zostaje w Firebase)")&&db.collection("users").doc(id).delete().catch(e=>toast(errPL(e),1));
+$("admForm").onsubmit=e=>{e.preventDefault();addAdmin($("admMail").value.trim());$("admForm").reset()};
+renderCart();
+</script>
+</body>
+</html>
+ 
