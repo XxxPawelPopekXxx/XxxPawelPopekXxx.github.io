@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -179,7 +178,7 @@ footer a{display:block}footer a:hover{color:#fff;text-decoration:underline}
 <header class="hero" id="top">
   <p class="eyebrow rv">BP CLUB KOWALA</p>
   <h1 class="rv d1"><span id="h1a">Wyglądaj lepiej.</span><br><span class="grad" id="h1b">Razem.</span></h1>
-  <p class="sub rv d2" id="hSub">Oficjalny sklep BP CLUB KOWALA.</p>
+  <p class="sub rv d2" id="hSub">Oficjalny sklep BP CLUB KOWALA. Zamów bez konta, zapłać w szkole.</p>
   <div class="cta rv d2"><a href="#produkty" class="pill">Kup teraz</a><a href="#jak" class="lnk">Jak to działa</a></div>
   <div class="hero-logo" id="heroLogo"><img src="logo.png" alt="Logo BP CLUB KOWALA"></div>
 </header>
@@ -205,7 +204,11 @@ footer a{display:block}footer a:hover{color:#fff;text-decoration:underline}
 <section id="admin" class="hide"><div class="wrap">
   <div class="sec-h"><h2>Panel <span>administratora</span></h2></div>
   <div class="stats"><div class="stat"><b id="sP">0</b><span>Produkty</span></div><div class="stat"><b id="sO">0</b><span>Nowe zamówienia</span></div><div class="stat"><b id="sR">0 zł</b><span>Suma zamówień</span></div><div class="stat"><b id="sU">0</b><span>Konta</span></div></div>
-  <div class="atabs" id="atabs"><button class="on" data-t="tProd">Produkty</button><button data-t="tOrd">Zamówienia</button><button data-t="tUsr">Konta</button><button data-t="tSet">Strona</button></div>
+  <div class="atabs" id="atabs">
+    <button class="on" data-t="tProd">Produkty</button>
+    <button data-t="tOrd">Zamówienia</button>
+    <button data-t="tUsr">Konta</button>
+  </div>
  
   <div class="tabp" id="tProd">
     <div class="panel"><h3 id="fTitle">Dodaj produkt</h3>
@@ -229,15 +232,6 @@ footer a{display:block}footer a:hover{color:#fff;text-decoration:underline}
     <p style="color:var(--t2);font-size:.9rem;margin-top:4px">Konta pojawiają się tu po pierwszym zalogowaniu na stronie. Zablokowany użytkownik jest od razu wylogowywany.</p>
     <form id="admForm" style="display:flex;gap:10px;margin:16px 0;flex-wrap:wrap"><input id="admMail" type="email" placeholder="Dodaj admina po e-mailu (Google)" required style="flex:1;min-width:220px"><button class="pill sm">Nadaj admina</button></form>
     <div id="aUsers"></div></div></div>
- 
-  <div class="tabp hide" id="tSet"><div class="panel"><h3>Teksty na stronie</h3>
-    <form id="setForm">
-      <label>Nagłówek – linia 1</label><input id="sH1" maxlength="60">
-      <label>Nagłówek – linia 2 (zielona)</label><input id="sH2" maxlength="60">
-      <label>Podtytuł</label><input id="sSub" maxlength="160">
-      <label>Tekst przewijany (sekcja pod hero)</label><textarea id="sStmt" rows="4" maxlength="500"></textarea>
-      <button class="pill" style="margin-top:20px">Zapisz zmiany</button>
-    </form></div></div>
 </div></section>
  
 <footer><div class="wrap">
@@ -287,7 +281,6 @@ footer a{display:block}footer a:hover{color:#fff;text-decoration:underline}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
 <script>
 /* ===== KONFIGURACJA ===== */
-// Wpisz e-mail(e) administratora (te same musisz wpisać w regułach Firestore!)
 const ADMIN_EMAILS=["its4ikocontactemail@gmail.com"];
 firebase.initializeApp({
   apiKey:"AIzaSyBvzkQ5e7EKh8bqJazA39T2khg9wPJioNY",
@@ -313,16 +306,16 @@ document.querySelectorAll(".ov").forEach(o=>o.addEventListener("click",e=>{if(e.
 document.addEventListener("keydown",e=>e.key==="Escape"&&closeAll());
 const errPL=e=>({"auth/email-already-in-use":"Ten e-mail jest już zarejestrowany.","auth/invalid-credential":"Nieprawidłowy e-mail lub hasło.","auth/wrong-password":"Nieprawidłowe hasło.","auth/user-not-found":"Nie znaleziono konta.","auth/weak-password":"Hasło musi mieć min. 6 znaków.","auth/invalid-email":"Nieprawidłowy adres e-mail.","auth/popup-closed-by-user":"Zamknięto okno logowania.","auth/unauthorized-domain":"Domena niedozwolona – dodaj ją w Firebase › Authentication › Settings.","permission-denied":"Brak uprawnień."}[e.code]||("Błąd: "+(e.message||e.code)));
  
-/* ===== EFEKTY PRZEWIJANIA (styl Apple) ===== */
+/* ===== EFEKTY PRZEWIJANIA ===== */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
 const observe=()=>document.querySelectorAll(".rv:not(.in)").forEach(el=>io.observe(el));observe();
-// zdanie rozjaśniane słowo po słowie
 const stmt=$("stmt"),logo=$("heroLogo");let words=[];
 let tick=false;
 function onScroll(){
   const y=scrollY,vh=innerHeight;
   const p=Math.min(1,y/(vh*.9));
-  logo.style.transform=`translateY(${y*.18}px) scale(${1+p*.35})`;logo.style.opacity=1-p*.9;
+  logo.style.transform=`translateY(${y*.18}px) scale(${1+p*.35})`;
+  logo.style.opacity=1-p*.9;
   const r=stmt.getBoundingClientRect();
   const prog=Math.min(1,Math.max(0,(vh*.85-r.top)/(vh*.6+r.height*.6)));
   const n=Math.round(prog*words.length);
@@ -333,64 +326,141 @@ addEventListener("scroll",()=>{if(!tick){tick=true;requestAnimationFrame(onScrol
 $("prev").onclick=()=>$("rail").scrollBy({left:-390,behavior:"smooth"});
 $("next").onclick=()=>$("rail").scrollBy({left:390,behavior:"smooth"});
  
-/* ===== USTAWIENIA STRONY ===== */
-const DEF={h1:"Wyglądaj lepiej.",h2:"Razem.",sub:"Oficjalny sklep BP CLUB KOWALA. Zamów bez konta, zapłać w szkole.",stmt:"Tu nie ma przypadków. Młotkowanie, woda kokosowa i Muszynianka to nasz codzienny rytuał. BP CLUB KOWALA to miejsce dla tych, którzy chcą wyglądać lepiej, żyć lepiej i robić to razem."};
-let SET={...DEF};
-function setStatement(t){stmt.innerHTML=t.split(" ").map(w=>`<span class="w${/BP|CLUB|KOWALA/.test(w)?" gr":""}">${esc(w)}</span>`).join(" ");words=[...stmt.querySelectorAll(".w")];onScroll()}
-function applySettings(){$("h1a").textContent=SET.h1;$("h1b").textContent=SET.h2;$("hSub").textContent=SET.sub;setStatement(SET.stmt);$("sH1").value=SET.h1;$("sH2").value=SET.h2;$("sSub").value=SET.sub;$("sStmt").value=SET.stmt}
-applySettings();
-db.collection("settings").doc("site").onSnapshot(d=>{SET={...DEF,...(d.exists?d.data():{})};applySettings()},()=>{});
-$("setForm").onsubmit=async e=>{e.preventDefault();
-  try{await db.collection("settings").doc("site").set({h1:$("sH1").value.trim(),h2:$("sH2").value.trim(),sub:$("sSub").value.trim(),stmt:$("sStmt").value.trim()});toast("Zapisano ✔")}catch(err){toast(errPL(err),1)}};
+/* ===== TEKSTY NA SZTYWNO ===== */
+const DEF={
+  h1:"Wyglądaj lepiej.",
+  h2:"Razem.",
+  sub:"Oficjalny sklep BP CLUB KOWALA.",
+  stmt:"Tu nie ma przypadków. Młotkowanie, woda kokosowa i Muszynianka to nasz codzienny rytuał. BP CLUB KOWALA to miejsce dla tych, którzy chcą wyglądać lepiej, żyć lepiej i robić to razem."
+};
+function setStatement(t){
+  stmt.innerHTML=t.split(" ").map(w=>`<span class="w${/BP|CLUB|KOWALA/.test(w)?" gr":""}">${esc(w)}</span>`).join(" ");
+  words=[...stmt.querySelectorAll(".w")];
+  onScroll();
+}
+$("h1a").textContent=DEF.h1;
+$("h1b").textContent=DEF.h2;
+$("hSub").textContent=DEF.sub;
+setStatement(DEF.stmt);
  
 /* ===== PRODUKTY ===== */
 db.collection("products").orderBy("createdAt","desc").onSnapshot(s=>{
-  products=s.docs.map(d=>({id:d.id,...d.data()}));renderProducts();renderCart();renderAdminProducts();
-},e=>{$("rail").innerHTML='<div class="empty">Nie udało się wczytać produktów. Sprawdź reguły Firestore.</div>';console.error(e)});
+  products=s.docs.map(d=>({id:d.id,...d.data()}));
+  renderProducts();
+  renderCart();
+  renderAdminProducts();
+},e=>{
+  $("rail").innerHTML='<div class="empty">Nie udało się wczytać produktów. Sprawdź reguły Firestore.</div>';
+  console.error(e);
+});
  
 function renderProducts(){
-  if(!products.length){$("rail").innerHTML='<div class="empty">Produkty pojawią się tu wkrótce. ✨</div>';return}
-  $("rail").innerHTML=products.map((p,i)=>`<article class="tile rv ${p.soldOut?"sold":""}" style="transition-delay:${Math.min(i,4)*.08}s" onclick="openProduct('${p.id}')">
-    <div><div class="tag ${p.soldOut?"so":i<2?"new":""}">${p.soldOut?"Wyprzedane":i<2?"Nowość":"Z oferty klubu"}</div><h3>${esc(p.name)}</h3><div class="ds">${esc(p.desc)}</div></div>
-    <div class="im" ${imgStyle(p.image)}>${p.image?"":'<img class="ph" src="logo.png" alt="">'}</div>
-    <div class="bt"><span class="price">${zl(p.price)}</span>${p.soldOut?"":`<button class="pill sm" onclick="event.stopPropagation();addCart('${p.id}')">Kup</button>`}</div>
-  </article>`).join("");
+  if(!products.length){
+    $("rail").innerHTML='<div class="empty">Produkty pojawią się tu wkrótce. ✨</div>';
+    return;
+  }
+  $("rail").innerHTML=products.map((p,i)=>`
+    <article class="tile rv ${p.soldOut?"sold":""}" style="transition-delay:${Math.min(i,4)*.08}s" onclick="openProduct('${p.id}')">
+      <div>
+        <div class="tag ${p.soldOut?"so":i<2?"new":""}">${p.soldOut?"Wyprzedane":i<2?"Nowość":"Z oferty klubu"}</div>
+        <h3>${esc(p.name)}</h3>
+        <div class="ds">${esc(p.desc||"")}</div>
+      </div>
+      <div class="im" ${imgStyle(p.image)}>${p.image?"":'<img class="ph" src="logo.png" alt="">'}</div>
+      <div class="bt">
+        <span class="price">${zl(p.price)}</span>
+        ${p.soldOut?"":`<button class="pill sm" onclick="event.stopPropagation();addCart('${p.id}')">Kup</button>`}
+      </div>
+    </article>
+  `).join("");
   observe();
 }
+
 function openProduct(id){
-  const p=products.find(x=>x.id===id);if(!p)return;
-  $("prodBox").innerHTML=`<button class="x" onclick="closeAll()">✕</button>
-   <div class="big" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
-   <div style="display:flex;flex-direction:column;justify-content:center"><div class="eyebrow" style="font-size:.85rem">BP CLUB KOWALA</div><h3>${esc(p.name)}</h3><div class="price">${zl(p.price)}</div><p>${esc(p.desc)||"Produkt z oferty klubu."}</p>
-   ${p.soldOut?'<p style="color:#ff453a;margin-top:14px;font-weight:600">Wyprzedane</p>':`<button class="pill full" onclick="addCart('${p.id}');closeAll()">Dodaj do koszyka</button>`}</div>`;
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  $("prodBox").innerHTML=`
+    <button class="x" onclick="closeAll()">✕</button>
+    <div class="big" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="eyebrow" style="font-size:.85rem">BP CLUB KOWALA</div>
+      <h3>${esc(p.name)}</h3>
+      <div class="price">${zl(p.price)}</div>
+      <p>${esc(p.desc)||"Produkt z oferty klubu."}</p>
+      ${p.soldOut
+        ?'<p style="color:#ff453a;margin-top:14px;font-weight:600">Wyprzedane</p>'
+        :`<button class="pill full" onclick="addCart('${p.id}');closeAll()">Dodaj do koszyka</button>`}
+    </div>`;
   $("prodOv").classList.add("on");
 }
  
 /* ===== KOSZYK ===== */
 function saveCart(){localStorage.setItem("bpcart",JSON.stringify(cart));renderCart()}
-function addCart(id){const pp=products.find(x=>x.id===id);if(pp&&pp.soldOut)return toast('Ten produkt jest wyprzedany',1);const i=cart.find(c=>c.id===id);i?i.qty++:cart.push({id,qty:1});saveCart();toast("Dodano do koszyka ✔")}
-function chg(id,d){const i=cart.find(c=>c.id===id);if(!i)return;i.qty+=d;if(i.qty<1)cart=cart.filter(c=>c.id!==id);saveCart()}
-function lines(){return cart.map(c=>{const p=products.find(x=>x.id===c.id);return p&&!p.soldOut?{id:c.id,name:p.name,price:p.price,qty:c.qty,image:p.image||""}:null}).filter(Boolean)}
+function addCart(id){
+  const pp=products.find(x=>x.id===id);
+  if(pp&&pp.soldOut)return toast('Ten produkt jest wyprzedany',1);
+  const i=cart.find(c=>c.id===id);
+  i?i.qty++:cart.push({id,qty:1});
+  saveCart();
+  toast("Dodano do koszyka ✔");
+}
+function chg(id,d){
+  const i=cart.find(c=>c.id===id);
+  if(!i)return;
+  i.qty+=d;
+  if(i.qty<1)cart=cart.filter(c=>c.id!==id);
+  saveCart();
+}
+function lines(){
+  return cart.map(c=>{
+    const p=products.find(x=>x.id===c.id);
+    return p&&!p.soldOut?{id:c.id,name:p.name,price:p.price,qty:c.qty,image:p.image||""}:null;
+  }).filter(Boolean);
+}
 function renderCart(){
   const L=lines(),n=L.reduce((a,l)=>a+l.qty,0);
-  $("cartN").textContent=n;$("cartN").classList.toggle("on",n>0);
-  $("cartItems").innerHTML=L.length?L.map(l=>`<div class="ci"><div class="th" ${imgStyle(l.image)}>${l.image?"":'<img src="logo.png" alt="">'}</div>
-   <div class="inf">${esc(l.name)}<small>${zl(l.price)}</small><div class="q"><button onclick="chg('${l.id}',-1)">−</button><b>${l.qty}</b><button onclick="chg('${l.id}',1)">+</button></div></div><b>${zl(l.price*l.qty)}</b></div>`).join(""):'<p style="color:var(--t2);padding:30px 0;font-size:1.1rem">Twój koszyk jest pusty.</p>';
+  $("cartN").textContent=n;
+  $("cartN").classList.toggle("on",n>0);
+  $("cartItems").innerHTML=L.length?L.map(l=>`
+    <div class="ci">
+      <div class="th" ${imgStyle(l.image)}>${l.image?"":'<img src="logo.png" alt="">'}</div>
+      <div class="inf">${esc(l.name)}<small>${zl(l.price)}</small>
+        <div class="q">
+          <button onclick="chg('${l.id}',-1)">−</button>
+          <b>${l.qty}</b>
+          <button onclick="chg('${l.id}',1)">+</button>
+        </div>
+      </div>
+      <b>${zl(l.price*l.qty)}</b>
+    </div>
+  `).join(""):'<p style="color:var(--t2);padding:30px 0;font-size:1.1rem">Twój koszyk jest pusty.</p>';
   $("cartTot").textContent=zl(L.reduce((a,l)=>a+l.price*l.qty,0));
   $("checkout").classList.toggle("hide",!L.length);
 }
 $("cartBtn").onclick=()=>{renderCart();$("cartOv").classList.add("on")};
  
 $("orderForm").onsubmit=async e=>{
-  e.preventDefault();const L=lines();if(!L.length)return;
-  const btn=$("orderBtn");btn.disabled=true;
+  e.preventDefault();
+  const L=lines();
+  if(!L.length)return;
+  const btn=$("orderBtn");
+  btn.disabled=true;
   try{
     await db.collection("orders").add({
-      name:$("oName").value.trim(),klasa:$("oClass").value.trim(),payment:"Płatność w szkole",
-      items:L.map(({id,name,price,qty})=>({id,name,price,qty})),total:L.reduce((a,l)=>a+l.price*l.qty,0),status:"nowe",
-      uid:user?user.uid:null,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      name:$("oName").value.trim(),
+      klasa:$("oClass").value.trim(),
+      payment:"Płatność w szkole",
+      items:L.map(({id,name,price,qty})=>({id,name,price,qty})),
+      total:L.reduce((a,l)=>a+l.price*l.qty,0),
+      status:"nowe",
+      uid:user?user.uid:null,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    cart=[];saveCart();closeAll();$("orderForm").reset();if(user)$("oName").value=user.displayName||"";
+    cart=[];
+    saveCart();
+    closeAll();
+    $("orderForm").reset();
+    if(user)$("oName").value=user.displayName||"";
     toast("Zamówienie złożone! Zapłać w szkole przy odbiorze 🎉");
   }catch(err){toast(errPL(err),1)}
   btn.disabled=false;
@@ -399,45 +469,93 @@ $("orderForm").onsubmit=async e=>{
 /* ===== LOGOWANIE ===== */
 function openAuth(reg){setMode(!!reg);$("authOv").classList.add("on")}
 $("loginBtn").onclick=()=>openAuth();
-function setMode(r){regMode=r;$("tReg").classList.toggle("on",r);$("tLog").classList.toggle("on",!r);$("nameBox").classList.toggle("hide",!r);$("authSubmit").textContent=r?"Zarejestruj się":"Zaloguj się"}
-$("tLog").onclick=()=>setMode(false);$("tReg").onclick=()=>setMode(true);
+function setMode(r){
+  regMode=r;
+  $("tReg").classList.toggle("on",r);
+  $("tLog").classList.toggle("on",!r);
+  $("nameBox").classList.toggle("hide",!r);
+  $("authSubmit").textContent=r?"Zarejestruj się":"Zaloguj się";
+}
+$("tLog").onclick=()=>setMode(false);
+$("tReg").onclick=()=>setMode(true);
 $("authForm").onsubmit=async e=>{
   e.preventDefault();
   try{
-    if(regMode){const c=await auth.createUserWithEmailAndPassword($("aMail").value,$("aPass").value);
-      const n=$("aName").value.trim();if(n)await c.user.updateProfile({displayName:n});toast("Konto utworzone!")}
-    else{await auth.signInWithEmailAndPassword($("aMail").value,$("aPass").value);toast("Zalogowano!")}
+    if(regMode){
+      const c=await auth.createUserWithEmailAndPassword($("aMail").value,$("aPass").value);
+      const n=$("aName").value.trim();
+      if(n)await c.user.updateProfile({displayName:n});
+      toast("Konto utworzone!");
+    }else{
+      await auth.signInWithEmailAndPassword($("aMail").value,$("aPass").value);
+      toast("Zalogowano!");
+    }
     closeAll();
   }catch(err){toast(errPL(err),1)}
 };
-$("gBtn").onclick=async()=>{try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());closeAll();toast("Zalogowano przez Google!")}catch(err){toast(errPL(err),1)}};
+$("gBtn").onclick=async()=>{
+  try{
+    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    closeAll();
+    toast("Zalogowano przez Google!");
+  }catch(err){toast(errPL(err),1)}
+};
 $("logoutBtn").onclick=()=>auth.signOut().then(()=>toast("Wylogowano"));
  
-let adminDoc=false,unsubUsers=null,unsubAdm=null,orderDocs=[],userDocs=[];
+let adminDoc=false,unsubUsers=null,orderDocs=[],userDocs=[];
 const isSuper=u=>!!u&&ADMIN_EMAILS.map(x=>x.toLowerCase()).includes((u.email||"").toLowerCase());
 function refreshAdmin(){
   isAdmin=isSuper(user)||adminDoc;
-  $("adminLink").classList.toggle("hide",!isAdmin);$("admin").classList.toggle("hide",!isAdmin);
+  $("adminLink").classList.toggle("hide",!isAdmin);
+  $("admin").classList.toggle("hide",!isAdmin);
 }
 auth.onAuthStateChanged(async u=>{
-  user=u;adminDoc=false;
-  [unsubOrders,unsubUsers].forEach(f=>f&&f());unsubOrders=unsubUsers=null;
-  $("loginBtn").classList.toggle("hide",!!u);$("logoutBtn").classList.toggle("hide",!u);
-  $("userBox").classList.toggle("hide",!u);$("userBox").textContent=u?(u.displayName||u.email):"";
+  user=u;
+  adminDoc=false;
+  [unsubOrders,unsubUsers].forEach(f=>f&&f());
+  unsubOrders=unsubUsers=null;
+  $("loginBtn").classList.toggle("hide",!!u);
+  $("logoutBtn").classList.toggle("hide",!u);
+  $("userBox").classList.toggle("hide",!u);
+  $("userBox").textContent=u?(u.displayName||u.email):"";
   if(u){
     if(!$("oName").value)$("oName").value=u.displayName||"";
-    try{ // blokada konta + zapis profilu
+    try{
       const ref=db.collection("users").doc(u.uid),snap=await ref.get();
-      if(snap.exists&&snap.data().blocked){await auth.signOut();toast("To konto zostało zablokowane.",1);return}
-      await ref.set({email:u.email||"",name:u.displayName||"",photo:u.photoURL||"",createdAt:u.metadata.creationTime||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+      if(snap.exists&&snap.data().blocked){
+        await auth.signOut();
+        toast("To konto zostało zablokowane.",1);
+        return;
+      }
+      await ref.set({
+        email:u.email||"",
+        name:u.displayName||"",
+        photo:u.photoURL||"",
+        createdAt:u.metadata.creationTime||"",
+        lastLogin:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
     }catch(e){console.warn(e)}
-    try{const a=await db.collection("admins").doc((u.email||"").toLowerCase()).get();adminDoc=a.exists}catch(e){}
+    try{
+      const a=await db.collection("admins").doc((u.email||"").toLowerCase()).get();
+      adminDoc=a.exists;
+    }catch(e){}
   }
   refreshAdmin();
-  if(isAdmin){ // baza odblokowana tylko dla zalogowanego admina
-    unsubOrders=db.collection("orders").orderBy("createdAt","desc").onSnapshot(s=>{orderDocs=s.docs;renderOrders();renderStats()},e=>toast(errPL(e),1));
-    unsubUsers=db.collection("users").onSnapshot(s=>{userDocs=s.docs;renderUsers();renderStats()},e=>toast(errPL(e),1));
-  }else{orderDocs=[];userDocs=[]}
+  if(isAdmin){
+    unsubOrders=db.collection("orders").orderBy("createdAt","desc").onSnapshot(s=>{
+      orderDocs=s.docs;
+      renderOrders();
+      renderStats();
+    },e=>toast(errPL(e),1));
+    unsubUsers=db.collection("users").onSnapshot(s=>{
+      userDocs=s.docs;
+      renderUsers();
+      renderStats();
+    },e=>toast(errPL(e),1));
+  }else{
+    orderDocs=[];
+    userDocs=[];
+  }
   renderProducts();
 });
  
@@ -452,50 +570,130 @@ function renderStats(){
   $("sR").textContent=zl(orderDocs.reduce((a,d)=>a+(d.data().total||0),0));
   $("sU").textContent=userDocs.length;
 }
-/* zdjęcia: kompresja w przeglądarce i zapis w Firestore (bez płatnego Storage) */
+ 
+/* zdjęcia */
 let imgData="",editId=null;
-function compress(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{
-  const sc=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
-  const x=c.getContext("2d");x.fillStyle="#0b0b0b";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
-  let q=.85,o=c.toDataURL("image/jpeg",q);while(o.length>600000&&q>.35){q-=.1;o=c.toDataURL("image/jpeg",q)}res(o)};im.src=r.result};r.readAsDataURL(file)})}
-function showImg(){$("pv").src=imgData;$("drop").classList.toggle("has",!!imgData);$("rmImg").classList.toggle("hide",!imgData);$("dropTxt").textContent=imgData?"Kliknij, aby zmienić zdjęcie":"📷 Kliknij, aby wgrać zdjęcie z telefonu / komputera"}
-$("pFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{imgData=await compress(f);showImg()}catch(err){toast("Nie udało się wczytać zdjęcia",1)}e.target.value=""};
+function compress(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onerror=rej;
+    r.onload=()=>{
+      const im=new Image();
+      im.onerror=rej;
+      im.onload=()=>{
+        const sc=Math.min(1,900/Math.max(im.width,im.height));
+        const c=document.createElement("canvas");
+        c.width=Math.round(im.width*sc);
+        c.height=Math.round(im.height*sc);
+        const x=c.getContext("2d");
+        x.fillStyle="#0b0b0b";
+        x.fillRect(0,0,c.width,c.height);
+        x.drawImage(im,0,0,c.width,c.height);
+        let q=.85,o=c.toDataURL("image/jpeg",q);
+        while(o.length>600000&&q>.35){q-=.1;o=c.toDataURL("image/jpeg",q)}
+        res(o);
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+function showImg(){
+  $("pv").src=imgData;
+  $("drop").classList.toggle("has",!!imgData);
+  $("rmImg").classList.toggle("hide",!imgData);
+  $("dropTxt").textContent=imgData?"Kliknij, aby zmienić zdjęcie":"📷 Kliknij, aby wgrać zdjęcie z telefonu / komputera";
+}
+$("pFile").onchange=async e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  try{imgData=await compress(f);showImg()}catch(err){toast("Nie udało się wczytać zdjęcia",1)}
+  e.target.value="";
+};
 $("rmImg").onclick=()=>{imgData="";showImg()};
-function resetForm(){editId=null;imgData="";$("addForm").reset();showImg();$("fTitle").textContent="Dodaj produkt";$("fBtn").textContent="Dodaj produkt";$("fCancel").classList.add("hide")}
+function resetForm(){
+  editId=null;
+  imgData="";
+  $("addForm").reset();
+  showImg();
+  $("fTitle").textContent="Dodaj produkt";
+  $("fBtn").textContent="Dodaj produkt";
+  $("fCancel").classList.add("hide");
+}
 $("fCancel").onclick=resetForm;
 $("addForm").onsubmit=async e=>{
-  e.preventDefault();$("fBtn").disabled=true;
-  const data={name:$("pName").value.trim(),price:parseFloat($("pPrice").value),desc:$("pDesc").value.trim(),image:imgData,soldOut:$("pSold").checked};
+  e.preventDefault();
+  $("fBtn").disabled=true;
+  const data={
+    name:$("pName").value.trim(),
+    price:parseFloat($("pPrice").value),
+    desc:$("pDesc").value.trim(),
+    image:imgData,
+    soldOut:$("pSold").checked
+  };
   try{
     if(editId)await db.collection("products").doc(editId).update(data);
     else await db.collection("products").add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    toast(editId?"Zapisano zmiany ✔":"Produkt dodany ✔");resetForm();
+    toast(editId?"Zapisano zmiany ✔":"Produkt dodany ✔");
+    resetForm();
   }catch(err){toast(errPL(err),1)}
   $("fBtn").disabled=false;
 };
-function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;
-  editId=id;$("pName").value=p.name;$("pPrice").value=p.price;$("pDesc").value=p.desc||"";$("pSold").checked=!!p.soldOut;imgData=p.image||"";showImg();
-  $("fTitle").textContent="Edytuj produkt";$("fBtn").textContent="Zapisz zmiany";$("fCancel").classList.remove("hide");
-  document.querySelector('#atabs button[data-t="tProd"]').click();$("fTitle").scrollIntoView({behavior:"smooth",block:"center"})}
+function editProduct(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  editId=id;
+  $("pName").value=p.name;
+  $("pPrice").value=p.price;
+  $("pDesc").value=p.desc||"";
+  $("pSold").checked=!!p.soldOut;
+  imgData=p.image||"";
+  showImg();
+  $("fTitle").textContent="Edytuj produkt";
+  $("fBtn").textContent="Zapisz zmiany";
+  $("fCancel").classList.remove("hide");
+  document.querySelector('#atabs button[data-t="tProd"]').click();
+  $("fTitle").scrollIntoView({behavior:"smooth",block:"center"});
+}
 function renderAdminProducts(){
-  $("aProds").innerHTML=products.length?products.map(p=>`<div class="arow"><div class="th" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
-   <div class="inf">${esc(p.name)}<small>${zl(p.price)}${p.soldOut?" · wyprzedane":""}</small></div>
-   <button class="ghost" onclick="editProduct('${p.id}')">Edytuj</button>
-   <button class="ghost" onclick="toggleSold('${p.id}',${!p.soldOut})">${p.soldOut?"Przywróć":"Wyprzedane"}</button>
-   <button class="ghost r" onclick="delProduct('${p.id}')">Usuń</button></div>`).join(""):'<p style="color:var(--t2);padding:14px 0">Brak produktów.</p>';
+  $("aProds").innerHTML=products.length?products.map(p=>`
+    <div class="arow">
+      <div class="th" ${imgStyle(p.image)}>${p.image?"":'<img src="logo.png" alt="">'}</div>
+      <div class="inf">${esc(p.name)}<small>${zl(p.price)}${p.soldOut?" · wyprzedane":""}</small></div>
+      <button class="ghost" onclick="editProduct('${p.id}')">Edytuj</button>
+      <button class="ghost" onclick="toggleSold('${p.id}',${!p.soldOut})">${p.soldOut?"Przywróć":"Wyprzedane"}</button>
+      <button class="ghost r" onclick="delProduct('${p.id}')">Usuń</button>
+    </div>
+  `).join(""):'<p style="color:var(--t2);padding:14px 0">Brak produktów.</p>';
   renderStats();
 }
 const toggleSold=(id,v)=>db.collection("products").doc(id).update({soldOut:v}).catch(e=>toast(errPL(e),1));
-async function delProduct(id){if(confirm("Usunąć ten produkt?"))try{await db.collection("products").doc(id).delete();toast("Usunięto")}catch(e){toast(errPL(e),1)}}
+async function delProduct(id){
+  if(confirm("Usunąć ten produkt?"))try{
+    await db.collection("products").doc(id).delete();
+    toast("Usunięto");
+  }catch(e){toast(errPL(e),1)}
+}
 function renderOrders(){
-  $("orders").innerHTML=orderDocs.length?orderDocs.map(d=>{const o=d.data(),ok=o.status==="zrealizowane";
+  $("orders").innerHTML=orderDocs.length?orderDocs.map(d=>{
+    const o=d.data(),ok=o.status==="zrealizowane";
     const dt=o.createdAt?o.createdAt.toDate().toLocaleString("pl-PL"):"";
-    return `<div class="ord"><div class="h"><span>${esc(o.name)} · klasa ${esc(o.klasa)}</span><span class="st ${ok?"ok":""}">${esc(o.status)}</span></div>
-    <small>${dt} · ${esc(o.payment)}</small>
-    <ul style="margin:8px 0 8px 18px;color:var(--t2)">${(o.items||[]).map(i=>`<li>${esc(i.name)} × ${i.qty}</li>`).join("")}</ul>
-    <b style="color:var(--g)">${zl(o.total)}</b><br>
-    <button class="ghost" onclick="setStatus('${d.id}','${ok?"nowe":"zrealizowane"}')">${ok?"Oznacz jako nowe":"Oznacz jako zrealizowane"}</button>
-    <button class="ghost r" onclick="delOrder('${d.id}')">Usuń</button></div>`}).join(""):'<p style="color:var(--t2);padding:14px 0">Brak zamówień.</p>';
+    return `
+      <div class="ord">
+        <div class="h">
+          <span>${esc(o.name)} · klasa ${esc(o.klasa)}</span>
+          <span class="st ${ok?"ok":""}">${esc(o.status)}</span>
+        </div>
+        <small>${dt} · ${esc(o.payment)}</small>
+        <ul style="margin:8px 0 8px 18px;color:var(--t2)">
+          ${(o.items||[]).map(i=>`<li>${esc(i.name)} × ${i.qty}</li>`).join("")}
+        </ul>
+        <b style="color:var(--g)">${zl(o.total)}</b><br>
+        <button class="ghost" onclick="setStatus('${d.id}','${ok?"nowe":"zrealizowane"}')">${ok?"Oznacz jako nowe":"Oznacz jako zrealizowane"}</button>
+        <button class="ghost r" onclick="delOrder('${d.id}')">Usuń</button>
+      </div>
+    `;
+  }).join(""):'<p style="color:var(--t2);padding:14px 0">Brak zamówień.</p>';
 }
 const setStatus=(id,s)=>db.collection("orders").doc(id).update({status:s}).catch(e=>toast(errPL(e),1));
 const delOrder=id=>confirm("Usunąć zamówienie?")&&db.collection("orders").doc(id).delete().catch(e=>toast(errPL(e),1));
@@ -503,22 +701,43 @@ const delOrder=id=>confirm("Usunąć zamówienie?")&&db.collection("orders").doc
 /* konta */
 let adminMails=[];
 function renderUsers(){
-  $("aUsers").innerHTML=userDocs.length?userDocs.map(d=>{const u=d.data(),mail=(u.email||"").toLowerCase(),sup=ADMIN_EMAILS.map(x=>x.toLowerCase()).includes(mail),adm=sup||adminMails.includes(mail);
+  $("aUsers").innerHTML=userDocs.length?userDocs.map(d=>{
+    const u=d.data(),mail=(u.email||"").toLowerCase();
+    const sup=ADMIN_EMAILS.map(x=>x.toLowerCase()).includes(mail);
+    const adm=sup||adminMails.includes(mail);
     const dt=u.lastLogin?u.lastLogin.toDate().toLocaleString("pl-PL"):"–";
-    return `<div class="arow"><div class="th" ${imgStyle(u.photo)}>${u.photo?"":"👤"}</div>
-    <div class="inf">${esc(u.name||"Bez nazwy")} ${adm?'<span class="st ok">admin</span>':""} ${u.blocked?'<span class="st" style="background:#3a1210;color:#ff453a">zablokowany</span>':""}<small>${esc(u.email)} · ostatnio: ${dt}</small></div>
-    ${sup?"":`<button class="ghost" onclick="setBlock('${d.id}',${!u.blocked})">${u.blocked?"Odblokuj":"Zablokuj"}</button>
-    <button class="ghost" onclick="${adm?`remAdmin('${mail}')`:`addAdmin('${mail}')`}">${adm?"Odbierz admina":"Nadaj admina"}</button>
-    <button class="ghost r" onclick="delUser('${d.id}')">Usuń wpis</button>`}</div>`}).join(""):'<p style="color:var(--t2);padding:14px 0">Brak kont.</p>';
+    return `
+      <div class="arow">
+        <div class="th" ${imgStyle(u.photo)}>${u.photo?"":"👤"}</div>
+        <div class="inf">
+          ${esc(u.name||"Bez nazwy")}
+          ${adm?'<span class="st ok">admin</span>':""}
+          ${u.blocked?'<span class="st" style="background:#3a1210;color:#ff453a">zablokowany</span>':""}
+          <small>${esc(u.email)} · ostatnio: ${dt}</small>
+        </div>
+        ${sup?"":`
+          <button class="ghost" onclick="setBlock('${d.id}',${!u.blocked})">${u.blocked?"Odblokuj":"Zablokuj"}</button>
+          <button class="ghost" onclick="${adm?`remAdmin('${mail}')`:`addAdmin('${mail}')`}">${adm?"Odbierz admina":"Nadaj admina"}</button>
+          <button class="ghost r" onclick="delUser('${d.id}')">Usuń wpis</button>
+        `}
+      </div>
+    `;
+  }).join(""):'<p style="color:var(--t2);padding:14px 0">Brak kont.</p>';
 }
-db.collection("admins").onSnapshot(s=>{adminMails=s.docs.map(d=>d.id);renderUsers()},()=>{});
+db.collection("admins").onSnapshot(s=>{
+  adminMails=s.docs.map(d=>d.id);
+  renderUsers();
+},()=>{});
 const setBlock=(id,v)=>db.collection("users").doc(id).update({blocked:v}).then(()=>toast(v?"Zablokowano":"Odblokowano")).catch(e=>toast(errPL(e),1));
 const addAdmin=m=>db.collection("admins").doc(m.toLowerCase()).set({addedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>toast("Nadano admina ✔")).catch(e=>toast(errPL(e),1));
 const remAdmin=m=>confirm("Odebrać uprawnienia admina?")&&db.collection("admins").doc(m).delete().then(()=>toast("Odebrano")).catch(e=>toast(errPL(e),1));
 const delUser=id=>confirm("Usunąć wpis konta? (samo konto Google/e-mail zostaje w Firebase)")&&db.collection("users").doc(id).delete().catch(e=>toast(errPL(e),1));
-$("admForm").onsubmit=e=>{e.preventDefault();addAdmin($("admMail").value.trim());$("admForm").reset()};
+$("admForm").onsubmit=e=>{
+  e.preventDefault();
+  addAdmin($("admMail").value.trim());
+  $("admForm").reset();
+};
 renderCart();
 </script>
 </body>
-</html>
- 
+</html>y
